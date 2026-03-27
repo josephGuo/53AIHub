@@ -20,7 +20,7 @@ jobs:
     # 第二步：运行同步 Action
     - name: Sync upstream changes
       id: sync
-      uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
+      uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.2
       with:
         upstream_sync_repo: 53AI/53AIHub   # 【需修改】填入原作者的 仓库路径
         upstream_sync_branch: main                      # 【需修改】原作者的主分支名
