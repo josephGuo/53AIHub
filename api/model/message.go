@@ -21,7 +21,7 @@ type Message struct {
 	ElapsedTime       int64  `json:"elapsed_time" gorm:"default:0"`
 	IsStream          bool   `json:"is_stream" gorm:"default:false"`
 	QuotaContent      string `json:"quota_content" gorm:"default:''"`
-	AgentCustomConfig string `json:"agent_custom_config" gorm:"default:''"`
+	AgentCustomConfig string `json:"agent_custom_config" gorm:"default:'';type:text"`
 	BaseModel
 }
 
