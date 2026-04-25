@@ -449,7 +449,14 @@ const imageFile = ref()
 const validator = (item) => {
   return (rule, value, callback) => {
     if (item.required) {
-      const hasVal = item.value.some((item) => item.trim())
+      let hasVal = false
+      if (['file', 'array_image', 'array_audio', 'array_video', 'array_file'].includes(item.type)) {
+        hasVal = Array.isArray(item.value) && item.value.length > 0
+      } else if (Array.isArray(item.value)) {
+        hasVal = item.value.some((val) => val && String(val).trim().length > 0)
+      } else {
+        hasVal = item.value && String(item.value).trim().length > 0
+      }
       if (hasVal) callback()
       else callback(new Error(`请添加${item.label}`))
     } else {
