@@ -692,13 +692,13 @@ func RelayTextHelper(c *gin.Context) *relay_model.ErrorWithStatusCode {
 		return respErr
 	}
 
-	responseContent, reasoningContent := GetResponseContent(c, meta.IsStream, resp)
+	_, _ = GetResponseContent(c, meta.IsStream, resp)
 
 	customConfig = service.GetCustomConfig(&adaptor)
 	// post-consume quota
 	go postConsumeQuota(c, agent, user_id, startTime, ctx, usage, meta,
 		textRequest, ratio, preConsumedQuota, modelRatio, groupRatio,
-		systemPromptReset, responseContent, reasoningContent, customConfig, messageID)
+		systemPromptReset, customConfig, messageID)
 	return nil
 }
 
@@ -764,7 +764,7 @@ func addAgentPrompt(ctx context.Context, textRequest *relay_model.GeneralOpenAIR
 func postConsumeQuota(c *gin.Context, agent *model.Agent, user_id int64, startTime time.Time,
 	ctx context.Context, usage *relay_model.Usage, meta *meta.Meta, textRequest *relay_model.GeneralOpenAIRequest,
 	ratio float64, preConsumedQuota int64, modelRatio float64,
-	groupRatio float64, systemPromptReset bool, responseContent string, reasoningContent string, customConfig *custom.CustomConfig, messageID int64) {
+	groupRatio float64, systemPromptReset bool, customConfig *custom.CustomConfig, messageID int64) {
 	if usage == nil {
 		logger.Error(ctx, "usage is nil, which is unexpected")
 		return
@@ -800,8 +800,7 @@ func postConsumeQuota(c *gin.Context, agent *model.Agent, user_id int64, startTi
 	}
 
 	// 更新消息字段
-	message.Answer = responseContent
-	message.ReasoningContent = reasoningContent
+	redactLLMOutputForPersistence(message)
 	message.ModelName = textRequest.Model
 	message.Quota = int(quotaDelta)
 	message.PromptTokens = promptTokens
@@ -828,10 +827,7 @@ func postConsumeQuota(c *gin.Context, agent *model.Agent, user_id int64, startTi
 		if err != nil {
 			logger.Errorf(ctx, "get conversation by id and user id failed: %s", err.Error())
 		} else {
-			lastMessage, _ := json.Marshal(map[string]string{
-				"question": string(messageJSON),
-				"answer":   responseContent,
-			})
+			lastMessage := buildConversationLastMessage(string(messageJSON))
 
 			conversation.Quota += int(quotaDelta)
 			conversation.TotalTokens += totalTokens
@@ -850,6 +846,22 @@ func postConsumeQuota(c *gin.Context, agent *model.Agent, user_id int64, startTi
 			}
 		}
 	}
+}
+
+// redactLLMOutputForPersistence removes assistant text before the message is written
+// back to shared storage. The live response already went to the client, so persisting
+// it here would turn prompt-injected text into cross-request state.
+func redactLLMOutputForPersistence(message *model.Message) {
+	message.Answer = ""
+	message.ReasoningContent = ""
+}
+
+func buildConversationLastMessage(question string) string {
+	lastMessage, _ := json.Marshal(map[string]string{
+		"question": question,
+		"answer":   "",
+	})
+	return string(lastMessage)
 }
 
 func preConsumeQuota(ctx context.Context, textRequest *relay_model.GeneralOpenAIRequest, promptTokens int, ratio float64, meta *meta.Meta) (int64, *relay_model.ErrorWithStatusCode) {
