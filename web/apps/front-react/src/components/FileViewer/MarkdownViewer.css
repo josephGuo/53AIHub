@@ -1,0 +1,33 @@
+.markdown-viewer-loading,
+.markdown-viewer-error {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.markdown-viewer-loading {
+  gap: 12px;
+  color: #4F5052;
+}
+
+.markdown-viewer-error .error-icon {
+  font-size: 48px;
+  color: #FA5151;
+  margin-bottom: 16px;
+}
+
+.markdown-viewer-error h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1D1E1F;
+  margin: 0 0 8px 0;
+}
+
+.markdown-viewer-error p {
+  color: #9B9B9B;
+  margin: 0 0 16px 0;
+}
