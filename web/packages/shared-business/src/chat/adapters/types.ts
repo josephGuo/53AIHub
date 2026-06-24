@@ -21,12 +21,21 @@ export interface ChatCompletionParams {
   web_search_config?: any;
   enable_graph_search?: boolean;
   completion_params?: any;
+  metadata?: Record<string, any>;
+}
+
+export interface ConversationControlParams {
+  action: "stop" | "respond_interruption" | "submit_answer" | "resolve_interruption";
+  [key: string]: any;
 }
 
 export interface IConversationApi {
   create(agentId: string, question: string, title?: string, type?: string): Promise<any>;
-  list(agentId: string, params?: { conversation_type?: string }): Promise<any>;
+  list(agentId: string, params?: { conversation_type?: string; offset?: number; limit?: number }): Promise<any>;
   messages(conversationId: string, params?: { offset?: number; limit?: number }): Promise<any>;
+  events?(conversationId: string, params?: { offset?: number; limit?: number; after_seq?: number }): Promise<any>;
+  snapshot?(conversationId: string, params?: { after_seq?: number }): Promise<any>;
+  control?(conversationId: string, data: ConversationControlParams): Promise<any>;
   edit(conversationId: string | number, data: { title: string }): Promise<any>;
   del(conversationId: string | number): Promise<any>;
   completions(

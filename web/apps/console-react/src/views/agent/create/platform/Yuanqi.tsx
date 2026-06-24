@@ -4,11 +4,11 @@ import { t } from "@/locales";
 import { useAgentFormStore } from "../store";
 import { useAgentForm } from "../hooks";
 import {
-  AgentInfo,
-  BaseConfig,
-  ExpandConfig,
-  UseScope,
-  RelateAgents,
+    AgentInfo,
+    BaseConfig,
+    ExpandConfig,
+    UseScope,
+    RelateAgents,
 } from "../components";
 import { SvgIcon } from "@km/shared-components-react";
 import { channelApi } from "@/api/modules/channel";
@@ -120,21 +120,21 @@ export const Yuanqi = forwardRef<YuanqiRef, YuanqiProps>(
           <>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <h3 className="text-base text-[#1D1E1F]">{t("yuanqi")}</h3>
+                <h3 className="text-base text-primary">{t("yuanqi")}</h3>
                 <Popover
                   content={
                     <div
-                      className="whitespace-pre-wrap text-sm text-[#333] leading-6"
+                      className="whitespace-pre-wrap text-sm text-primary leading-6"
                       dangerouslySetInnerHTML={{
                         __html: t("yuanqi_agent_get_tip", {
-                          url: `<a class='text-[#5A6D9E] underline' href='https://yuanqi.tencent.com/my-creation/agent' target='_blank'>https://yuanqi.tencent.com/my-creation/agent</a>`,
+                          url: `<a class='text-link underline' href='https://yuanqi.tencent.com/my-creation/agent' target='_blank'>https://yuanqi.tencent.com/my-creation/agent</a>`,
                         }),
                       }}
                     />
                   }
                   placement="rightTop"
                 >
-                  <div className="flex-center text-[#9A9A9A] gap-1 ml-1 cursor-pointer">
+                  <div className="flex-center text-disabled gap-1 ml-1 cursor-pointer">
                     <SvgIcon name="help" width={14} color="#999" />
                     <span className="text-sm">{t("how_get")}</span>
                   </div>

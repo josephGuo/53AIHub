@@ -21,6 +21,9 @@ const AGENT_TYPE = {
   N8N_WORKFLOW: 'n8n_workflow',
   TENCENT: 'tencent',
   OPENCLAW: 'openclaw',
+  QCLAW: 'qclaw',
+  CODEX: 'codex',
+  MANUS: 'manus',
 } as const
 
 const BACKEND_AGENT_TYPE = {
@@ -279,13 +282,35 @@ const PLATFORM_CONFIG = {
     channelValue: 1014,
     category: 'model_platform',
     auth: false,
-    label: 'Openclaw',
+    label: 'OpenClaw',
     agents: [
       {
         id: AGENT_TYPE.OPENCLAW,
         name: AGENT_TYPE.OPENCLAW,
-        mode: AGENT_MODES.CHAT,
-        label: 'Openclaw',
+        channelValue: 1014,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'OpenClaw',
+      },
+      {
+        id: AGENT_TYPE.QCLAW,
+        name: AGENT_TYPE.QCLAW,
+        channelValue: 1015,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'QClaw',
+      },
+      {
+        id: AGENT_TYPE.CODEX,
+        name: AGENT_TYPE.CODEX,
+        channelValue: 1016,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'Codex',
+      },
+      {
+        id: AGENT_TYPE.MANUS,
+        name: AGENT_TYPE.MANUS,
+        channelValue: 1017,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'Manus',
       },
     ],
   },
@@ -527,7 +552,7 @@ export const agents: Record<AgentType, AgentConfig> = Object.fromEntries(
             label: agent.label,
             icon: `${img_host}/agent/${type.toLowerCase()}.png`,
             channelName: key as ChannelType,
-            channelType: config.channelValue as ChannelValue,
+            channelType: ('channelValue' in agent ? agent.channelValue : config.channelValue) as ChannelValue,
             providerId: config.providerValue as ProviderValue,
             mode: agent.mode || AGENT_MODES.CHAT,
             category: config.category as AgentCategory,

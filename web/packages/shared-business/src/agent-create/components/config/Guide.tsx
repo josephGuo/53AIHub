@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { Button, message } from 'antd'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Modal, Form, Input } from 'antd'
 import { useAgentForm } from '../../hooks'
@@ -54,9 +54,11 @@ export function AgentGuide() {
   }, [formData.use_cases])
 
   const syncToStore = useCallback((cases: UseCase[], scenes: UseCase[]) => {
-    const allCases = [...cases, ...scenes].filter(item => item.id)
+    // 保留渠道数据，只更新场景和案例
+    const channels = formData.use_cases.filter(item => item.type === 'channel')
+    const allCases = [...channels, ...cases, ...scenes].filter(item => item.id)
     updateUseCases(allCases)
-  }, [updateUseCases])
+  }, [updateUseCases, formData.use_cases])
 
   useEffect(() => {
     if (caseVisible) {
@@ -128,6 +130,14 @@ export function AgentGuide() {
   }
 
   const onSceneOpen = (data?: UseCase) => {
+    // 如果是新增（没有传入 data），需要检查是否已达上限
+    if (!data) {
+      const filledScenes = useSceneList.filter(item => item.id)
+      if (filledScenes.length >= 3) {
+        message.warning(t('agent.scene_limit_reached'))
+        return
+      }
+    }
     currentSceneRef.current = data || null
     setSceneVisible(true)
   }
@@ -189,6 +199,7 @@ export function AgentGuide() {
 
   return (
     <div>
+      <div className="text-sm font-medium text-[#9CA3AF] py-1.5 border-b">{t('agent.usage_help')}</div>
       <CollapsibleSection
         title={t('app.usage_scene')}
         actions={

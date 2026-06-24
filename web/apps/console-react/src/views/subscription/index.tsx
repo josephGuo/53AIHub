@@ -7,10 +7,8 @@ import {
   Select,
   InputNumber,
   Switch,
-  Divider,
-  Spin,
-  Tooltip,
-  message,
+  Divider, Tooltip,
+  message
 } from "antd";
 import { PlusOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -18,7 +16,6 @@ import { t } from "@/locales";
 import { subscriptionApi } from "@/api/modules/subscription";
 import { SvgIcon } from "@km/shared-components-react";
 import SelectPlus from "@/components/SelectPlus";
-import { deepCopy } from "@/utils";
 import { getRealPath, img_host } from "@/utils/config";
 import {
   createNewSubscriptionItem,
@@ -224,12 +221,12 @@ export function SubscriptionPage() {
   }, [refresh]);
 
   return (
-    <div className="h-full flex flex-col py-6 px-2 relative overflow-hidden">
+    <div className="h-full flex flex-col px-2 relative overflow-hidden">
       <div className="flex-1 min-h-0 flex flex-col bg-white box-border overflow-auto">
-        <h1 className="flex-none text-sm text-[#4F5052]">
+        <h1 className="flex-none text-base text-secondary">
           {t("module.subscription_header_title")}
         </h1>
-        <div className="overflow-x-auto mt-6 pb-1 pr-1">
+        <div className="overflow-x-auto mt-5 pb-1 pr-1">
           <Form
             ref={formRef}
             form={form}
@@ -336,7 +333,7 @@ export function SubscriptionPage() {
                       placeholder={t("form_input_placeholder")}
                       onKeyDown={numberInputKeydownHandler}
                     />
-                    <div className="flex-none text-sm text-[#1D1E1F]">
+                    <div className="flex-none text-sm text-primary">
                       /{t("year")}
                     </div>
                   </div>
@@ -369,7 +366,7 @@ export function SubscriptionPage() {
                       placeholder={t("form_input_placeholder")}
                       onKeyDown={numberInputKeydownHandler}
                     />
-                    <div className="flex-none text-sm text-[#1D1E1F]">
+                    <div className="flex-none text-sm text-primary">
                       /{t("monthly")}
                     </div>
                   </div>
@@ -393,7 +390,7 @@ export function SubscriptionPage() {
                       placeholder={t("form_input_placeholder")}
                       onKeyDown={numberInputKeydownHandler}
                     />
-                    <div className="flex-none text-sm text-[#1D1E1F]">
+                    <div className="flex-none text-sm text-primary">
                       /{t("monthly")}
                     </div>
                   </div>
@@ -418,7 +415,7 @@ export function SubscriptionPage() {
                             className="flex-none w-[18px] h-[18px] object-contain rounded-full overflow-hidden"
                             alt={agent.name}
                           />
-                          <div className="flex-1 truncate text-sm text-[#4F5052]">
+                          <div className="flex-1 truncate text-sm text-secondary">
                             {agent.name}
                           </div>
                         </div>
@@ -538,7 +535,7 @@ export function SubscriptionPage() {
           </Button>,
         ]}
       >
-        <p className="text-sm text-[#4F5052]">
+        <p className="text-sm text-secondary">
           {t("subscription.transfer_desc")}
         </p>
         {deletedList.map((item, idx) => (
@@ -550,7 +547,7 @@ export function SubscriptionPage() {
                 disabled
               />
             </div>
-            <div className="text-sm text-[#4F5052] mx-3">
+            <div className="text-sm text-secondary mx-3">
               {t("subscription.transfer_to")}
             </div>
             <div className="flex-1">

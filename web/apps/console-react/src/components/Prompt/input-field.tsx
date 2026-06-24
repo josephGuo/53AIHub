@@ -81,13 +81,13 @@ export const PromptInputField = forwardRef<
         style={style}
       >
         <div className="min-h-10 px-3 border-b flex items-center justify-between bg-white rounded-t">
-          <div className="flex-1 text-sm text-[#4F5052] truncate">
+          <div className="flex-1 text-sm text-secondary truncate">
             *{t("role_instruction_desc")}
           </div>
           <div hidden className="flex items-center gap-1">
             <Tooltip title={t("optimize_tip")}>
               <span
-                className="flex items-center gap-1 text-[#2563EB] text-sm px-1 cursor-pointer hover:opacity-80"
+                className="flex items-center gap-1 text-brand text-sm px-1 cursor-pointer hover:opacity-80"
                 onClick={handleOptimize}
               >
                 <SvgIcon name="hglt" width="18px" />
@@ -97,7 +97,7 @@ export const PromptInputField = forwardRef<
             <div className="flex-none h-4 w-px border-r border-[#E1E2E6]" />
             <Tooltip title={t("generate_tip")}>
               <span
-                className="text-[#182B50] px-1 cursor-pointer hover:opacity-80"
+                className="text-dark px-1 cursor-pointer hover:opacity-80"
                 onClick={handleGenerate}
               >
                 <SvgIcon name="magic-stick" width="18px" />

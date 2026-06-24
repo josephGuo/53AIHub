@@ -82,6 +82,60 @@ export function parseJson<T>(json: string, defaultValue: T | null = null): T | n
   }
 }
 
+function normalizeOutputFiles(value: unknown): any[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((file: any) => {
+      if (!file || typeof file !== 'object') return null
+      const fileName = file.file_name ?? file.fileName ?? file.filename ?? file.name
+      const url = file.url ?? file.href ?? file.download_url ?? file.downloadUrl
+      const id = file.id ?? file.file_id ?? file.fileId ?? url ?? fileName
+      if (id == null && !url && !fileName) return null
+      return {
+        id: id ?? `${url || ''}|${fileName || ''}`,
+        file_name: fileName != null ? String(fileName) : undefined,
+        url: url != null ? String(url) : undefined,
+        download_url: typeof file.download_url === 'string' ? file.download_url : typeof file.downloadUrl === 'string' ? file.downloadUrl : undefined,
+        signed_download_url: typeof file.signed_download_url === 'string' ? file.signed_download_url : typeof file.signedDownloadUrl === 'string' ? file.signedDownloadUrl : undefined,
+        mime_type: file.mime_type ?? file.mimeType ?? file.mime,
+        size: typeof file.size === 'number' ? file.size : Number.isFinite(Number(file.size)) ? Number(file.size) : undefined,
+        kind: file.kind,
+        message_id: file.message_id ?? file.messageId,
+        source_kind: file.source_kind ?? file.sourceKind
+      }
+    })
+    .filter(Boolean)
+}
+
+function appendOutputFiles(message: any, files: any[]): void {
+  if (!files.length) return
+  const current = Array.isArray(message.outputFiles) ? message.outputFiles : []
+  const merged = [...current]
+  const indexByKey = new Map(merged.map((file: any, index: number) => [String(file.id ?? `${file.url || ''}|${file.file_name || ''}`), index]))
+  files.forEach((file: any) => {
+    const key = String(file.id ?? `${file.url || ''}|${file.file_name || ''}`)
+    if (indexByKey.has(key)) {
+      const index = indexByKey.get(key)!
+      const existing = merged[index]
+      merged[index] = {
+        ...file,
+        ...existing,
+        mime_type: existing.mime_type ?? file.mime_type,
+        size: existing.size ?? file.size,
+        kind: existing.kind ?? file.kind,
+        message_id: existing.message_id ?? file.message_id,
+        download_url: existing.download_url ?? file.download_url,
+        signed_download_url: existing.signed_download_url ?? file.signed_download_url,
+        source_kind: existing.source_kind ?? file.source_kind
+      }
+      return
+    }
+    indexByKey.set(key, merged.length)
+    merged.push(file)
+  })
+  message.outputFiles = merged
+}
+
 export function formatBash(code: string, language: string): string {
   const trimmed = (code || '').trim()
   return trimmed ? (language === 'bash' || !language ? `$ ${trimmed}` : trimmed) : ''
@@ -453,19 +507,10 @@ export function processStreamDataItem(
     message.rag_search_text = ps.message
 
     if (ps.step_code === 'output_files' && ps.status === 'completed' && ps.data) {
-      const files = ps.data?.files
-      if (Array.isArray(files) && files.length > 0) {
-        if (!Array.isArray(message.outputFiles)) {
-          message.outputFiles = []
-        }
-        message.outputFiles.push(
-          ...files.map((file: any) => ({
-            id: file.id,
-            file_name: file.file_name,
-            url: file.url
-          }))
-        )
-      }
+      appendOutputFiles(message, [
+        ...normalizeOutputFiles(ps.data?.files),
+        ...normalizeOutputFiles(ps.data?.media_attachments)
+      ])
     }
 
     // 收集 skillRunItems
@@ -556,7 +601,16 @@ export function useChatStream() {
 
           if (data) {
             if (data?.error) {
-              const errorMessage = t('agent.failed_tip')
+              // 提取 SSE 错误中的 message，优先使用后端返回的错误信息
+              const errorObj = data.error
+              let errorMessage = ''
+              if(errorObj) {
+                errorMessage = JSON.stringify({
+                  error: errorObj
+                })
+              } else {
+                errorMessage = t('agent.failed_tip')
+              }
               message.error = true
               message.answer = errorMessage
               return newProcessedLength

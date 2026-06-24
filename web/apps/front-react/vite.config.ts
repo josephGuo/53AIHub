@@ -7,6 +7,7 @@ import fs from 'fs'
 import https from 'https'
 
 import { mergePublic } from '../../packages/vite-plugins/merge-public'
+import { vitePluginMock } from '../../packages/vite-plugin-mock/src/index'
 
 // 从 API 接口获取版本号
 async function getVersionFromAPI(): Promise<string> {
@@ -74,6 +75,9 @@ export default defineConfig(({ mode }) => {
   const isOpLocal = env.VITE_PLATFORM === 'op-local'
   const isPrivatePrem = env.VITE_PRIVATE_PREM === 'true'
   const useHashRouter = isOpLocal || isPrivatePrem
+  const devServerPort = Number(env.VITE_PORT) || 80
+
+  const isMock = env.VITE_MOCK === 'true'
 
   return {
     base: useHashRouter ? './' : '/',
@@ -95,6 +99,7 @@ export default defineConfig(({ mode }) => {
       ...mergePublic({
         sharedPublicPath: path.resolve(process.cwd(), '..', '..', 'packages', 'shared-public'),
       }),
+      vitePluginMock({ enabled: isMock, verbose: true }),
     ],
     resolve: {
       alias: {
@@ -103,13 +108,12 @@ export default defineConfig(({ mode }) => {
         '@km/shared-business': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-business', 'src'),
         '@km/shared-components-react': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-components-react', 'src'),
         '@km/shared-utils': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-utils', 'src'),
-        '@km/shared-types': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-types', 'src'),
       },
       dedupe: ['react', 'react-dom', 'react-router-dom']
     },
     server: {
       host: '0.0.0.0',
-      port: 80,
+      port: devServerPort,
       allowedHosts: ['vevadob.kmtest.53ai.com','wescrm.kmtest.53ai.com', '352vtkg.kmtest.53ai.com', 'ct11fmn.kmtest.53ai.com']
     },
     build: {

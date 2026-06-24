@@ -45,7 +45,6 @@
   "dependencies": {
     "@km/hub-ui-x-react": "workspace:*",
     "@km/shared-components-react": "workspace:*",
-    "@km/shared-types": "workspace:*",
     "@km/shared-utils": "workspace:*",
     "antd": "^6.0.0"
   },

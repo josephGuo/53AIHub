@@ -1,5 +1,11 @@
 import type { AgentTypeOption, AgentPlatformOption } from './adapters/types'
-import { BACKEND_AGENT_TYPE, AGENT_MODES } from './constants'
+import {
+  BACKEND_AGENT_TYPE,
+  AGENT_MODES,
+  OPENCLAW_COMPATIBLE_CREATABLE_AGENT_TYPES,
+  OPENCLAW_COMPATIBLE_AGENT_METADATA,
+  getOpenClawCompatibleAgentIconPath,
+} from './constants'
 
 export const AGENT_TYPE_OPTIONS: AgentTypeOption[] = [
   {
@@ -45,15 +51,20 @@ function createPlatformOption(
 /**
  * 创建平台配置（后台管理）
  * @param imgHost 图片服务器地址，如 `${api_host}/api/images`
+ * @param getPublicPath 可选的公共路径转换函数，用于处理基础路径前缀
  */
 export function createPlatformsByType(
   imgHost: string,
+  getPublicPath?: (path: string) => string,
 ): AgentPlatformOption[] {
   const getIconUrl = (path: string): string => `${imgHost}${path}`
+  const openClawCompatiblePlatforms = OPENCLAW_COMPATIBLE_CREATABLE_AGENT_TYPES.map((agentType) =>
+    createPlatformOption(agentType, OPENCLAW_COMPATIBLE_AGENT_METADATA[agentType].label, getOpenClawCompatibleAgentIconPath(agentType, getPublicPath), OPENCLAW_COMPATIBLE_AGENT_METADATA[agentType].channelType, BACKEND_AGENT_TYPE.ASSISTANT, AGENT_MODES.ASSISTANT),
+  )
 
   return [
-    createPlatformOption('openclaw', 'OpenClaw', getIconUrl('/agent/openclaw.png'), 1014, BACKEND_AGENT_TYPE.ASSISTANT, AGENT_MODES.ASSISTANT),
-    createPlatformOption('prompt', 'Prompt', getIconUrl('/agent/prompt.png'), 0, BACKEND_AGENT_TYPE.AGENT, AGENT_MODES.CHAT),
+    ...openClawCompatiblePlatforms,
+    createPlatformOption('prompt', '智能问答', getIconUrl('/agent/prompt.png'), 0, BACKEND_AGENT_TYPE.AGENT, AGENT_MODES.CHAT),
     createPlatformOption('coze_agent_cn', '扣子编程', getIconUrl('/agent/coze_agent_cn.png'), 34, BACKEND_AGENT_TYPE.AGENT, AGENT_MODES.CHAT),
     createPlatformOption('53ai_agent', '53AI Studio', getIconUrl('/agent/53ai_agent.png'), 1002, BACKEND_AGENT_TYPE.AGENT, AGENT_MODES.CHAT),
     createPlatformOption('coze_agent_osv', 'coze-studio开源版', getIconUrl('/agent/coze_agent_osv.png'), 1010, BACKEND_AGENT_TYPE.AGENT, AGENT_MODES.CHAT),
@@ -78,15 +89,15 @@ export function createPlatformsByType(
 /**
  * 创建平台配置（前台用户）
  * @param imgHost 图片服务器地址，如 `${api_host}/api/images`
+ * @param getPublicPath 可选的公共路径转换函数，用于处理基础路径前缀
  */
 export function createFrontPlatformsByType(
-  imgHost: string,
+  _imgHost: string,
+  getPublicPath?: (path: string) => string,
 ): AgentPlatformOption[] {
-  const getIconUrl = (path: string): string => `${imgHost}${path}`
-
-  return [
-    createPlatformOption('openclaw', 'OpenClaw', getIconUrl('/agent/openclaw.png'), 1014, BACKEND_AGENT_TYPE.ASSISTANT, AGENT_MODES.ASSISTANT),
-  ]
+  return OPENCLAW_COMPATIBLE_CREATABLE_AGENT_TYPES.map((agentType) =>
+    createPlatformOption(agentType, OPENCLAW_COMPATIBLE_AGENT_METADATA[agentType].label, getOpenClawCompatibleAgentIconPath(agentType, getPublicPath), OPENCLAW_COMPATIBLE_AGENT_METADATA[agentType].channelType, BACKEND_AGENT_TYPE.ASSISTANT, AGENT_MODES.ASSISTANT),
+  )
 }
 
 export function createConsoleTypeOptions(): AgentTypeOption[] {

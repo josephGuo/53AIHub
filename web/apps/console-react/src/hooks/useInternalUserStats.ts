@@ -1,19 +1,22 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useEnterpriseStore } from "@/stores";
 import { userApi } from "@/api/modules/user";
 import { VERSION_MODULE } from "@/constants/enterprise";
 
 export function useInternalUserStats() {
   const [internalUserCount, setInternalUserCount] = useState(0);
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const enterpriseStore = useEnterpriseStore();
 
-  // Get module max value
   const getModuleMax = useMemo(() => {
-    const max = enterpriseStore.version?.features?.[VERSION_MODULE.REGISTERED_USER]?.max;
+    const max = enterpriseStore.version?.features?.[VERSION_MODULE.INTERNAL_USER]?.max;
     return max && max !== -1 ? max : "∞";
   }, [enterpriseStore.version?.features]);
 
-  // Load internal user count
+  const refreshCount = useCallback(() => {
+    setRefreshVersion((v) => v + 1);
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -30,7 +33,7 @@ export function useInternalUserStats() {
       }
     };
     load();
-  }, []);
+  }, [refreshVersion]);
 
-  return { internalUserCount, maxLimit: getModuleMax };
+  return { internalUserCount, maxLimit: getModuleMax, refreshCount };
 }

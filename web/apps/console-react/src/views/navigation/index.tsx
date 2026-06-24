@@ -1,5 +1,4 @@
 import {
-  Input,
   Switch,
   Button,
   Spin,
@@ -12,7 +11,7 @@ import { HolderOutlined } from "@ant-design/icons";
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { t } from "@/locales";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import { eventBus, sleep } from "@km/shared-utils";
 import { navigationApi } from "@/api/modules/navigation";
 import { transformNavigationList } from "@/api/modules/navigation/transform";
@@ -293,7 +292,7 @@ export function NavigationPage() {
     {
       key: "drag",
       width: 40,
-      render: () => <HolderOutlined className="text-[#999] cursor-grab" />,
+      render: () => <HolderOutlined className="text-placeholder cursor-grab" />,
     },
     {
       title: t("name"),
@@ -321,7 +320,7 @@ export function NavigationPage() {
       width: 100,
       ellipsis: true,
       render: (label: string) => (
-        <span className={label ? "" : "text-[#9B9B9B]"}>
+        <span className={label ? "" : "text-disabled"}>
           {t(label) || "--"}
         </span>
       ),
@@ -332,7 +331,7 @@ export function NavigationPage() {
       key: "jump_path",
       ellipsis: true,
       render: (path: string) => (
-        <span className={path ? "" : "text-[#9B9B9B]"}>{path || "--"}</span>
+        <span className={path ? "" : "text-disabled"}>{path || "--"}</span>
       ),
     },
     {
@@ -342,7 +341,7 @@ export function NavigationPage() {
       width: 100,
       ellipsis: true,
       render: (label: string) => (
-        <span className={label ? "" : "text-[#9B9B9B]"}>
+        <span className={label ? "" : "text-disabled"}>
           {t(label) || "--"}
         </span>
       ),
@@ -443,20 +442,16 @@ export function NavigationPage() {
     <div className="px-2 h-full flex flex-col overflow-y-auto">
       <div className="flex-1 flex flex-col bg-white box-border max-h-[calc(100vh-100px)] overflow-auto">
         <div className="flex items-center justify-between">
-          <Input.Search
+          <Search
+            mode="expanded"
             value={searchKeyword}
-            onChange={(e) => {
-              const newValue = e.target.value;
-              setSearchKeyword(newValue);
-              searchKeywordRef.current = newValue;
-              if (!newValue) {
-                handleSearch("");
-              }
+            onDebouncedChange={(val) => {
+              setSearchKeyword(val);
+              searchKeywordRef.current = val;
+              handleSearch(val);
             }}
-            style={{ maxWidth: 268 }}
-            allowClear
+            className="max-w-[268px]"
             placeholder={t("navigation.search_placeholder")}
-            onSearch={(value) => handleSearch(value || "")}
           />
         </div>
 

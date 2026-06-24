@@ -8,14 +8,14 @@ import { UserOrganization } from "./Organization";
 
 export function UserInternalPage() {
   const [activeKey, setActiveKey] = useState("account");
-  const { internalUserCount, maxLimit } = useInternalUserStats();
+  const { internalUserCount, maxLimit, refreshCount } = useInternalUserStats();
 
   const tabs = useMemo(
     () => [
       {
         key: "account",
         label: t("internal_user.account.title"),
-        children: <UserAccount />,
+        children: <UserAccount onDataChange={refreshCount}  />,
       },
       {
         key: "group",
@@ -28,7 +28,7 @@ export function UserInternalPage() {
         children: <UserOrganization />,
       },
     ],
-    [],
+    [refreshCount],
   );
 
   return (

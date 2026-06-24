@@ -64,7 +64,7 @@ export const ModelSelectDialog = forwardRef<
               src={opt.platform_icon}
               alt=""
             />
-            <div className="flex-1 text-[#1B2B51] font-semibold">
+            <div className="flex-1 text-dark font-semibold">
               {opt.platform_name}
             </div>
             <Button

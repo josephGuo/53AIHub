@@ -1,7 +1,12 @@
 import { useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from 'antd'
-import { CreateAgentDialog, createFrontTypeOptions, createFrontPlatformsByType } from '@km/shared-business/agent-create'
+import {
+  CreateAgentDialog,
+  createFrontTypeOptions,
+  createFrontPlatformsByType,
+  getOpenClawCompatibleAgentMetadata,
+} from '@km/shared-business/agent-create'
 import type { CreateAgentDialogResult } from '@km/shared-business/agent-create'
 import { frontAgentAdapter } from '@/adapters/agent-create-adapter'
 import agentsApi from '@/api/modules/agents'
@@ -9,6 +14,7 @@ import channelApi from '@/api/modules/channel'
 import { t } from '@/locales'
 import { img_host } from '@/utils/config'
 import './AddMyList.css'
+import { buildOpenClawPersonalAgentPayload } from './openclaw-create'
 
 interface AddMyListProps {
   visible: boolean
@@ -51,14 +57,15 @@ export function AddMyList({ visible, onClose, onSuccess }: AddMyListProps) {
   // 处理确认
   const handleConfirm = async (data: CreateAgentDialogResult) => {
     try {
+      const metadata = getOpenClawCompatibleAgentMetadata(data.agentType)
       // 获取或创建 channel
       const channelList = await channelApi.listv2()
-      const existingChannel = channelList.find((item: any) => item.type === 1014)
+      const existingChannel = channelList.find((item: any) => item.type === metadata.channelType)
       let channelId = existingChannel?.channel_id
 
       if (!channelId) {
         const res = await channelApi.create({
-          type: 1014,
+          type: metadata.channelType,
           name: t('agent.personal_agent_channel'),
           models: 'openclaw-ws',
         })
@@ -66,46 +73,11 @@ export function AddMyList({ visible, onClose, onSuccess }: AddMyListProps) {
       }
 
       // 创建智能体
-      const result = await agentsApi.my.create({
-        name: data.name,
-        description: data.description,
-        logo: data.logo,
-        channel_type: 1014,
-        model: 'openclaw-ws',
-        agent_type: 2,
-        prompt: '',
-        tools: JSON.stringify([]),
-        use_cases: JSON.stringify([]),
-        configs: JSON.stringify({
-          completion_params: {
-            temperature: 0.2,
-            top_p: 0.75,
-            presence_penalty: 0.5,
-            frequency_penalty: 0.5,
-          },
-        }),
-        custom_config: JSON.stringify({
-          agent_type: 'openclaw',
-          agent_mode: 'assistant',
-          provider_id: 0,
-          channel_id: channelId,
-          channel_config: {},
-        }),
-        settings: JSON.stringify({
-          opening_statement: '',
-          suggested_questions: [],
-          file_parse: { enable: false },
-          image_parse: { vision: false, enable: false },
-          relate_agents: [],
-          input_fields: [],
-          output_fields: [],
-        }),
-        enable: true,
-      })
+      const result = await agentsApi.my.create(buildOpenClawPersonalAgentPayload(data, channelId))
 
       navigate({
         pathname: '/agent/create-v2',
-        search: `?type=openclaw&agent_id=${result.agent_id}`
+        search: `?type=${metadata.agentType}&agent_id=${result.agent_id}`
       })
 
       onSuccess?.()

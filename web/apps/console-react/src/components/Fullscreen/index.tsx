@@ -30,6 +30,7 @@ const Fullscreen: React.FC<FullscreenProps> = (props) => {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [nodeHeight, setNodeHeight] = useState(0)
   const [dynamicZIndex, setDynamicZIndex] = useState(zIndex)
+  const isSelectingRef = useRef(false)  // 是否正在选择文字
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(prev => {
@@ -39,6 +40,17 @@ const Fullscreen: React.FC<FullscreenProps> = (props) => {
       return !prev
     })
   }, [zIndex])
+
+  // 处理遮罩层点击：如果正在选择文字则不关闭
+  const handleMaskClick = useCallback(() => {
+    // 检查是否有文字选中
+    const selection = window.getSelection()
+    if (selection && selection.toString().trim().length > 0) {
+      // 有文字选中，不关闭
+      return
+    }
+    toggleFullscreen()
+  }, [toggleFullscreen])
 
   // ESC key handler
   useEffect(() => {
@@ -124,7 +136,7 @@ const Fullscreen: React.FC<FullscreenProps> = (props) => {
         <div
           className={`fixed inset-0 p-4 bg-black/25 overflow-y-auto ${maskClassName}`}
           style={{ zIndex: dynamicZIndex, backdropFilter: 'blur(2px)' }}
-          onClick={toggleFullscreen}
+          onClick={handleMaskClick}
         >
           {styledChild}
         </div>,

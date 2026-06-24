@@ -1,12 +1,12 @@
 import {
-  Button,
-  Divider,
-  Form,
-  Input,
-  InputNumber,
-  ColorPicker,
-  Space,
-  message,
+    Button,
+    Divider,
+    Form,
+    Input,
+    InputNumber,
+    ColorPicker,
+    Space,
+    message,
 } from "antd";
 import { useEffect, useState, useMemo } from "react";
 import { t } from "@/locales";
@@ -14,21 +14,21 @@ import { useEnterpriseStore } from "@/stores";
 import { SvgIcon } from "@km/shared-components-react";
 import { ImageUpload } from "@/components/Upload/image";
 import {
-  templateStyleApi,
-  TemplateStyleForm,
-  defaultForm,
+    templateStyleApi,
+    TemplateStyleForm,
+    defaultForm,
 } from "@/api/modules/template-style";
 import bannerApi from "@/api/modules/banner";
 import {
-  transformBanner,
-  getDefaultBanner,
+    transformBanner,
+    getDefaultBanner,
 } from "@/api/modules/banner/transform";
 import type { Banner } from "@/api/modules/banner/types";
 import { BANNER_CONFIG } from "@/constants/banner";
 import {
-  WEBSITE_STYLE,
-  WEBSITE_STYLE_LABEL_MAP,
-  WEBSITE_STYLE_DEMO_MAP,
+    WEBSITE_STYLE,
+    WEBSITE_STYLE_LABEL_MAP,
+    WEBSITE_STYLE_DEMO_MAP,
 } from "@/constants/enterprise";
 import { getRealPath } from "@/utils/config";
 
@@ -142,10 +142,10 @@ export function TemplateStylePage() {
             {[WEBSITE_STYLE.WEBSITE, WEBSITE_STYLE.SOFTWARE].map((value) => (
               <li
                 key={value}
-                className={`w-[172px] p-1.5 bg-[#F5F5F5] flex relative flex-col cursor-pointer items-center gap-2 border rounded box-border overflow-hidden text-sm hover:border-[#3664EF] hover:text-[#3664EF] ${
+                className={`w-[172px] p-1.5 bg-[#F5F5F5] flex relative flex-col cursor-pointer items-center gap-2 border rounded box-border overflow-hidden text-sm hover:border-[#3664EF] hover:text-brand ${
                   styleType === value
-                    ? "border-[#3664EF] text-[#3664EF]"
-                    : "text-[#4F5052]"
+                    ? "border-[#3664EF] text-brand"
+                    : "text-secondary"
                 }`}
                 onClick={() => {
                   form.setFieldValue("style_type", value);
@@ -186,7 +186,7 @@ export function TemplateStylePage() {
               label={t("template_style.theme_color")}
               labelCol={{ flex: "70px" }}
             >
-              <ul className="flex items-center flex-wrap gap-5 text-[#4F5052] text-sm">
+              <ul className="flex items-center flex-wrap gap-5 text-secondary text-sm">
                 <li className="flex items-center gap-2">
                   <Form.Item name="theme_color" noStyle getValueFromEvent={(color) => color?.toHexString?.() ?? color}>
                     <ColorPicker showText />
@@ -233,7 +233,7 @@ export function TemplateStylePage() {
             >
               <div className="w-full h-2"></div>
               <Form.Item>
-                <div className="text-[#939499] text-xs w-full">
+                <div className="text-hint text-xs w-full">
                   {t("banner.upload_image_tip")}
                 </div>
                 {banner.url_list.length > 0 && (
@@ -290,7 +290,7 @@ export function TemplateStylePage() {
                 </ImageUpload>
               </Form.Item>
               <Form.Item label={t("banner.interval")} layout="vertical">
-                <div className="text-[#939499] text-xs w-full">
+                <div className="text-hint text-xs w-full">
                   {t("banner.interval_tip")}
                 </div>
                 <Space.Compact style={{ display: "flex", marginTop: 16 }}>

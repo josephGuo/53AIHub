@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { Spin, Tooltip } from 'antd'
 import { StarFilled, StarOutlined } from '@ant-design/icons'
 import { LibraryHeader } from '@/views/library/components/header'
@@ -9,7 +9,7 @@ import { PERMISSION_TYPE } from '@/components/KMPermission/constant'
 import type { PreviewFile } from '../types'
 import FileEditBtn from './FileEditBtn'
 
-const AudioViewer = lazy(() => import('../views/audio-viewer'))
+const AudioViewer = lazy(() => import('@/components/Audio/index'))
 const VideoViewer = lazy(() => import('../views/video-viewer'))
 const FileViewer = lazy(() => import('@/components/FileViewer/index'))
 
@@ -86,13 +86,13 @@ export function PreviewPanel({ file, content, loading, onBack, onCommand, onEdit
     {
       key: 'rename',
       icon: 'edit',
-      label: '重命名',
+      label: t('action.rename'),
     },
     { key: 'divider', divided: true },
     {
       key: 'delete',
       icon: 'delete',
-      label: '删除',
+      label: t('action.delete'),
       danger: true,
     },
   ]
@@ -110,7 +110,7 @@ export function PreviewPanel({ file, content, loading, onBack, onCommand, onEdit
         />
       )}
       {showFavBtn && (
-        <Tooltip title={file.isFavorite ? '取消收藏' : '收藏'}>
+        <Tooltip title={file.isFavorite ? t('action.unfavorite') : t('action.favorite')}>
           <div
             className="size-[34px] rounded hover:bg-[#F0F0F0] flex items-center justify-center cursor-pointer"
             onClick={() => onCommand?.(file.isFavorite ? 'favorite-removed' : 'favorite-added')}
@@ -168,13 +168,19 @@ export function PreviewPanel({ file, content, loading, onBack, onCommand, onEdit
         ) : (
           (() => {
             if (AUDIO_EXTS.includes(fileExt)) {
+              // 判断是否应该轮询：enabled 不为 false 且 parser_platform 有值
+              const recordingConfig = file.recordingConfig
+              const shouldPollAudio = recordingConfig?.enabled !== false && (recordingConfig?.parser_platform?.length ?? 0) > 0
               return (
                 <Suspense fallback={<Spin size="large" />}>
                   <AudioViewer
                     currentFile={{
+                      id: file.id,
                       file_url: file.file_url,
                       name: file.name,
+                      insight_summary: (file.rawData as any)?.insight_summary,
                     } as any}
+                    shouldPoll={shouldPollAudio}
                   />
                 </Suspense>
               )

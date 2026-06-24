@@ -6,6 +6,7 @@ import {
 } from "react";
 import { Form, Input, Modal, Image } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
+import { useAgentCreateAdapter } from "../adapters";
 import { useAgentFormStore } from "../store";
 import { useAgentForm, usePlatformChannel } from "../hooks";
 import {
@@ -126,28 +127,56 @@ export const N8N = forwardRef<N8NRef, N8NProps>(
                 </div>
               </div>
             </div>
-            <Form form={channelForm} layout="vertical" className="mt-3">
-              <Form.Item
-                label={t("module.platform_model_webhook_url")}
-                name="base_url"
-                rules={generateInputRules({
-                  message: "form_input_placeholder",
-                  validator: ["link"],
-                })}
-              >
-                <Input placeholder={t("form.input_placeholder")} />
-              </Form.Item>
-              <Form.Item
-                label="Value"
-                name="key"
-                rules={generateInputRules({
-                  message: "form_input_placeholder",
-                  validator: ["text"],
-                })}
-              >
-                <Input placeholder={t("form.input_placeholder")} />
-              </Form.Item>
-            </Form>
+            
+            <div className="p-4 border rounded-xl bg-white mt-3">
+              <Form form={channelForm} layout="vertical">
+                <Form.Item
+                  label={t("module.platform_model_webhook_url")}
+                  name="base_url"
+                  rules={generateInputRules({
+                    message: "form_input_placeholder",
+                    validator: ["link"],
+                  })}
+                >
+                  <Input placeholder={t("form.input_placeholder")} />
+                </Form.Item>
+                <Form.Item
+                  label="Value"
+                  name="key"
+                  rules={generateInputRules({
+                    message: "form_input_placeholder",
+                    validator: ["text"],
+                  })}
+                  className="mb-0"
+                >
+                  <Input placeholder={t("form.input_placeholder")} />
+                </Form.Item>
+              </Form>
+            </div>
+            {
+              agentType === AGENT_TYPES.N8N_WORKFLOW && (
+                <>
+                  <FieldInput
+                    list={inputFields}
+                    onChange={updateInputFields}
+                    title={t("agent.input_variable")}
+                    allowAdd
+                    type="input"
+                    agentType={agentType}
+                    className="mt-2"
+                  />
+                  <FieldInput
+                    list={outputFields}
+                    onChange={updateOutputFields}
+                    title={t("agent.output_variable")}
+                    allowAdd
+                    type="output"
+                    agentType={agentType}
+                    className="mt-2"
+                  />
+                </>
+              )
+            }
           </>
         )}
 
@@ -162,29 +191,18 @@ export const N8N = forwardRef<N8NRef, N8NProps>(
             <>
               {agentType === AGENT_TYPES.N8N_WORKFLOW ? (
                 <>
-                  <FieldInput
-                    list={inputFields}
-                    onChange={updateInputFields}
-                    title={t("agent.input_variable")}
-                    allowAdd
-                    type="input"
-                    agentType={agentType}
-                  />
-                  <FieldInput
-                    list={outputFields}
-                    onChange={updateOutputFields}
-                    title={t("agent.output_variable")}
-                    allowAdd
-                    type="output"
-                    agentType={agentType}
-                  />
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
+
                   <RelateAgents />
+                  <div className="h-3"></div>
                 </>
               ) : (
                 <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <BaseConfig />
                   <RelateAgents />
                   <ExpandConfig />
+                  <div className="h-3"></div>
                 </>
               )}
             </>

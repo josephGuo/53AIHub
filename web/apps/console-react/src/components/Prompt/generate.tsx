@@ -1,11 +1,11 @@
 import { Modal, Button, Empty, message } from "antd";
 import { ThunderboltOutlined } from "@ant-design/icons";
 import {
-  useState,
-  useRef,
-  useCallback,
-  forwardRef,
-  useImperativeHandle,
+    useState,
+    useRef,
+    useCallback,
+    forwardRef,
+    useImperativeHandle,
 } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
@@ -214,7 +214,7 @@ const PromptGenerateInner = forwardRef<PromptGenerateRef, PromptGenerateProps>(
         <div className="h-[450px] flex">
           {/* Left side - Input */}
           <div className="flex-1 px-7 py-5">
-            <div className="flex-none text-sm text-[#182B50]">
+            <div className="flex-none text-sm text-dark">
               {t("reference_example") || "参考示例"}
             </div>
             <div className="mt-3 flex items-center gap-2 flex-wrap">
@@ -223,8 +223,8 @@ const PromptGenerateInner = forwardRef<PromptGenerateRef, PromptGenerateProps>(
                   key={item.type}
                   className={`h-8 rounded px-3 flex items-center gap-1 cursor-pointer border ${
                     selectedType === item.type
-                      ? "border-[#2563EB] text-[#2563EB] bg-[#F4F7FD]"
-                      : "border-[#F3F3F4] text-[#182B50] bg-[#F3F3F4]"
+                      ? "border-[#2563EB] text-brand bg-[#F4F7FD]"
+                      : "border-[#F3F3F4] text-dark bg-[#F3F3F4]"
                   }`}
                   onClick={() => handleExample(item)}
                 >
@@ -252,7 +252,7 @@ const PromptGenerateInner = forwardRef<PromptGenerateRef, PromptGenerateProps>(
           <div className="flex-1 px-7 py-5 border-l flex flex-col overflow-hidden">
             {result || loading ? (
               <>
-                <div className="flex-none text-sm text-[#182B50]">
+                <div className="flex-none text-sm text-dark">
                   {t("generated_prompt") || "生成的角色指令"}
                 </div>
                 <div className="flex-1 border rounded bg-[#F9FAFB] mt-3 flex flex-col overflow-hidden">

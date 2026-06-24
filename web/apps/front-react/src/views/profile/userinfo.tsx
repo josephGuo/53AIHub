@@ -226,31 +226,6 @@ const UserInfo = forwardRef<UserInfoRef>((_, ref) => {
             </Button>
           )}
         </div>
-
-        {/* WeChat - Only show if not private prem env */}
-        {!isPrivatePremEnv && (
-          <div className="p-4 box-border flex items-center gap-2.5 account-item">
-            <img className="size-6" src={getPublicPath('/images/profile/wechat.png')} alt="" />
-            <div className="flex-none text-base text-primary">{t('profile.bind_wechat')}</div>
-            <div className="flex-1 w-0 text-sm text-placeholder invisible md:visible">
-              {userStore.info.openid || t('profile.unbind_account')}
-            </div>
-            {userStore.info.openid ? (
-              <>
-                <Button type="link" className="!text-[#586D9A]" onClick={() => handleUnbindWechat(false)}>
-                  {t('profile.unbind')}
-                </Button>
-                <Button type="link" className="!text-[#586D9A] !ml-0" onClick={handleBindWechat}>
-                  {t('profile.change')}
-                </Button>
-              </>
-            ) : (
-              <Button type="link" className="!text-[#586D9A]" disabled={isOpLocalEnv} onClick={handleBindWechat}>
-                {t('profile.bind')}
-              </Button>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Subscription */}

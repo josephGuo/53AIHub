@@ -1,22 +1,22 @@
 import {
-  forwardRef,
-  useImperativeHandle,
-  useState,
-  useEffect,
-  useRef,
+    forwardRef,
+    useImperativeHandle,
+    useState,
+    useEffect,
+    useRef,
 } from "react";
 import { Form, Input, Popover } from "antd";
 import { t } from "@/locales";
 import { useAgentFormStore } from "../store";
 import { useAgentForm } from "../hooks";
 import {
-  AgentInfo,
-  BaseConfig,
-  ExpandConfig,
-  UseScope,
-  RelateAgents,
-  FieldInput,
-  AgentType,
+    AgentInfo,
+    BaseConfig,
+    ExpandConfig,
+    UseScope,
+    RelateAgents,
+    FieldInput,
+    AgentType,
 } from "../components";
 import { AGENT_TYPES, getAgentByAgentType } from "@/constants/platform/config";
 import { channelApi } from "@/api/modules/channel";
@@ -170,16 +170,16 @@ export const FastGPT = forwardRef<FastGPTRef, FastGPTProps>(
           <>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1">
-                <h3 className="text-base text-[#1D1E1F]">
+                <h3 className="text-base text-primary">
                   {t("agent_app.fastgpt_agent")}
                 </h3>
                 <Popover
                   content={
                     <div
-                      className="whitespace-pre-wrap text-sm text-[#333] leading-6"
+                      className="whitespace-pre-wrap text-sm text-primary leading-6"
                       dangerouslySetInnerHTML={{
                         __html: t("fastgpt_agent_get_tip", {
-                          url: `<a class='text-[#5A6D9E] underline' href='https://cloud.fastgpt.cn/login' target='_blank'>https://cloud.fastgpt.cn/login</a>`,
+                          url: `<a class='text-link underline' href='https://cloud.fastgpt.cn/login' target='_blank'>https://cloud.fastgpt.cn/login</a>`,
                         }),
                       }}
                     />
@@ -187,7 +187,7 @@ export const FastGPT = forwardRef<FastGPTRef, FastGPTProps>(
                   placement="rightTop"
                   overlayStyle={{ width: 480 }}
                 >
-                  <div className="flex-center text-[#9A9A9A] gap-1 ml-1 cursor-pointer">
+                  <div className="flex-center text-disabled gap-1 ml-1 cursor-pointer">
                     <SvgIcon name="help" width={14} color="#999" />
                     <span className="text-sm">{t("how_get")}</span>
                   </div>

@@ -13,12 +13,12 @@
   --color-primary-hover: #1b3f94;
 
   /* 文字颜色 (Text Colors) */
-  --color-text-primary: #1d1e1f;
-  --color-text-secondary: #4f5052;
-  --color-text-tertiary: #6b6c70;
+  --color-text-primary: #1d1e1f;    /* 标题色 */
+  --color-text-secondary: #495266; /* 副标题 */
+  --color-text-tertiary: #818999;  /* 描述 */
+  --color-text-hint: #b3b9c6;      /* 注释色 */
   --color-text-placeholder: #999999;
   --color-text-disabled: #9a9a9a;
-  --color-text-hint: #9ca1b7;
   --color-text-light: #9fa4c5;
   --color-text-link: #5a6d9e;
   --color-text-dark: #182b50;
@@ -33,9 +33,11 @@
   --color-bg-secondary: #f3f3f5;
   --color-bg-tertiary: #f5f6fa;
   --color-bg-muted: #f7f8fa;
+  --color-bg-green: #ebfaf5;      /* 绿-底色 */
+  --color-bg-blue: #f0f5ff;       /* 蓝底色 */
 
   /* 边框颜色 (Border Colors) */
-  --color-border: #e5e5e5;
+  --color-border: #e9eef7;       /* 描边 */
   --color-border-light: #f0f0f0;
   --color-border-input: #e3e8ff;
   --color-border-card: #ededed;
@@ -55,6 +57,9 @@
   --color-tag-skill-bg: transparent;
   --color-tag-skill-text: #2563eb;
   --color-tag-mention-secondary: #98a2b1;
+  --color-tag-orange: #eb9e10;  /* 橙-标签 */
+  --color-tag-red: #fa5151;     /* 红-标签 */
+  --color-tag-green: #10b981;   /* 绿-标签 */
 }
 
 /* ========================================
@@ -91,12 +96,18 @@ body {
 .text-secondary { color: var(--color-text-secondary); }  /* 次要文本，如描述、辅助信息 */
 .text-tertiary { color: var(--color-text-tertiary); }    /* 三级文本，如标签、时间戳 */
 .text-placeholder { color: var(--color-text-placeholder); } /* 占位符文本 */
-.text-disabled { color: var(--color-text-disabled); }    /* 禁用状态文本 */
-.text-hint { color: var(--color-text-hint); }           /* 提示、引导文字 */
-.text-link { color: var(--color-text-link); }           /* 链接文字 */
-.text-error { color: var(--color-text-error); }         /* 错误提示文字 */
-.text-theme { color: var(--color-primary); }            /* 品牌色文字 */
-.text-brand { color: var(--color-primary); }            /* 品牌色文字 */
+.text-disabled { color: var(--color-text-disabled); }    /* 筛选/禁用状态文本 */
+.text-hint { color: var(--color-text-hint); }            /* 提示、引导文字、注释 */
+.text-light { color: var(--color-text-light); }          /* 浅色文字 */
+.text-link { color: var(--color-text-link); }            /* 链接文字 */
+.text-dark { color: var(--color-text-dark); }            /* 深色文字 */
+.text-error { color: var(--color-text-error); }          /* 错误提示文字 */
+.text-theme { color: var(--color-primary); }             /* 品牌色文字 */
+.text-brand { color: var(--color-primary); }             /* 品牌色文字 */
+.text-icon-default { color: var(--color-icon-default); } /* 图标默认颜色 */
+.text-tag-red { color: var(--color-tag-red); }           /* 红色标签文字 */
+.text-tag-orange { color: var(--color-tag-orange); }     /* 橙色标签文字 */
+.text-tag-green { color: var(--color-tag-green); }       /* 绿色标签文字 */
 
 /* 背景颜色 - 用于容器、卡片、输入框等背景 */
 .bg-page { background-color: var(--color-bg-page); }        /* 页面背景 */
@@ -111,6 +122,7 @@ body {
 
 /* 边框颜色 - 用于分割线、卡片边框、输入框边框 */
 .border-default { border-color: var(--color-border); }      /* 默认边框 */
+.border-brand { border-color: var(--color-primary); }        /* 品牌色边框 */
 .border-light { border-color: var(--color-border-light); }  /* 浅色边框 */
 .border-input { border-color: var(--color-border-input); }  /* 输入框边框 */
 .border-card { border-color: var(--color-border-card); }    /* 卡片边框 */
@@ -211,6 +223,7 @@ svg {
 }
 .ant-drawer-header .ant-drawer-title {
   flex: 1;
+  overflow: hidden;
 }
 
 .ant-btn-icon {

@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import { Button, Empty, Spin, message, Select, Input, Drawer } from 'antd'
+import { Button, Empty, Spin, message, Select, Drawer } from 'antd'
 import {
   ZoomInOutlined,
   ZoomOutOutlined,
   FullscreenOutlined,
   ReloadOutlined,
-  SearchOutlined,
   NodeIndexOutlined,
 } from '@ant-design/icons'
+import { Search } from '@km/shared-components-react'
 import './GraphView.css'
 
 interface GraphNode {
@@ -191,10 +191,11 @@ export function LibraryGraphView() {
     setSelectedNode(null)
   }
 
-  const handleSearch = () => {
-    if (!searchText.trim() || !graphData) return
+  const handleSearch = (text?: string) => {
+    const searchValue = text ?? searchText
+    if (!searchValue.trim() || !graphData) return
     const found = graphData.nodes.find(n =>
-      n.label.toLowerCase().includes(searchText.toLowerCase())
+      n.label.toLowerCase().includes(searchValue.toLowerCase())
     )
     if (found) {
       setSelectedNode(found)
@@ -210,13 +211,15 @@ export function LibraryGraphView() {
       <div className="graph-header">
         <h2>知识图谱</h2>
         <div className="graph-actions">
-          <Input
+          <Search
+            mode="expanded"
             placeholder="搜索节点..."
-            prefix={<SearchOutlined />}
             value={searchText}
-            onChange={e => setSearchText(e.target.value)}
-            onPressEnter={handleSearch}
-            style={{ width: 200 }}
+            onDebouncedChange={(val) => {
+              setSearchText(val)
+              handleSearch(val)
+            }}
+            className="w-[200px]"
           />
           <Button icon={<ZoomInOutlined />} onClick={handleZoomIn} />
           <Button icon={<ZoomOutOutlined />} onClick={handleZoomOut} />

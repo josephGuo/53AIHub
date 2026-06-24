@@ -24,7 +24,7 @@ export function PageLayoutContent({
         className={`flex-1 min-h-0 flex flex-col bg-white rounded-lg ${contentClassName}`}
       >
         <div
-          className={`flex-1 ${scrollable ? "overflow-y-auto px-2" : "min-h-0"}`}
+          className={`flex-1 ${scrollable ? "overflow-y-auto" : "min-h-0"}`}
         >
           {children}
         </div>

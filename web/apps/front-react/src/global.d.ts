@@ -184,6 +184,7 @@ declare namespace Conversation {
     presence_penalty?: number
     knowledge_base_ids?: number[]
     file_ids?: number[]
+    space_ids?: number[]
     message_file_id?: number
     solo_file_mode?: boolean
     search_config?: Record<string, any>

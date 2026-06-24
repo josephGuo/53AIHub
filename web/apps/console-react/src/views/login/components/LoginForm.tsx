@@ -153,7 +153,7 @@ export function LoginForm(props: LoginFormProps) {
             verify_code: "",
           }}
         >
-          <h4 className="text-3xl text-[#1D1E1F] font-bold text-center mb-10">
+          <h4 className="text-3xl text-primary font-bold text-center mb-10">
             {t(`login.${type}_login` as string)}
           </h4>
 
@@ -329,7 +329,7 @@ export function LoginForm(props: LoginFormProps) {
           )}
 
           <Divider className="!w-[80%] !mx-auto !mt-8 !mb-4">
-            <span className="text-sm text-[#9A9A9A]">
+            <span className="text-sm text-disabled">
               {t("other_login_method")}
             </span>
           </Divider>
@@ -339,7 +339,7 @@ export function LoginForm(props: LoginFormProps) {
               <div
                 key={item.type}
                 className={`w-14 flex flex-col items-center gap-3 cursor-pointer hover:opacity-70 ${
-                  type === item.type ? "text-[#2563eb]" : "text-[#4f5052]"
+                  type === item.type ? "text-brand" : "text-secondary"
                 }`}
                 onClick={() => changeLoginType(item.type)}
               >

@@ -11,6 +11,7 @@ import type {
   SaveNavigationContentData,
 } from './types'
 
+
 /**
  * 导航管理 API
  */
@@ -30,7 +31,7 @@ export const navigationApi = {
    * 初始化导航数据
    */
   init() {
-    return service.post('/api/navigations/init', [...NAVIGATION_INIT_DATA]).catch(handleError)
+    return service.post('/api/navigations/init', [...NAVIGATION_INIT_DATA()]).catch(handleError)
   },
 
   /**

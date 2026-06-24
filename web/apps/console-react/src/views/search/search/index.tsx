@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo, forwardRef } from "react";
 import { t } from "@/locales";
 import {
-  Checkbox,
-  Switch,
-  Slider,
-  Radio,
-  Input,
-  Button,
-  message,
-  Spin,
-  Tooltip,
-  Divider,
+    Checkbox,
+    Switch,
+    Slider,
+    Radio,
+    Input,
+    Button,
+    message,
+    Spin,
+    Tooltip,
+    Divider,
 } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import { SvgIcon } from "@km/shared-components-react";
@@ -477,7 +477,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Model Setting */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("module.model_setting")}
               </span>
             </div>
@@ -488,14 +488,14 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                     checked={form.settings.fast_reasoning_config.enable}
                     disabled
                   />
-                  <span className="text-sm text-[#1D1E1F]">
+                  <span className="text-sm text-primary">
                     {t("model.fast_reasoning")}
                   </span>
                   <Tooltip
                     title={t("model.fast_reasoning_desc")}
                     placement="top"
                   >
-                    <QuestionCircleOutlined className="text-[#A4AAB9] cursor-help" />
+                    <QuestionCircleOutlined className="text-hint cursor-help" />
                   </Tooltip>
                 </div>
                 <div className="flex-1">
@@ -532,14 +532,14 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                       })
                     }
                   />
-                  <span className="text-sm text-[#1D1E1F]">
+                  <span className="text-sm text-primary">
                     {t("model.deep_thinking")}
                   </span>
                   <Tooltip
                     title={t("model.deep_thinking_desc")}
                     placement="top"
                   >
-                    <QuestionCircleOutlined className="text-[#A4AAB9] cursor-help" />
+                    <QuestionCircleOutlined className="text-hint cursor-help" />
                   </Tooltip>
                 </div>
                 <div className="flex-1">
@@ -572,7 +572,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Question Rewrite */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("module.question_rewrite")}
               </span>
             </div>
@@ -587,7 +587,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                   })
                 }
               />
-              <span className="text-sm text-[#4F5052]">
+              <span className="text-sm text-secondary">
                 {t("module.question_rewrite_desc")}
               </span>
             </div>
@@ -596,7 +596,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Answer Preference */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("module.answer_preference")}
               </span>
             </div>
@@ -612,7 +612,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                     })
                   }
                 />
-                <span className="text-sm text-[#4F5052]">
+                <span className="text-sm text-secondary">
                   {t("module.answer_preference_desc")}
                 </span>
               </div>
@@ -691,7 +691,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Knowledge Search */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("module.knowledge_library_search")}
               </span>
             </div>
@@ -703,8 +703,8 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                       className={`flex-1 h-10 rounded border flex items-center justify-center gap-1 cursor-pointer text-sm ${
                         form.settings.rerank_config.rerank_model ===
                         RERANKING_MODE.WEIGHTED_SCORE
-                          ? "border-[#2563EB] bg-[#F6F9FE] text-[#2563EB]"
-                          : "text-[#182B50]"
+                          ? "border-[#2563EB] bg-[#F6F9FE] text-brand"
+                          : "text-dark"
                       }`}
                       onClick={() =>
                         handleRerankMode(RERANKING_MODE.WEIGHTED_SCORE)
@@ -715,15 +715,15 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                         title={t("module.weighted_score_desc")}
                         placement="top"
                       >
-                        <QuestionCircleOutlined className="text-[#A4AAB9]" />
+                        <QuestionCircleOutlined className="text-hint" />
                       </Tooltip>
                     </div>
                     <div
                       className={`flex-1 h-10 rounded border flex items-center justify-center gap-1 cursor-pointer text-sm ${
                         form.settings.rerank_config.rerank_model ===
                         RERANKING_MODE.RERANKING_MODEL
-                          ? "border-[#2563EB] bg-[#F6F9FE] text-[#2563EB]"
-                          : "text-[#182B50]"
+                          ? "border-[#2563EB] bg-[#F6F9FE] text-brand"
+                          : "text-dark"
                       }`}
                       onClick={() =>
                         handleRerankMode(RERANKING_MODE.RERANKING_MODEL)
@@ -734,7 +734,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                         title={t("module.reranking_model_desc")}
                         placement="top"
                       >
-                        <QuestionCircleOutlined className="text-[#A4AAB9]" />
+                        <QuestionCircleOutlined className="text-hint" />
                       </Tooltip>
                     </div>
                   </div>
@@ -777,7 +777,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                   form.settings.rerank_config.rerank_model ===
                     RERANKING_MODE.RERANKING_MODEL) && (
                   <div className="flex items-center">
-                    <div className="flex-none w-[120px] flex items-center text-sm text-[#182B50] opacity-80">
+                    <div className="flex-none w-[120px] flex items-center text-sm text-dark opacity-80">
                       {t("model.rerank")}
                       <Tooltip
                         title={t("module.reranking_desc")}
@@ -800,7 +800,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                 )}
 
                 <div className="flex items-center mt-3">
-                  <div className="flex-none w-[120px] flex items-center text-sm text-[#182B50] opacity-80">
+                  <div className="flex-none w-[120px] flex items-center text-sm text-dark opacity-80">
                     {t("module.recall_count")}
                     <Tooltip
                       title={t("module.recall_count_desc")}
@@ -823,7 +823,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                         })
                       }
                     />
-                    <span className="flex-none w-9 text-right text-sm opacity-80 text-[#182B50]">
+                    <span className="flex-none w-9 text-right text-sm opacity-80 text-dark">
                       {form.settings.rerank_config.top_k}
                     </span>
                   </div>
@@ -831,7 +831,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
 
 
                 <div className="flex mt-3">
-                  <div className="flex-none w-[120px] h-9 flex items-center text-sm text-[#182B50] opacity-80">
+                  <div className="flex-none w-[120px] h-9 flex items-center text-sm text-dark opacity-80">
                     {t("module.reject_strategy")}
                     <Tooltip
                       title={t("module.out_of_range_reply")}
@@ -881,7 +881,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                     {form.settings.out_of_range_reply.mode ===
                       OUT_REPLY_TYPE.CONTINUE && (
                       <div className="border rounded mt-2.5">
-                        <div className="h-10 flex items-center px-4 text-sm text-[#4F5052] border-b">
+                        <div className="h-10 flex items-center px-4 text-sm text-secondary border-b">
                           {t("role_instruction_desc")}
                         </div>
                         <div>
@@ -914,7 +914,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Web Search */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("module.web_search")}
               </span>
             </div>
@@ -930,14 +930,14 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                     })
                   }
                 />
-                <span className="text-sm text-[#4F5052]">
+                <span className="text-sm text-secondary">
                   {t("module.web_search_desc")}
                 </span>
               </div>
               {form.settings.web_search_setting.enable && (
                 <div className="border rounded p-5 space-y-4 mt-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex-none w-[106px] text-sm text-[#1D1E1F]">
+                    <div className="flex-none w-[106px] text-sm text-primary">
                       {t("module.online_search_source")}
                     </div>
                     <SelectPlus
@@ -948,7 +948,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="flex-none w-[106px] text-sm text-[#1D1E1F]">
+                    <div className="flex-none w-[106px] text-sm text-primary">
                       {t("module.online_search_recall_count")}
                     </div>
                     <div className="flex-1 flex items-center">
@@ -965,7 +965,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                           })
                         }
                       />
-                      <span className="flex-none w-9 text-right text-[#182B50] opacity-80 text-sm">
+                      <span className="flex-none w-9 text-right text-dark opacity-80 text-sm">
                         {form.settings.web_search_setting.top_k}
                       </span>
                     </div>
@@ -978,7 +978,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Graph Search */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("module.knowledge_graph")}
               </span>
             </div>
@@ -994,7 +994,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                     })
                   }
                 />
-                <span className="text-sm text-[#4F5052]">
+                <span className="text-sm text-secondary">
                   {t("module.graph_search_desc")}
                 </span>
               </div>
@@ -1021,7 +1021,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Answer Note */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("module.answer_note")}
               </span>
             </div>
@@ -1037,7 +1037,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                     })
                   }
                 />
-                <span className="text-sm text-[#4F5052]">
+                <span className="text-sm text-secondary">
                   {t("module.answer_note_desc")}
                 </span>
               </div>
@@ -1063,7 +1063,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Base Setting - Opening Statement */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("base_setting")}
               </span>
             </div>
@@ -1089,7 +1089,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
           {/* Suggested Questions */}
           <div className="flex mb-4">
             <div className="flex-none w-[100px] h-8 flex items-center">
-              <span className="text-sm text-[#1D1E1F]">
+              <span className="text-sm text-primary">
                 {t("suggested_questions")}
               </span>
             </div>
@@ -1135,7 +1135,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                       </div>
                       <SvgIcon
                         name="delete"
-                        className="ml-4 cursor-pointer text-[#182B50] opacity-40 hover:opacity-80"
+                        className="ml-4 cursor-pointer text-dark opacity-40 hover:opacity-80"
                         onClick={() => handleDelQuestion(item.id)}
                       />
                     </div>
@@ -1154,7 +1154,7 @@ export const SearchSettingPage = forwardRef<SearchSettingRef, SearchSettingPageP
                 >
                   +{t("action_add")}
                 </Button>
-                <p className="text-sm text-[#999999]">
+                <p className="text-sm text-placeholder">
                   {t("max_add_tip", { max: MAX_QUESTION_LENGTH })}
                 </p>
               </div>

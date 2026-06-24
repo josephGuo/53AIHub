@@ -3,7 +3,7 @@ import {
   ChatView as ChatViewBase
 } from "@km/shared-business/chat";
 import type { IAgentInfo } from "@km/shared-business/chat";
-import { AGENT_TYPES } from "@km/shared-business/agent-create";
+import { isOpenClawCompatibleAgentType } from "@km/shared-business/agent-create";
 import AuthTagGroup from "../../components/AuthTagGroup";
 import { checkPermission as checkUserPermission } from "../../utils/permission";
 import { agentUploadApi } from "../../adapters/upload";
@@ -43,7 +43,7 @@ function ChatViewInner({ agentId: agentIdProp, agentInfo: agentInfoProp }: ChatV
   const settingsObj = agentInfoProp?.settings_obj || {};
 
   // 判断是否为 Openclaw 智能体（URL 参数或智能体属性）
-  const isOpenclaw = type === "openclaw" || customConfigObj.agent_type === AGENT_TYPES.OPENCLAW;
+  const isOpenclaw = isOpenClawCompatibleAgentType(type) || isOpenClawCompatibleAgentType(customConfigObj.agent_type);
 
   const fileUploadEnabled = !!(settingsObj.file_parse?.enable || settingsObj.image_parse?.enable);
 

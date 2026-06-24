@@ -4,6 +4,8 @@ import { groupApi } from '@/api/modules/group'
 import { settingApi, DefaultLinkItem } from '@/api/modules/setting'
 import { GROUP_TYPE } from '@/constants/group'
 import { useEnterpriseStore } from '@/stores'
+import { api_host } from '@/utils/config'
+import { t } from '@/locales'
 
 interface AILink {
   ai_link: DefaultLinkItem
@@ -29,6 +31,7 @@ interface PromptFormData {
   group_ids: number[]
   name: string
   description: string
+  logo: string
   content: string
   subscription_group_ids: number[]
   user_group_ids: number[]
@@ -36,13 +39,18 @@ interface PromptFormData {
   status: number
   custom_config: CustomConfig
   ai_links: AILink[]
+  updated_time?: number
 }
+
+// 获取默认 logo
+const getDefaultLogo = () => `${api_host}/api/images/prompt/logo.png`
 
 const DEFAULT_FORM_DATA: PromptFormData = {
   prompt_id: 0,
   group_ids: [],
   name: '',
   description: '',
+  logo: '',
   content: '',
   subscription_group_ids: [],
   user_group_ids: [],
@@ -52,6 +60,7 @@ const DEFAULT_FORM_DATA: PromptFormData = {
     use_cases: [],
   },
   ai_links: [],
+  updated_time: 0
 }
 
 interface PromptStore {
@@ -76,9 +85,35 @@ export const usePromptFormDataStore = create<PromptStore>((set, get) => ({
   loading: false,
 
   reset: async () => {
+    // 防止重复请求
+    if (get().loading) return Promise.resolve()
+    set({ loading: true })
+
+    // 立即设置默认数据，包含动态获取的 logo 和默认 name
+    const defaultLogo = getDefaultLogo()
+    set({
+      formData: {
+        ...DEFAULT_FORM_DATA,
+        logo: defaultLogo,
+        name: t('prompt.default_name'),
+      },
+      detailData: {},
+    })
+
     const enterpriseStore = useEnterpriseStore.getState()
     let subscriptionGroupIds: number[] = []
     let userGroupIds: number[] = []
+    let groupIds: number[] = []
+
+    // 获取分组列表，默认选择第一个
+    try {
+      const promptGroups = await groupApi.list({ params: { group_type: GROUP_TYPE.PROMPT } })
+      if (promptGroups && promptGroups.length > 0) {
+        groupIds = [(promptGroups as any[])[0].group_id]
+      }
+    } catch (error) {
+      console.error('Load prompt groups error:', error)
+    }
 
     if (enterpriseStore.info.is_enterprise || enterpriseStore.info.is_industry) {
       const list = await groupApi.list({ params: { group_type: GROUP_TYPE.INTERNAL_USER } })
@@ -89,13 +124,17 @@ export const usePromptFormDataStore = create<PromptStore>((set, get) => ({
       subscriptionGroupIds = list.map((item: any) => item.group_id)
     }
 
+    // 更新分组数据
     set({
       formData: {
         ...DEFAULT_FORM_DATA,
+        logo: defaultLogo,
+        name: t('prompt.default_name'),
+        group_ids: groupIds,
         subscription_group_ids: subscriptionGroupIds,
         user_group_ids: userGroupIds,
       },
-      detailData: {},
+      loading: false,
     })
   },
 
@@ -179,7 +218,7 @@ export const usePromptFormDataStore = create<PromptStore>((set, get) => ({
       data.user_group_ids = allGroupIds.filter((id: number) =>
         (internalUserGroups as any[]).some((g: any) => g.group_id === id)
       )
-
+      data.logo = data.logo || getDefaultLogo()
       set({ detailData: data })
       get().formatFormData(data)
     } finally {
@@ -194,6 +233,7 @@ export const usePromptFormDataStore = create<PromptStore>((set, get) => ({
       group_ids: data.group_ids || [],
       name: data.name || '',
       description: data.description || '',
+      logo: data.logo || getDefaultLogo(),
       content: data.content || '',
       subscription_group_ids: data.subscription_group_ids || [],
       user_group_ids: data.user_group_ids || [],
@@ -201,6 +241,7 @@ export const usePromptFormDataStore = create<PromptStore>((set, get) => ({
       status: data.status,
       custom_config: data.custom_config,
       ai_links: data.ai_links,
+      updated_time: data.updated_time
     })
   },
 

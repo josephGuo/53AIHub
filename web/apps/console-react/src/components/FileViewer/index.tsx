@@ -139,8 +139,8 @@ export function FileViewer({ url, content, extension, autoLoad = true }: FileVie
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-8">
         <WarningOutlined className="text-6xl text-red-500 mb-4" />
-        <h3 className="text-lg font-medium text-[#1D1E1F] mb-2">文件验证失败</h3>
-        <p className="text-[#9B9B9B] mb-4">{error}</p>
+        <h3 className="text-lg font-medium text-primary mb-2">文件验证失败</h3>
+        <p className="text-disabled mb-4">{error}</p>
         <Button type="primary" onClick={loadFile}>
           重试
         </Button>
@@ -172,8 +172,8 @@ export function FileViewer({ url, content, extension, autoLoad = true }: FileVie
   return (
     <div className="h-full w-full flex flex-col items-center justify-center text-center p-8">
       <WarningOutlined className="text-6xl text-orange-500 mb-4" />
-      <h3 className="text-lg font-medium text-[#1D1E1F] mb-2">不支持的文件类型</h3>
-      <p className="text-[#9B9B9B] mb-4">
+      <h3 className="text-lg font-medium text-primary mb-2">不支持的文件类型</h3>
+      <p className="text-disabled mb-4">
         当前文件类型 {fileExtension} 暂不支持预览
       </p>
       <div className="flex gap-2">

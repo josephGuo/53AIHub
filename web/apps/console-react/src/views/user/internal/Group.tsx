@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Table, Button, Input, Modal, message, Empty } from "antd";
-import { Dropdown } from "@km/shared-components-react";
-import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
+import { Table, Button, Modal, message, Empty } from "antd";
+import { Dropdown, Search, SvgIcon } from "@km/shared-components-react";
+import { MoreOutlined } from "@ant-design/icons";
 import { t } from "@/locales";
 import { groupApi } from "@/api/modules/group";
 import { useEnterpriseStore } from "@/stores";
@@ -49,6 +48,8 @@ export function UserGroup() {
   const [groupLoading, setGroupLoading] = useState(false);
   const [groupData, setGroupData] = useState<GroupItem[]>([]);
   const [groupKeyword, setGroupKeyword] = useState("");
+  const groupKeywordRef = useRef(groupKeyword);
+  groupKeywordRef.current = groupKeyword;
   const [activeGroupId, setActiveGroupId] = useState(0);
 
   // Tab state
@@ -61,6 +62,8 @@ export function UserGroup() {
   const [userTableData, setUserTableData] = useState<UserItem[]>([]);
   const [userTableTotal, setUserTableTotal] = useState(0);
   const [userKeyword, setUserKeyword] = useState("");
+  const userKeywordRef = useRef(userKeyword);
+  userKeywordRef.current = userKeyword;
   const [userPage, setUserPage] = useState(1);
   const [userPageSize, setUserPageSize] = useState(10);
   const paginationRef = useRef({ userPage, userPageSize });
@@ -110,7 +113,7 @@ export function UserGroup() {
         params: { group_type: GROUP_TYPE.INTERNAL_USER },
       });
       const filtered = list.filter((item: any) =>
-        (item.group_name || "").includes(groupKeyword),
+        (item.group_name || "").includes(groupKeywordRef.current),
       );
       setGroupData(filtered);
       if (!activeGroupId && filtered.length > 0) {
@@ -119,7 +122,7 @@ export function UserGroup() {
     } finally {
       setGroupLoading(false);
     }
-  }, [groupKeyword, activeGroupId]);
+  }, [activeGroupId]);
 
   // Fetch user data
   const fetchUserData = useCallback(
@@ -133,7 +136,7 @@ export function UserGroup() {
       try {
         const { total = 0, list = [] } = await groupApi.user_list({
           group_id: activeGroupId,
-          keyword: userKeyword,
+          keyword: userKeywordRef.current,
           offset: (userPage - 1) * userPageSize,
           limit: userPageSize,
         });
@@ -143,7 +146,7 @@ export function UserGroup() {
         setUserLoading(false);
       }
     },
-    [activeGroupId, userKeyword],
+    [activeGroupId],
   );
 
   // Fetch resource data
@@ -196,6 +199,7 @@ export function UserGroup() {
             onOk: async () => {
               await groupApi.delete({ data: { group_id: item.group_id } });
               message.success(t("action_delete_success"));
+              groupApi.clearCache(GROUP_TYPE.INTERNAL_USER);
               fetchGroupData();
             },
           });
@@ -378,13 +382,15 @@ export function UserGroup() {
       {/* Left: Group List */}
       <div className="w-[280px] flex flex-col pr-5 py-2 border-r border-gray-200">
         <div className="flex items-center gap-2">
-          <Input
+          <Search
+            mode="expanded"
             value={groupKeyword}
-            onChange={(e) => setGroupKeyword(e.target.value)}
-            onPressEnter={fetchGroupData}
+            onDebouncedChange={(val) => {
+              groupKeywordRef.current = val;
+              setGroupKeyword(val);
+              fetchGroupData();
+            }}
             placeholder={t("internal_user.group.search_placeholder")}
-            prefix={<SearchOutlined className="text-gray-300" />}
-            allowClear
             className="flex-1"
           />
         </div>
@@ -481,16 +487,18 @@ export function UserGroup() {
                 {activeGroupInfo.group_name || "--"}
               </h1>
               <div className="flex items-center gap-4">
-                <Input
+                <Search
+                  mode="expanded"
                   value={userKeyword}
-                  onChange={(e) => setUserKeyword(e.target.value)}
-                  onPressEnter={refresh}
+                  onDebouncedChange={(val) => {
+                    userKeywordRef.current = val;
+                    setUserKeyword(val);
+                    refresh();
+                  }}
                   placeholder={t(
                     "internal_user.organization.all_search_placeholder",
                   )}
-                  prefix={<SearchOutlined className="text-gray-300" />}
-                  allowClear
-                  style={{ width: 268 }}
+                  className="w-[268px]"
                 />
                 <DeptMemberPicker onConfirm={handleUserAddConfirm}>
                   <Button type="primary">{t("action_add")}</Button>
@@ -562,6 +570,7 @@ export function UserGroup() {
         onSuccess={() => {
           setGroupAddDialogOpen(false);
           setEditingGroup(null);
+          groupApi.clearCache(GROUP_TYPE.INTERNAL_USER);
           fetchGroupData();
         }}
       />

@@ -42,14 +42,14 @@ export function AgentType({
             <div className="size-4 flex items-center justify-center">
               {item.icon && <SvgIcon name={item.icon} />}
             </div>
-            <p className="flex-1 text-sm text-[#1D1E1F] font-medium">
+            <p className="flex-1 text-sm text-primary font-medium">
               {item.label}
             </p>
             {value === item.value && (
-              <CheckCircleFilled className="size-4 text-[#2563EB]" />
+              <CheckCircleFilled className="size-4 text-brand" />
             )}
           </div>
-          <p className="text-xs text-[#9A9A9A] mt-2">{item.description}</p>
+          <p className="text-xs text-disabled mt-2">{item.description}</p>
         </div>
       ))}
     </div>

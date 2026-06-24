@@ -4,13 +4,16 @@ import type { MenuProps } from "antd";
 import { DownOutlined, RightOutlined, CheckOutlined } from "@ant-design/icons";
 import { SvgIcon } from "@km/shared-components-react";
 import SpaceDialog from "@/components/Space/dialog";
+import type { LibraryItem } from "@/api/modules/libraries";
+import type { SpaceItem } from "@/api/modules/spaces";
+import type { FileItem } from "@/api/modules/files/types";
 import { t } from "@/locales";
-import type { KnowledgeSourceSelectorProps, KnowledgeSourceState, SelectedFile } from "./types";
+import type { KnowledgeSourceSelectorProps, KnowledgeSourceState } from "./types";
 import "./selector.css";
 
 export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorProps>(
   function KnowledgeSourceSelector(
-    { value, onChange, library, disabled, agentInfo },
+    { value, onChange, library, disabled, allowSelectLibrary = false, allowSelectSpace = false, agentInfo },
     ref
   ) {
     const spaceDialogRef = useRef<any>(null);
@@ -53,18 +56,29 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
           text: t("chat.online_search")
         };
       }
-      // 从知识库选择文件
-      if (value.mode === 'files' && value.selectedFiles.length > 0) {
+
+      const hasFiles = value.selectedFiles && value.selectedFiles.length > 0;
+      const hasLibraries = allowSelectLibrary && value.selectedLibraries && value.selectedLibraries.length > 0;
+      const hasSpaces = allowSelectSpace && value.selectedSpaces && value.selectedSpaces.length > 0;
+
+      // 计算总个数（空间 + 知识库 + 知识）
+      const totalCount = (value.selectedSpaces?.length || 0) +
+                          (value.selectedLibraries?.length || 0) +
+                          (value.selectedFiles?.length || 0);
+
+      // 有选择任何内容
+      if (hasFiles || hasLibraries || hasSpaces) {
         return {
           icon: <span className="text-base">@</span>,
-          text: `${value.selectedFiles.length}个`
+          text: `${totalCount}个`
         };
       }
+
       // 否则显示当前知识库/空间
       if (library?.value?.length > 0) {
         return {
           icon: <SvgIcon name="folder" size={16} />,
-          text: library.name
+          text: library?.name || ''
         };
       }
       // 默认显示全部知识（兜底）
@@ -72,39 +86,65 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
         icon: <SvgIcon name="documents" size={16} />,
         text: t("library.all_knowledge")
       };
-    }, [value, library]);
+    }, [value, library, allowSelectLibrary, allowSelectSpace]);
 
     // 打开文件选择弹窗（先关闭下拉框）
     const handleOpenFileDialog = useCallback(() => {
       setDropdownOpen(false);
-      spaceDialogRef.current?.open(value.selectedFiles, library);
-    }, [value.selectedFiles, library]);
+      // 传递已选中的文件、知识库和空间
+      spaceDialogRef.current?.open(value.selectedFiles, value.selectedLibraries, undefined, value.selectedSpaces);
+    }, [value.selectedFiles, value.selectedLibraries, value.selectedSpaces]);
 
-    // 从知识库选择文件
-    const handleSelectFiles = useCallback((files: SelectedFile[]) => {
-      // 文件为空时重置为全部知识
-      if (files.length === 0) {
+    // 从知识库选择文件/知识库/空间
+    const handleSelectFiles = useCallback((files: FileItem[], libraries?: LibraryItem[], spaces?: SpaceItem[]) => {
+      const hasFiles = files.length > 0;
+      const hasLibraries = allowSelectLibrary && libraries && libraries.length > 0;
+      const hasSpaces = allowSelectSpace && spaces && spaces.length > 0;
+
+      // 都为空时重置为全部知识
+      if (!hasFiles && !hasLibraries && !hasSpaces) {
         const newState: KnowledgeSourceState = {
           ...value,
           mode: 'all',
           allKnowledge: true,
           selectedFiles: [],
+          selectedLibraries: [],
+          selectedSpaces: [],
           networkSearch: false,
           knowledgeGraph: false
         };
         onChange(newState);
         return;
       }
+      // 确定模式：有文件用 files，否则有知识库用 libraries，否则用 spaces
+      const mode = hasFiles ? 'files' : hasLibraries ? 'libraries' : 'spaces';
       const newState: KnowledgeSourceState = {
         ...value,
-        mode: 'files',
-        selectedFiles: files,
+        mode,
         allKnowledge: false,
+        selectedFiles: hasFiles ? files.map((file) => ({
+          id: String(file.id),
+          name: file.name,
+          icon: file.icon,
+          library_id: file.library_id,
+          isfolder: file.isfolder
+        })) : [],
+        selectedLibraries: hasLibraries ? libraries.map((lib) => ({
+          id: String(lib.id),
+          name: lib.name,
+          icon: lib.icon,
+          islibrary: true
+        })) : [],
+        selectedSpaces: hasSpaces ? spaces.map((space) => ({
+          id: String(space.id),
+          name: space.name,
+          icon: space.icon
+        })) : [],
         networkSearch: false,
-        knowledgeGraph: false // 选择文件时取消知识图谱
+        knowledgeGraph: false
       };
       onChange(newState);
-    }, [value, onChange]);
+    }, [value, onChange, allowSelectLibrary, allowSelectSpace]);
 
     // 切换全部知识
     const handleToggleAllKnowledge = useCallback(() => {
@@ -115,7 +155,9 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
           mode: 'all',
           allKnowledge: true,
           selectedFiles: [],
-          networkSearch: false
+          selectedLibraries: [],
+          selectedSpaces: [],
+          networkSearch: false,
         };
         onChange(newState);
         return;
@@ -126,7 +168,9 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
           ...value,
           mode: 'all',
           allKnowledge: true,
-          selectedFiles: []
+          selectedFiles: [],
+          selectedLibraries: [],
+          selectedSpaces: [],
         };
         onChange(newState);
         return;
@@ -134,7 +178,7 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
       // 全部知识已选中时，不做任何变化（保持选中）
     }, [value, onChange]);
 
-    // 切换知识图谱（与选择文件互斥）
+    // 切换知识图谱（与选择文件、知识库、空间互斥）
     const handleToggleKnowledgeGraph = useCallback(() => {
       const newKnowledgeGraph = !value.knowledgeGraph;
       const newState: KnowledgeSourceState = {
@@ -143,7 +187,9 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
         allKnowledge: true,
         knowledgeGraph: newKnowledgeGraph,
         networkSearch: false,
-        selectedFiles: [] // 知识图谱与选择文件互斥，清空已选文件
+        selectedFiles: [],
+        selectedLibraries: [],
+        selectedSpaces: []
       };
       onChange(newState);
     }, [value, onChange]);
@@ -155,6 +201,8 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
         mode: 'all',
         allKnowledge: !value.networkSearch ? false : true, // 选中联网搜索时取消全部知识，取消时恢复
         selectedFiles: [],
+        selectedLibraries: [],
+        selectedSpaces: [],
         knowledgeGraph: false,
         networkSearch: !value.networkSearch
       };
@@ -163,6 +211,12 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
 
     // 下拉菜单项
     const menuItems: MenuProps['items'] = useMemo(() => {
+      // 计算总个数（空间 + 知识库 + 知识）
+      const totalCount = (value.selectedSpaces?.length || 0) +
+                          (value.selectedLibraries?.length || 0) +
+                          (value.selectedFiles?.length || 0);
+      const hasSelection = totalCount > 0;
+
       const items: MenuProps['items'] = [
         {
           key: 'select-files',
@@ -170,8 +224,8 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
             <div className="flex items-center gap-[10px]">
               <span className="text-base">@</span>
               <span className={`knowledge-source-menu-text`}>{t("chat.select_from_library")}</span>
-              {value.mode === 'files' && value.selectedFiles.length > 0 && (
-                <span className="knowledge-source-file-count">{value.selectedFiles.length}</span>
+              {hasSelection && (
+                <span className="knowledge-source-file-count">{totalCount}</span>
               )}
               <RightOutlined className="knowledge-source-menu-arrow" />
             </div>
@@ -227,6 +281,9 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
       value.allKnowledge,
       value.knowledgeGraph,
       value.networkSearch,
+      value.selectedSpaces,
+      value.selectedLibraries,
+      value.selectedFiles,
       handleOpenFileDialog,
       handleToggleAllKnowledge,
       handleToggleKnowledgeGraph,
@@ -256,6 +313,8 @@ export const KnowledgeSourceSelector = forwardRef<any, KnowledgeSourceSelectorPr
         <SpaceDialog
           ref={spaceDialogRef}
           onConfirm={handleSelectFiles}
+          allowSelectLibrary={allowSelectLibrary}
+          allowSelectSpace={allowSelectSpace}
         />
       </>
     );

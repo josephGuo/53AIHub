@@ -101,7 +101,7 @@
 
 .x-bubble__message-container {
   display: flex;
-  align-items: flex-start;
+  justify-content: flex-end;
 }
 
 .x-image-viewer {

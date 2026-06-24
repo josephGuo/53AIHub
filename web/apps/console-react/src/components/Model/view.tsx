@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { LoadingOutlined, QuestionCircleFilled } from "@ant-design/icons";
-import { Spin } from "antd";
 import { loadModels } from "./index";
 
 export interface ModelInfo {
@@ -127,12 +126,12 @@ export function ModelView({
           />
         )}
         {(type === "all" || type === "provider_name") && (
-          <span className="text-sm text-[#1D1E1F] whitespace-nowrap">
+          <span className="text-sm text-primary whitespace-nowrap">
             {modelInfo.provider_name}
           </span>
         )}
         {(type === "all" || type === "model") && (
-          <span className="text-sm text-[#4F5052] whitespace-nowrap">
+          <span className="text-sm text-secondary whitespace-nowrap">
             {modelInfo.label}
           </span>
         )}

@@ -1,5 +1,12 @@
 import type { IAgentCreateAdapter, AgentFormData, GroupOption, AgentFormRef, ChannelOption } from '@km/shared-business/agent-create'
 import { AgentForm, Chat as SharedChat } from '@km/shared-business/agent-create'
+import {
+  getOpenClawCompatibleChannelType,
+  isOpenClawCompatibleAgentType,
+  normalizeOpenClawCompatibleCustomConfig,
+  resolveOpenClawCompatibleAgentLogo,
+  resolveOpenClawCompatibleAgentTypeFromRecord,
+} from '@km/shared-business/agent-create'
 import { agentApi, transform53aiBotItem, transformTencentAppItem, transformAppBuilderBotItem, transformCozeBotItem, transformCozeWorkspaceItem } from '@/api/modules/agent'
 import { groupApi } from '@/api/modules/group'
 import providersApi, { transformProviderList } from '@/api/modules/providers'
@@ -10,6 +17,7 @@ import { GROUP_TYPE } from '@/constants/group'
 import { CHANNEL_TYPE_VALUE_MAP } from '@/constants/platform/channel'
 import { PageLayoutContent } from '@/components/PageLayout'
 import { AgentPreview } from '@/views/agent/create/components/layout/Preview'
+import { ConsoleOpenClawEmbeddedChatWorkspace } from '@/views/agent/create-v2/OpenClawEmbeddedChatWorkspace'
 import { UseScope } from '@/views/agent/create/components/shared/UseScope'
 import { t } from '@/locales'
 import { generateRandomId } from '@/utils'
@@ -33,13 +41,18 @@ const DEFAULT_COMPLETION_PARAMS = {
 }
 
 /** 转换 API 响应到表单数据 */
-function transformToFormData(data: any): AgentFormData {
-  const agentType = data.custom_config?.agent_type || 'prompt'
+export function transformToFormData(data: any): AgentFormData {
+  const openClawAgentType = resolveOpenClawCompatibleAgentTypeFromRecord(data)
+  const agentType = openClawAgentType || data.custom_config?.agent_type || 'prompt'
   const agentOptionData = getAgentByAgentType(agentType as AgentType)
+  const isOpenclaw = Boolean(openClawAgentType) || isOpenClawCompatibleAgentType(agentType)
+  const openClawCustomConfig = isOpenclaw
+    ? normalizeOpenClawCompatibleCustomConfig(data.custom_config, openClawAgentType || agentType)
+    : undefined
 
   // prompt 类型需要将 model 转换为 model_value 格式
   let model = data.model || ''
-  if (agentType === AGENT_TYPES.PROMPT) {
+  if (!isOpenclaw && agentType === AGENT_TYPES.PROMPT) {
     const customConfig = data.custom_config || {}
     model = `${customConfig.channel_id}_53aikm_${data.model}_53aikm_${data.channel_type}` || ''
   }
@@ -47,11 +60,11 @@ function transformToFormData(data: any): AgentFormData {
   return {
     agent_id: data.agent_id,
     bot_id: data.bot_id || '',
-    logo: data.logo || agentOptionData?.icon || '',
+    logo: isOpenclaw ? resolveOpenClawCompatibleAgentLogo(data.logo, agentType) : (data.logo || agentOptionData?.icon || ''),
     name: data.name || '',
     group_id: +data.group_id || 0,
     description: data.description || '',
-    channel_type: +data.channel_type || 0,
+    channel_type: isOpenclaw ? getOpenClawCompatibleChannelType(openClawAgentType || agentType) : (+data.channel_type || 0),
     model,
     sort: +data.sort || 0,
     prompt: data.prompt || '',
@@ -59,33 +72,39 @@ function transformToFormData(data: any): AgentFormData {
     subscription_group_ids: data.subscription_group_ids || [],
     tools: data.tools || [],
     use_cases: data.use_cases || [],
-    configs: data.configs && Object.keys(data.configs).length > 0
+    configs: isOpenclaw
       ? data.configs
-      : { completion_params: DEFAULT_COMPLETION_PARAMS },
+      : (data.configs && Object.keys(data.configs).length > 0
+        ? data.configs
+        : { completion_params: DEFAULT_COMPLETION_PARAMS }),
     enable: !!+data.enable || false,
-    custom_config: {
-      agent_type: agentType,
-      provider_id: 0,
-      channel_id: 0,
-      coze_workspace_id: '',
-      coze_bot_id: '',
-      coze_bot_url: '',
-      tencent_bot_id: '',
-      app_builder_bot_id: '',
-      chat53ai_agent_id: '',
-      channel_config: data.channel_config || {},
-      ...(data.custom_config || {}),
-    },
-    settings: {
-      opening_statement: '',
-      suggested_questions: [],
-      file_parse: { enable: false },
-      image_parse: { vision: false, enable: false },
-      relate_agents: [],
-      input_fields: [],
-      output_fields: [],
-      ...(data.settings || {}),
-    },
+    custom_config: isOpenclaw
+      ? openClawCustomConfig!
+      : {
+          agent_type: agentType,
+          provider_id: 0,
+          channel_id: 0,
+          coze_workspace_id: '',
+          coze_bot_id: '',
+          coze_bot_url: '',
+          tencent_bot_id: '',
+          app_builder_bot_id: '',
+          chat53ai_agent_id: '',
+          channel_config: data.channel_config || {},
+          ...(data.custom_config || {}),
+        },
+    settings: isOpenclaw
+      ? data.settings
+      : {
+          opening_statement: '',
+          suggested_questions: [],
+          file_parse: { enable: false },
+          image_parse: { vision: false, enable: false },
+          relate_agents: [],
+          input_fields: [],
+          output_fields: [],
+          ...(data.settings || {}),
+        },
     // 时间戳字段
     created_time: data.created_time,
     updated_time: data.updated_time,
@@ -116,9 +135,9 @@ function transformToSaveData(formData: AgentFormData): any {
     settings,
     enable,
   } = formData
-
+  
   // Openclaw 类型：保持原始数据，不填充默认值
-  const isOpenclaw = custom_config?.agent_type === AGENT_TYPES.OPENCLAW
+  const isOpenclaw = isOpenClawCompatibleAgentType(custom_config?.agent_type)
 
   const data: any = {
     agent_id: agent_id || 0,
@@ -144,7 +163,10 @@ function transformToSaveData(formData: AgentFormData): any {
   // 根据平台类型处理 model
   const agentConfig = getAgentByAgentType(custom_config?.agent_type as AgentType)
 
-  if (!channel_type) {
+  if (isOpenclaw) {
+    data.channel_type = getOpenClawCompatibleChannelType(custom_config?.agent_type)
+    data.model = 'openclaw-ws'
+  } else if (!channel_type) {
     data.channel_type = CHANNEL_TYPE_VALUE_MAP.get(custom_config?.agent_type) || 0
   }
   switch (custom_config?.agent_type) {
@@ -219,6 +241,9 @@ export const consoleAgentAdapter: IAgentCreateAdapter = {
     AGENT_TYPES['53AI_WORKFLOW'],
     AGENT_TYPES.YUANQI,
     AGENT_TYPES.OPENCLAW,
+    AGENT_TYPES.QCLAW,
+    AGENT_TYPES.CODEX,
+    AGENT_TYPES.MANUS,
   ] as AgentType[],
 
   defaultPlatform: AGENT_TYPES.PROMPT as AgentType,
@@ -409,6 +434,8 @@ export const consoleAgentAdapter: IAgentCreateAdapter = {
   InlinePreviewComponent: SharedChat as React.ComponentType<{
     className?: string
   }>,
+
+  OpenClawPreviewComponent: ConsoleOpenClawEmbeddedChatWorkspace,
 
   UseScopeComponent: UseScope as React.ComponentType<{}>,
 

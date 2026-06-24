@@ -2,6 +2,7 @@ import { Select } from "antd";
 import type { SelectProps } from "antd";
 import { useMemo, useCallback } from "react";
 import { t } from "@/locales";
+import "./index.css";
 
 export interface OptionItem {
   value: string | number;
@@ -140,15 +141,19 @@ export function SelectPlus({
 
   // Custom label render - display icon + label like Vue prefix
   const labelRender = useCallback(
-    (option: any) => {
-      const item = option._item || selectedOption;
-      const icon = option._icon || selectedOption.icon;
-      const labelText = option.label || selectedOption.label;
-      if (!item.value) {
-        return <div className="flex items-center gap-2">
-          <span className="text-[#BFBFBF]">{  placeholder }</span>
-        </div>
+    (props: any) => {
+      const option = findOptionByValue(props.value);  
+      const icon = option.icon;
+      const labelText = option.label;
+
+      if (!option.value) {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-[#BFBFBF]">{placeholder}</span>
+          </div>
+        );
       }
+
       return (
         <div className="flex items-center gap-2">
           {icon && renderIcon(icon)}
@@ -156,14 +161,14 @@ export function SelectPlus({
         </div>
       );
     },
-    [selectedOption, useI18n, iconType],
+    [selectedOption, useI18n, iconType, placeholder, findOptionByValue],
   );
 
   // Custom option render for dropdown
   const optionRender = useCallback(
     (option: any) => {
-      const item = option._item;
-      const icon = option._icon;
+      const item = option.data?._item;
+      const icon = option.data?._icon; 
 
       // Guard against undefined item (e.g., group headers)
       if (!item) {

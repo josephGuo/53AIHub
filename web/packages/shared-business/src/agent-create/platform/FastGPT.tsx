@@ -29,7 +29,7 @@ export const FastGPT = forwardRef<FastGPTRef, FastGPTProps>(
       t,
     } = usePlatformChannel({
       platformName: 'fastgpt_agent',
-      defaultBaseUrl: 'https://api.fastgpt.in/api',
+      defaultBaseUrl: 'https://cloud.fastgpt.cn/api',
       generateModel: (values) => md5(`${values.key}_${values.base_url}`),
     })
 
@@ -52,9 +52,10 @@ export const FastGPT = forwardRef<FastGPTRef, FastGPTProps>(
       <div className={`${className || ''}`}>
         {showChannelConfig && (
           <>
+            <div className="text-sm font-medium text-primary mb-3">{t("provider_platform.platform_auth")}</div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1">
-                <h3 className="text-base text-[#1D1E1F]">{t('agent_app.fastgpt_agent')}</h3>
+                <h3 className="text-sm text-[#1D1E1F]">{t('agent_app.fastgpt_agent')}</h3>
                 <Popover
                   content={
                     <div
@@ -75,31 +76,56 @@ export const FastGPT = forwardRef<FastGPTRef, FastGPTProps>(
                 </Popover>
               </div>
             </div>
-            <Form form={channelForm} layout="vertical" className="mt-3">
-              <div className="flex items-center gap-4">
-                <Form.Item
-                  className="flex-1"
-                  label={t('ap_host_fastgpt')}
-                  name="base_url"
-                  rules={generateInputRules({
-                    message: 'form_input_placeholder',
-                    validator: ['text', 'link'],
-                  })}
-                >
-                  <Input placeholder={t('form_input_placeholder')} />
-                </Form.Item>
-                <Form.Item
-                  className="flex-1"
-                  label={t('api_key')}
-                  name="key"
-                  rules={generateInputRules({
-                    message: 'form_input_placeholder',
-                  })}
-                >
-                  <Input placeholder={t('form_input_placeholder')} />
-                </Form.Item>
-              </div>
-            </Form>
+            <div className="p-4 border rounded-xl bg-white mt-3">
+              <Form form={channelForm} layout="vertical">
+                <div className="flex items-center gap-4">
+                  <Form.Item
+                    className="flex-1 mb-0"
+                    label={t('ap_host_fastgpt')}
+                    name="base_url"
+                    rules={generateInputRules({
+                      message: 'form_input_placeholder',
+                      validator: ['text', 'link'],
+                    })}
+                  >
+                    <Input placeholder={t('form_input_placeholder')} />
+                  </Form.Item>
+                  <Form.Item
+                    className="flex-1 mb-0"
+                    label={t('api_key')}
+                    name="key"
+                    rules={generateInputRules({
+                      message: 'form_input_placeholder',
+                    })}
+                  >
+                    <Input placeholder={t('form_input_placeholder')} />
+                  </Form.Item>
+                </div>
+              </Form>
+            </div>
+            { agentType === AGENT_TYPES.FASTGPT_WORKFLOW && (
+              <>
+                <FieldInput
+                  list={inputFields}
+                  onChange={updateInputFields}
+                  title={t('agent.input_variable')}
+                  allowAdd
+                  type="input"
+                  agentType={agentType}
+                  className="mt-2"
+                />
+                <FieldInput
+                  list={outputFields}
+                  onChange={updateOutputFields}
+                  title={t('agent.output_variable')}
+                  allowAdd
+                  type="output"
+                  agentType={agentType}
+                  className="mt-2"
+                />
+              </>
+
+            )}
           </>
         )}
 
@@ -112,29 +138,18 @@ export const FastGPT = forwardRef<FastGPTRef, FastGPTProps>(
             <>
               {agentType === AGENT_TYPES.FASTGPT_WORKFLOW ? (
                 <>
-                  <FieldInput
-                    list={inputFields}
-                    onChange={updateInputFields}
-                    title={t('agent.input_variable')}
-                    allowAdd
-                    type="input"
-                    agentType={agentType}
-                  />
-                  <FieldInput
-                    list={outputFields}
-                    onChange={updateOutputFields}
-                    title={t('agent.output_variable')}
-                    allowAdd
-                    type="output"
-                    agentType={agentType}
-                  />
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
+
                   <RelateAgents />
+                  <div className="h-3"></div>
                 </>
               ) : (
                 <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <BaseConfig />
                   <RelateAgents />
                   <ExpandConfig />
+                  <div className="h-3"></div>
                 </>
               )}
             </>

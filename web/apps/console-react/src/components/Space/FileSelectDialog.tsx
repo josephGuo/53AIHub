@@ -1,19 +1,17 @@
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
+import {
+    useState,
+    useCallback, forwardRef,
+    useImperativeHandle
 } from "react";
 import {
-  Modal,
-  Empty,
-  Table,
-  Checkbox,
-  Button,
-  Popover,
-  Spin,
-  message,
+    Modal,
+    Empty,
+    Table,
+    Checkbox,
+    Button,
+    Popover,
+    Spin,
+    message,
 } from "antd";
 import { CloseOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import { spacesApi } from "@/api";
@@ -22,8 +20,8 @@ import { filesApi } from "@/api";
 import { permissionsApi } from "@/api";
 import { buildFileTree, formatFile } from "@/api/modules/files/transform";
 import {
-  RESOURCE_TYPE,
-  PERMISSION_TYPE,
+    RESOURCE_TYPE,
+    PERMISSION_TYPE,
 } from "@/components/Permission/constant";
 import { SvgIcon } from "@km/shared-components-react";
 import type { FileItem } from "@/api/modules/files/types";
@@ -234,7 +232,7 @@ export const FileSelectDialog = forwardRef<
       render: (_: any, record: FileItem) => (
         <div className="file-item-row" onClick={() => handleSelectFile(record)}>
           <img src={record.icon} className="size-6" alt="" />
-          <span className="flex-1 text-sm text-[#1D1E1F] truncate">
+          <span className="flex-1 text-sm text-primary truncate">
             {record.name}
           </span>
           <Checkbox checked={isSelectedFile(record)} />

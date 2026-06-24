@@ -33,6 +33,7 @@ interface SenderProps {
   maxLength?: number;
   sendOnEnter?: boolean;
   loading?: boolean;
+  stopDisabled?: boolean;
   enableUpload?: boolean;
   acceptTypes?: string;
   allowMultiple?: boolean;
@@ -84,6 +85,7 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
   maxLength = 0,
   sendOnEnter = true,
   loading = false,
+  stopDisabled = false,
   enableUpload = false,
   acceptTypes = '*/*',
   allowMultiple = false,
@@ -107,6 +109,8 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
 }, ref) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isComposingRef = useRef(false);
+  const compositionEndTimeRef = useRef(0);
   const [isFocused, setIsFocused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [internalPrompt, setInternalPrompt] = useState('');
@@ -146,6 +150,7 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
     disabled || loading || !canSend || hasUploadingFiles,
     [disabled, loading, canSend, hasUploadingFiles]
   );
+  const stopButtonDisabled = disabled || stopDisabled;
 
   const generateUniqueId = useCallback(() => {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
@@ -259,8 +264,9 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
   }, [onBlur]);
 
   const handleStop = useCallback(() => {
+    if (stopButtonDisabled) return;
     onStop?.();
-  }, [onStop]);
+  }, [onStop, stopButtonDisabled]);
 
   const handleSend = useCallback(() => {
     if (buttonDisabled) return;
@@ -288,18 +294,43 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
     handleSend();
   }, [handleSend]);
 
+  const isCompositionActive = useCallback((event?: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const nativeEvent = event?.nativeEvent as KeyboardEvent | undefined;
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    const compositionRecentlyEnded = isSafari && Date.now() - compositionEndTimeRef.current < 20;
+
+    return Boolean(
+      event?.isComposing ||
+      nativeEvent?.isComposing ||
+      nativeEvent?.keyCode === 229 ||
+      isComposingRef.current ||
+      compositionRecentlyEnded
+    );
+  }, []);
+
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    isComposingRef.current = false;
+    compositionEndTimeRef.current = Date.now();
+  }, []);
+
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (sendOnEnter && event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSend();
-    }
-  }, [sendOnEnter, handleSend]);
+    if (!sendOnEnter || event.key !== 'Enter' || event.shiftKey) return;
+    if (isCompositionActive(event)) return;
+
+    event.preventDefault();
+    handleSend();
+  }, [sendOnEnter, handleSend, isCompositionActive]);
 
   const handleUploadClick = useCallback(() => {
+    if (disabled) return;
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
-  }, []);
+  }, [disabled]);
 
   const onFileSelected = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -457,6 +488,8 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
           onChange={handleInput}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
         />
@@ -467,7 +500,10 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
               {enableUpload && (
                 <>
                   <Tooltip content={t('hubx.bubble.upload_attachment')} placement="top" trigger="hover">
-                    <div className="x-sender__action-button x-sender__action-button--upload" onClick={handleUploadClick}>
+                    <div
+                      className={`x-sender__action-button x-sender__action-button--upload ${disabled ? 'x-sender__action-button--disabled' : ''}`}
+                      onClick={handleUploadClick}
+                    >
                       <Icon name="attachment" />
                       <input
                         type="file"
@@ -475,6 +511,7 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
                         className="x-sender__file-input"
                         accept={acceptTypes}
                         multiple={allowMultiple}
+                        disabled={disabled}
                         onChange={onFileSelected}
                       />
                     </div>
@@ -484,8 +521,11 @@ const Sender = forwardRef<SenderRef, SenderProps>(({
               )}
               {loading ? (
                 // <Tooltip content={t('hubx.bubble.stop')} placement="top" trigger="hover">
-                  <div className="x-sender__action-button x-sender__action-button--stop" onClick={handleStop}>
-                    <div className="x-sender__loading-border"></div>
+                  <div
+                    className={`x-sender__action-button x-sender__action-button--stop ${stopButtonDisabled ? 'x-sender__action-button--disabled' : ''}`}
+                    onClick={handleStop}
+                  >
+                    {!stopButtonDisabled && <div className="x-sender__loading-border"></div>}
                     <Icon name="stop" />
                   </div>
                 // </Tooltip>

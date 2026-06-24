@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Modal, Button, Divider, Radio, message } from 'antd'
+import { Modal, Button, Divider, Radio, message, Avatar } from 'antd'
 import {
   CloseOutlined,
   LeftOutlined,
@@ -13,12 +13,13 @@ import paymentApi from '@/api/modules/payment'
 import { useUserStore } from '@/stores/modules/user'
 import { getPublicPath } from '@/utils/config'
 import { SubscriptionContext, type SubscriptionOption } from './context'
+import { t } from '@/locales'
 import './upgrade.css'
 
 // Re-export the hook
 export { useSubscriptionContext } from './context'
 
-interface UpgradeRef {
+export interface UpgradeRef {
   open: () => Promise<void>
   close: () => void
   validateUpgrade: () => Promise<boolean>
@@ -36,7 +37,7 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
   const [visible, setVisible] = useState(false)
   const [loading, setLoading] = useState(false)
   const [subscriptionOptions, setSubscriptionOptions] = useState<SubscriptionOption[]>([])
-  const [activeGroupId, setActiveGroupId] = useState('')
+  const [activeGroupId, setActiveGroupId] = useState<string | number>('')
   const [activeTimeUnit, setActiveTimeUnit] = useState('month')
   const [scrollLeft, setScrollLeft] = useState(0)
   const [scrollLeftLimit, setScrollLeftLimit] = useState(0)
@@ -44,6 +45,8 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
   const [activePayment, setActivePayment] = useState<PaymentType>(PAYMENT_TYPE.WECHAT)
   const [paymentOptions, setPaymentOptions] = useState<{ pay_type: PaymentType; label: string }[]>([])
   const [displayPaymentDetail, setDisplayPaymentDetail] = useState(false)
+
+  const isSingleOption = subscriptionOptions.length <= 1
 
   const activeSubscriptionInfo = useMemo(
     () => subscriptionOptions.find((item) => item.group_id === activeGroupId) || null,
@@ -71,6 +74,7 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
 
   const open = async () => {
     setVisible(true)
+    setDisplayPaymentDetail(false)
     loadPaymentSettingData()
     await loadSubscriptionData()
     if (subscriptionOptions[0]) {
@@ -131,7 +135,6 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
     )
     if (subscriptionData) {
       userStore.setGroupName(subscriptionData.group_name || userStore.info.group_name)
-      // userStore.setGroupIcon(subscriptionData.logo_url || userStore.info.group_icon)
     }
   }
 
@@ -191,10 +194,15 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
   const handleQrcodeOpen = async () => {
     await loadPaymentSettingData({ defaultDisabled: true })
     if (!paymentOptions.length) {
-      message.warning('支付功能未配置')
+      message.warning(t('authority.payment_not_setting'))
     } else {
       paymentQrcodeRef.current?.open()
     }
+  }
+
+  const handleAIAssistantOpen = (type: 'windows' | 'ios' | 'chrome') => {
+    // TODO: Implement AI assistant download links
+    console.log('Open AI assistant:', type)
   }
 
   useImperativeHandle(ref, () => ({
@@ -225,11 +233,12 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
         destroyOnHidden
       >
         <div className="upgrade-container">
+          {/* Main content */}
           <div className="upgrade-main">
-            <CloseOutlined className="upgrade-close mobile-hide" onClick={close} />
+            {/* Close button - only visible on mobile */}
             <CloseOutlined className="upgrade-close mobile-show" onClick={close} />
 
-            <h1 className="upgrade-title">选择版本</h1>
+            <h1 className="upgrade-title">{t('subscription.version_title')}</h1>
 
             <div className="upgrade-versions">
               {scrollLeft > 0 && (
@@ -248,26 +257,145 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
                       key={item.group_id}
                       className={`upgrade-version-card ${
                         item.group_id === activeGroupId ? 'active' : ''
-                      }`}
+                      } ${isSingleOption ? 'single' : ''}`}
                       onClick={() => handleVersionSelect(item)}
                     >
                       <header className="upgrade-version-header">
                         <img
                           src={
-                            !/\.png$/.test(item.logo)
-                              ? getPublicPath(`/images/subscription/${item.logo}.png`)
-                              : item.logo
+                            !/\.png$/.test(item.logo || '')
+                              ? getPublicPath(`/images/subscription/${item.logo || ''}.png`)
+                              : item.logo || ''
                           }
                           alt={item.group_name}
                           className="upgrade-version-logo"
                         />
-                        <h2 className="upgrade-version-name">{item.group_name}</h2>
+                        <h2 className={`upgrade-version-name ${isSingleOption ? 'flex-none' : 'flex-1'}`}>
+                          {item.group_name}
+                        </h2>
+                        {/* Single option: show price in header */}
+                        {isSingleOption && (
+                          <>
+                            <div className="flex-1" />
+                            <div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-lg font-bold text-black">
+                                  {item.month_info.currency_symbol}
+                                  {item.month_info.amount}
+                                </span>
+                                <span className="text-xs text-[#333]">
+                                  / {t(`subscription.${item.month_info.time_unit}`)}
+                                </span>
+                              </div>
+                              <div className="text-xs text-[#9A9A9A]">
+                                {t('subscription.credit_month_amount', { amount: ` ${item.credit_month_info?.amount || 0} ` })}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </header>
-                      <Divider />
-                      <div className="upgrade-version-price">
-                        <span className="price-symbol">{item.month_info.currency_symbol}</span>
-                        <span className="price-amount">{item.month_info.amount}</span>
-                        <span className="price-unit">/ 月</span>
+
+                      <Divider className="!my-4 !border-[#E7ECF7]" />
+
+                      {/* Multiple options: show price below divider */}
+                      {!isSingleOption && (
+                        <>
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg font-bold text-black">
+                              {item.month_info.currency_symbol}
+                              {item.month_info.amount}
+                            </span>
+                            <span className="text-xs text-[#333]">
+                              / {t(`subscription.${item.month_info.time_unit}`)}
+                            </span>
+                          </div>
+                          <div className="text-xs text-[#9A9A9A]">
+                            {t('subscription.credit_month_amount', { amount: ` ${item.credit_month_info?.amount || 0} ` })}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Content section */}
+                      <div className={isSingleOption ? 'flex flex-row' : ''}>
+                        {/* Agent bots list */}
+                        {item.agents && item.agents.length > 0 && (
+                          <div className={isSingleOption ? 'flex-1' : 'mt-6'}>
+                            <h3 className="text-sm font-semibold text-[#1D1E1F]">
+                              {t('subscription.agent_bots_title')}
+                            </h3>
+                            <ul className="flex flex-wrap gap-3.5 mt-4">
+                              {item.agents.map((agent, idx) => (
+                                <li key={idx} className="flex items-center gap-2 w-full" title={agent.name}>
+                                  <img
+                                    src={agent.logo || ''}
+                                    alt={agent.name}
+                                    className="flex-none w-4 h-4 rounded-full overflow-hidden"
+                                  />
+                                  <div className="flex-1 text-sm text-[#4F5052] truncate">
+                                    {agent.name}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* AI Assistant download buttons */}
+                        <div className={isSingleOption ? 'flex-1' : 'mt-5'}>
+                          <h3 className="text-sm font-semibold text-[#1D1E1F]">
+                            {t('subscription.ai_assistant_title')}
+                          </h3>
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <Button
+                              className="!p-1.5"
+                              type="default"
+                              disabled={!item.ai_enabled}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAIAssistantOpen('windows')
+                              }}
+                            >
+                              <img
+                                src={getPublicPath('/images/windows.png')}
+                                className="w-4 h-4 object-cover mr-1"
+                                alt="Windows"
+                              />
+                              <span className="text-xs">Windows</span>
+                            </Button>
+                            <Button
+                              className="!p-1.5 !ml-0"
+                              type="default"
+                              disabled={!item.ai_enabled}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAIAssistantOpen('ios')
+                              }}
+                            >
+                              <img
+                                src={getPublicPath('/images/ios.png')}
+                                className="w-4 h-4 object-cover mr-1"
+                                alt="macOS"
+                              />
+                              <span className="text-xs">macOS</span>
+                            </Button>
+                            <Button
+                              className="!p-1.5 !ml-0"
+                              type="default"
+                              disabled={!item.ai_enabled}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAIAssistantOpen('chrome')
+                              }}
+                            >
+                              <img
+                                src={getPublicPath('/images/chrome.png')}
+                                className="w-4 h-4 object-cover mr-1"
+                                alt="Chrome"
+                              />
+                              <span className="text-xs">Google</span>
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -284,9 +412,10 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
               )}
             </div>
 
-            {activeTimeInfo && Number(activeTimeInfo.amount) > 0 && (
+            {/* Time unit selection */}
+            {(Number(activeSubscriptionInfo?.month_info?.amount) > 0 || Number(activeSubscriptionInfo?.year_info?.amount) > 0) && (
               <>
-                <h1 className="upgrade-title">选择购买时长</h1>
+                <h1 className="upgrade-title">{t('subscription.time_title')}</h1>
                 <ul className="upgrade-time-options">
                   {['month', 'year'].map((key) => {
                     const info = (activeSubscriptionInfo as any)?.[`${key}_info`]
@@ -297,11 +426,17 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
                         className={`upgrade-time-option ${key === activeTimeUnit ? 'active' : ''}`}
                         onClick={() => handleTimeUnitSelect(key)}
                       >
-                        <div className="time-label">{key === 'month' ? '1个月' : '1年'}</div>
+                        <div className="time-label">{t(`subscription.time_unit_${key}`)}</div>
                         <div className="time-price">
-                          <span className="price-symbol">{info.currency_symbol || '¥'}</span>
-                          <span className="price-amount">{info.amount}</span>
-                          <span className="price-unit">/ {key === 'month' ? '月' : '年'}</span>
+                          <span className="text-lg font-bold text-black">
+                            {info.currency_symbol || '￥'}
+                          </span>
+                          <span className="text-2xl font-bold text-black mx-1">
+                            {info.amount || 0}
+                          </span>
+                          <span className="text-sm text-[#333]">
+                            / {t(`subscription.${key}`)}
+                          </span>
                         </div>
                       </li>
                     )
@@ -311,45 +446,49 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
             )}
           </div>
 
+          {/* Desktop aside */}
           <aside className="upgrade-aside">
             <CloseOutlined className="upgrade-close" onClick={close} />
-            <h2 className="upgrade-aside-title">订单确认</h2>
-            <p className="upgrade-aside-desc">请确认您的订阅信息</p>
+            <h2 className="upgrade-aside-title">{t('subscription.aside_title')}</h2>
+            <p className="upgrade-aside-desc">{t('subscription.aside_desc')}</p>
             <div className="upgrade-user">
-              <img src={userStore.info.avatar} alt="" className="upgrade-user-avatar" />
-              <div className="upgrade-user-name">{userStore.info.nickname}</div>
+              <Avatar size={32} src={userStore.info.avatar} className="flex-none" />
+              <div className="flex-1 text-sm font-medium text-[#333]">
+                {userStore.info.nickname}
+              </div>
             </div>
-            <Divider />
+            <Divider className="!my-5 !border-[#E7ECF7]" />
             <div className="upgrade-order-info">
               <span>{activeSubscriptionInfo?.group_name || '- -'}</span>
               <span>
-                {activeTimeInfo?.currency_symbol || '¥'}
+                {activeTimeInfo?.currency_symbol || '￥'}
                 {activeTimeInfo?.amount || 0}
               </span>
             </div>
             {Number(activeTimeInfo?.amount) > 0 && (
               <>
-                <Divider />
+                <Divider className="!my-5 !border-[#E7ECF7]" />
                 {paymentOptions.length > 1 && (
                   <div className="upgrade-payment">
-                    <h2 className="upgrade-payment-title">支付方式</h2>
+                    <h2 className="upgrade-payment-title">{t('subscription.payment')}</h2>
                     <Radio.Group
                       value={activePayment}
                       onChange={(e) => setActivePayment(e.target.value)}
                       disabled={payDisabled}
+                      className="mt-2"
                     >
                       {paymentOptions.map((opt) => (
                         <Radio key={opt.pay_type} value={opt.pay_type}>
-                          {opt.label}
+                          <span className="text-[#333]">{t(`${opt.label}`)}</span>
                         </Radio>
                       ))}
                     </Radio.Group>
                   </div>
                 )}
                 <div className="upgrade-total">
-                  <span>合计</span>
+                  <span>{t('subscription.total')}</span>
                   <span>
-                    {activeTimeInfo?.currency_symbol || '¥'}
+                    {activeTimeInfo?.currency_symbol || '￥'}
                     {Number(activeTimeInfo?.amount || 0).toFixed(2)}
                   </span>
                 </div>
@@ -360,11 +499,87 @@ export const Upgrade = forwardRef<UpgradeRef, UpgradeProps>(({ onSuccess }, ref)
                   disabled={payDisabled}
                   onClick={handleQrcodeOpen}
                 >
-                  支付
+                  {t('action.pay')}
                 </Button>
               </>
             )}
           </aside>
+
+          {/* Mobile footer */}
+          {Number(activeTimeInfo?.amount) > 0 && (
+            <footer className="upgrade-footer">
+              <div className={`min-h-1 ${displayPaymentDetail ? 'pb-0' : 'pb-1'}`}>
+                {displayPaymentDetail && (
+                  <div>
+                    <h2 className="mt-10 text-2xl font-semibold text-black">
+                      {t('subscription.aside_title')}
+                    </h2>
+                    <p className="mt-2 text-sm text-[#333]">{t('subscription.aside_desc')}</p>
+                    <div className="w-full flex items-center gap-2 mt-3">
+                      <Avatar size={32} src={userStore.info.avatar} className="flex-none" />
+                      <div className="flex-1 text-sm font-medium text-[#333]">
+                        {userStore.info.nickname}
+                      </div>
+                    </div>
+                    <Divider className="!my-5 !border-[#E7ECF7]" />
+                    <div className="w-full flex items-center justify-between text-lg text-black min-h-[48px] border-b">
+                      <span>{activeSubscriptionInfo?.group_name || '- -'}</span>
+                      <span>{activeTimeInfo?.currency_symbol || '￥'}{activeTimeInfo?.amount || 0}</span>
+                    </div>
+                  </div>
+                )}
+
+                {paymentOptions.length > 1 && (
+                  <div className="flex flex-row items-center gap-4 min-h-max">
+                    <h2 className="text-lg text-black whitespace-nowrap">{t('subscription.payment')}</h2>
+                    <Radio.Group
+                      value={activePayment}
+                      onChange={(e) => setActivePayment(e.target.value)}
+                      disabled={payDisabled}
+                    >
+                      {paymentOptions.map((opt) => (
+                        <Radio key={opt.pay_type} value={opt.pay_type}>
+                          <span className="text-[#333]">{t(`${opt.label}`)}</span>
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  </div>
+                )}
+
+                <div className="flex flex-row items-end gap-4">
+                  <div className="mt-4 flex gap-1 items-end">
+                    <span className="text-lg text-black">
+                      {activeTimeInfo?.currency_symbol || '￥'}
+                    </span>
+                    <span className="text-4xl font-semibold text-black">
+                      {Number(activeTimeInfo?.amount || 0).toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div
+                    className="whitespace-nowrap min-w-max flex items-center gap-1 cursor-pointer"
+                    onClick={() => setDisplayPaymentDetail(!displayPaymentDetail)}
+                  >
+                    <span className="text-sm text-[#333]">明细</span>
+                    <ArrowUpOutlined
+                      className="text-sm text-[#333] transition-transform"
+                      style={{ transform: displayPaymentDetail ? 'rotate(180deg)' : 'none' }}
+                    />
+                  </div>
+
+                  <Button
+                    className="w-full mt-4"
+                    type="primary"
+                    size="large"
+                    disabled={payDisabled}
+                    onClick={handleQrcodeOpen}
+                  >
+                    {t('action.pay')}
+                  </Button>
+                </div>
+              </div>
+            </footer>
+          )}
         </div>
       </Modal>
 

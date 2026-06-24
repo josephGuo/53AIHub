@@ -130,8 +130,8 @@ export function PlatformWebSearch() {
             {/* 中间：服务器地址 */}
             <div className="flex-1 px-6 flex items-center gap-2 overflow-hidden">
               <div className="flex items-center gap-1">
-                <span className="text-sm text-[#999]">API Key：</span>
-                <span className="flex-1 text-sm text-[#1D1E1F] truncate">
+                <span className="text-sm text-placeholder">API Key：</span>
+                <span className="flex-1 text-sm text-primary truncate">
                   {formatSecret(bochaSetting.setting.api_key)}
                 </span>
               </div>
@@ -204,7 +204,7 @@ export function PlatformWebSearch() {
                     className="w-10 h-10"
                   />
                 </div>
-                <span className="text-base font-medium text-[#1D1E1F]">
+                <span className="text-base font-medium text-primary">
                   {BOCHA_PLATFORM_NAME}
                 </span>
               </div>
@@ -235,7 +235,7 @@ export function PlatformWebSearch() {
               alt={BOCHA_PLATFORM_NAME}
               className="w-8 h-8"
             />
-            <span className="text-base font-medium text-[#1D1E1F]">
+            <span className="text-base font-medium text-primary">
               {BOCHA_PLATFORM_NAME}
             </span>
           </div>

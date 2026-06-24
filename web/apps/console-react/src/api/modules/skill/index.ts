@@ -4,7 +4,8 @@ import {
   AdminImportSkillRequest, AdminAIGenerateRequest, AdminUpdateSkillRequest,
   AdminSkillListQuery, SkillExploreQuery, SkillPublic, SkillDetail, SkillMyItem,
   PagedResponse, SkillFileItem, SkillFileContentResult, SkillFileUpdateRequest,
-  SkillFileUpdateResult
+  SkillFileUpdateResult, SkillEnvVar, CreateSkillEnvVarRequest,
+  UpdateSkillEnvVarRequest, BatchUpdateSkillEnvVarsRequest, ForceImportSkillRequest
 } from './types'
 
 export const skillApi = {
@@ -12,6 +13,12 @@ export const skillApi = {
   async import(data: AdminImportSkillRequest) {
     const { data: resultData = {} } = await service
       .post('/api/admin/skill-library/import', data)
+    return resultData
+  },
+  // 强制导入高风险技能
+  async forceImport(data: ForceImportSkillRequest) {
+    const { data: resultData = {} } = await service
+      .post('/api/admin/skill-library/import/force', data)
     return resultData
   },
   // 获取技能详情，含最新扫描结果和权限分组
@@ -100,6 +107,41 @@ export const skillApi = {
   // 重载技能管理器
   async reload(): Promise<void> {
     await service.post('/api/admin/skill-library/reload').catch(handleError)
+  },
+  // ========== 环境变量相关 ==========
+  // 获取环境变量列表
+  async getEnvVars(skill_id: string): Promise<SkillEnvVar[]> {
+    const { data = {} } = await service
+      .get(`/api/admin/skill-library/${skill_id}/env-vars`)
+      .catch(handleError)
+    return data.items || []
+  },
+  // 创建环境变量
+  async createEnvVar(skill_id: string, data: CreateSkillEnvVarRequest): Promise<SkillEnvVar> {
+    const { data: resultData = {} } = await service
+      .post(`/api/admin/skill-library/${skill_id}/env-vars`, data)
+      .catch(handleError)
+    return resultData
+  },
+  // 更新环境变量
+  async updateEnvVar(skill_id: string, env_var_id: string, data: UpdateSkillEnvVarRequest): Promise<SkillEnvVar> {
+    const { data: resultData = {} } = await service
+      .put(`/api/admin/skill-library/${skill_id}/env-vars/${env_var_id}`, data)
+      .catch(handleError)
+    return resultData
+  },
+  // 删除环境变量
+  async deleteEnvVar(skill_id: string, env_var_id: string): Promise<void> {
+    await service
+      .delete(`/api/admin/skill-library/${skill_id}/env-vars/${env_var_id}`)
+      .catch(handleError)
+  },
+  // 批量替换环境变量（全量覆盖）
+  async batchUpdateEnvVars(skill_id: string, data: BatchUpdateSkillEnvVarsRequest): Promise<SkillEnvVar[]> {
+    const { data: resultData = {} } = await service
+      .put(`/api/admin/skill-library/${skill_id}/env-vars/batch`, data)
+      .catch(handleError)
+    return resultData.items || []
   },
 }
 

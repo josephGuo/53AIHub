@@ -10,8 +10,12 @@ export interface SearchProps {
   size?: 'large' | 'middle' | 'small'
   disabled?: boolean
   className?: string
+  mode?: 'collapsed' | 'expanded'
+  debounceMs?: number
   onInput?: (value: string) => void
   onChange?: (value: string) => void
+  onDebouncedChange?: (value: string) => void
+  onFocus?: () => void
 }
 
 export const Search: React.FC<SearchProps> = ({
@@ -21,12 +25,17 @@ export const Search: React.FC<SearchProps> = ({
   size = 'middle',
   disabled = false,
   className,
+  mode = 'collapsed',
+  debounceMs = 800,
   onInput,
-  onChange
+  onChange,
+  onDebouncedChange,
+  onFocus
 }) => {
   const [input, setInput] = useState(value || '')
   const [searching, setSearching] = useState(false)
   const inputRef = useRef<any>(null)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (value !== undefined) {
@@ -35,14 +44,24 @@ export const Search: React.FC<SearchProps> = ({
   }, [value])
 
   useEffect(() => {
-    if (searching && inputRef.current) {
+    if (mode === 'collapsed' && searching && inputRef.current) {
       inputRef.current.focus()
     }
-  }, [searching])
+  }, [searching, mode])
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = null
+      }
+    }
+  }, [])
 
   const handleFocus = () => {
     if (disabled) return
     setSearching(true)
+    onFocus?.()
   }
 
   const handleBlur = () => {
@@ -50,23 +69,47 @@ export const Search: React.FC<SearchProps> = ({
     setSearching(false)
   }
 
+  const flushDebounced = (val: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+    }
+    onDebouncedChange?.(val)
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     setInput(val)
     onInput?.(val)
+
+    if (onDebouncedChange) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+      if (debounceMs > 0) {
+        debounceTimerRef.current = setTimeout(() => {
+          debounceTimerRef.current = null
+          onDebouncedChange(val)
+        }, debounceMs)
+      } else {
+        onDebouncedChange(val)
+      }
+    }
   }
 
   const handlePressEnter = () => {
+    flushDebounced(input)
     onChange?.(input)
   }
 
-  if (searching) {
+  if (mode === 'expanded' || searching) {
     return (
       <Input
         ref={inputRef}
         value={input}
         onChange={handleInputChange}
-        onBlur={handleBlur}
+        onFocus={onFocus}
+        onBlur={mode === 'collapsed' ? handleBlur : undefined}
         onPressEnter={handlePressEnter}
         placeholder={placeholder || '搜索'}
         prefix={<SearchOutlined />}
@@ -74,7 +117,7 @@ export const Search: React.FC<SearchProps> = ({
         allowClear
         disabled={disabled}
         className={`input-with-search ${className || ''}`}
-        style={{ maxWidth: '230px' }}
+        style={mode === 'collapsed' ? { maxWidth: '230px' } : undefined}
       />
     )
   }

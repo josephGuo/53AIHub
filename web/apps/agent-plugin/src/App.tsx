@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ChatProvider, ChatI18nProvider } from "@km/shared-business/chat";
+import { ChatProvider, ChatConfigProvider } from "@km/shared-business/chat";
 import { config } from "./config";
 import { adapters } from "./adapters";
 import { ChatView } from "./views/chat";
@@ -26,7 +26,7 @@ function useEmbedClose() {
 
 function LoadingScreen({ message = "加载中..." }: { message?: string }) {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[#eaf3ff] to-white">
+    <div className="flex items-center justify-center h-screen bg-gradient-to-b from-[#eaf3ff] to-white">
       <div className="text-gray-500">{message}</div>
     </div>
   );
@@ -167,7 +167,7 @@ function App() {
 
   if (appState === 'error') {
     return (
-      <div className="relative min-h-screen">
+      <div className="relative h-screen">
         {isEmbedMode && (
           <div
             className="fixed top-4 right-4 z-50 w-8 h-8 flex items-center justify-center rounded cursor-pointer hover:bg-gray-100"
@@ -183,12 +183,12 @@ function App() {
 
   // Ready state - show chat
   return (
-    <div className="relative min-h-screen">
-      <ChatI18nProvider lang="zh-cn">
+    <div className="relative h-screen">
+      <ChatConfigProvider lang="zh-cn">
         <ChatProvider config={config} adapters={adapters}>
           <ChatView agentId={agentInfo?.agent_id} agentInfo={agentInfo} />
         </ChatProvider>
-      </ChatI18nProvider>
+      </ChatConfigProvider>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Table, Button, Input, message, Modal } from "antd";
-import { SearchOutlined, UserOutlined } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
+import { Table, Button, message, Modal } from "antd";
+import { UserOutlined } from "@ant-design/icons";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import { t } from "@/locales";
 import { userApi } from "@/api/modules/user";
 import { useUserStore } from "@/stores";
@@ -188,14 +188,16 @@ export function UserAdminPage() {
   // Filter bar
   const filterBar = (
     <>
-      <Input
+      <Search
+        mode="expanded"
         value={keyword}
-        onChange={(e) => setKeyword(e.target.value)}
-        onPressEnter={handleSearch}
+        onDebouncedChange={(val) => {
+          setKeyword(val);
+          setSearchKeyword(val);
+          setPage(1);
+        }}
         placeholder={t("admin_user.search_placeholder")}
-        prefix={<SearchOutlined className="text-gray-300" />}
-        allowClear
-        style={{ width: 268 }}
+        className="w-[268px]"
       />
       <Button type="primary" onClick={handleAdd}>
         {t("action_add")}

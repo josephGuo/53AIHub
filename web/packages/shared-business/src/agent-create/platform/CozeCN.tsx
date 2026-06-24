@@ -145,89 +145,89 @@ export const CozeCN = forwardRef<CozeCNRef, CozeCNProps>(
           {showChannelConfig ? (
             <>
               <div className="text-sm font-medium text-primary mb-3">{t("provider_platform.platform_auth")}</div>
-              <Form.Item label={t('agent_app.coze_agent_cn')}>
-                <Select
-                  className="w-full"
-                  value={customConfig.provider_id}
-                  onChange={(value) => {
-                    updateCustomConfig({ provider_id: value })
-                    onProviderChange()
-                  }}
-                  options={providers.map((item) => ({
-                    label: item.name,
-                    value: item.provider_id,
-                  }))}
-                />
-              </Form.Item>
-              {agentType === AGENT_TYPES.COZE_WORKFLOW_CN ? (
-                <Form.Item
-                  label={t('agent.coze.workflow_link')}
-                  name="custom_config.coze_bot_url"
-                  rules={generateInputRules({ message: 'form_link_validator', validator: ['link'] })}
-                  getValueProps={() => ({ value: customConfig.coze_bot_url })}
-                  getValueFromEvent={(e) => {
-                    const val = e?.target?.value ?? e;
-                    updateCustomConfig({ coze_bot_url: val });
-                    return val;
-                  }}
-                >
-                  <Input placeholder={t('form.input_placeholder')} />
+              <div className="p-4 border rounded-xl bg-white">
+                <Form.Item label={t('agent_app.coze_agent_cn')}>
+                  <Select
+                    className="w-full"
+                    value={customConfig.provider_id}
+                    onChange={(value) => {
+                      updateCustomConfig({ provider_id: value })
+                      onProviderChange()
+                    }}
+                    options={providers.map((item) => ({
+                      label: item.name,
+                      value: item.provider_id,
+                    }))}
+                  />
                 </Form.Item>
-              ) : agentType === AGENT_TYPES.COZE_AGENT_CN ? (
-                <div className="flex items-center gap-4">
+                {agentType === AGENT_TYPES.COZE_WORKFLOW_CN ? (
                   <Form.Item
-                    className="flex-1"
-                    label={t('agent.coze.workspace')}
-                    name="custom_config.coze_workspace_id"
-                    rules={generateInputRules({ message: 'form_select_placeholder' })}
-                    getValueProps={() => ({ value: customConfig.coze_workspace_id })}
-                    getValueFromEvent={(value) => {
-                      updateCustomConfig({ coze_workspace_id: value as string });
-                      loadBots();
-                      return value;
+                    label={t('agent.coze.workflow_link')}
+                    name="custom_config.coze_bot_url"
+                    rules={generateInputRules({ message: 'form_link_validator', validator: ['link'] })}
+                    getValueProps={() => ({ value: customConfig.coze_bot_url })}
+                    getValueFromEvent={(e) => {
+                      const val = e?.target?.value ?? e;
+                      updateCustomConfig({ coze_bot_url: val });
+                      return val;
                     }}
+                    className="mb-0"
                   >
-                    <SelectPlus
-                      className="w-full"
-                      t={t}
-                      useI18n={false}
-                      options={workspaces.map((item) => ({
-                        value: item.value,
-                        label: item.label,
-                        icon: item.logo,
-                      }))}
-                    />
+                    <Input placeholder={t('form.input_placeholder')} />
                   </Form.Item>
-                  <Form.Item
-                    className="flex-1"
-                    label={t('agent.name')}
-                    name="custom_config.coze_bot_id"
-                    rules={generateInputRules({ message: 'form_select_placeholder' })}
-                    getValueProps={() => ({ value: customConfig.coze_bot_id })}
-                    getValueFromEvent={(value) => {
-                      updateCustomConfig({ coze_bot_id: value as string });
-                      onBotChange({ value: value as string, option: bots.find(b => b.value === value) });
-                      return value;
-                    }}
-                  >
-                    <SelectPlus
-                      t={t}
-                      className="w-full"
-                      useI18n={false}
-                      options={bots.map((item) => ({
-                        value: item.value,
-                        label: item.label,
-                        icon: item.logo,
-                        description: item.description,
-                      }))}
-                    />
-                  </Form.Item>
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <>
-              {agentType === AGENT_TYPES.COZE_WORKFLOW_CN ? (
+                ) : agentType === AGENT_TYPES.COZE_AGENT_CN ? (
+                  <div className="flex items-center gap-4">
+                    <Form.Item
+                      className="flex-1 mb-0"
+                      label={t('agent.coze.workspace')}
+                      name="custom_config.coze_workspace_id"
+                      rules={generateInputRules({ message: 'form_select_placeholder' })}
+                      getValueProps={() => ({ value: customConfig.coze_workspace_id })}
+                      getValueFromEvent={(value) => {
+                        updateCustomConfig({ coze_workspace_id: value as string });
+                        loadBots();
+                        return value;
+                      }}
+                    >
+                      <SelectPlus
+                        className="w-full"
+                        t={t}
+                        useI18n={false}
+                        options={workspaces.map((item) => ({
+                          value: item.value,
+                          label: item.label,
+                          icon: item.logo,
+                        }))}
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      className="flex-1 mb-0"
+                      label={t('agent.name')}
+                      name="custom_config.coze_bot_id"
+                      rules={generateInputRules({ message: 'form_select_placeholder' })}
+                      getValueProps={() => ({ value: customConfig.coze_bot_id })}
+                      getValueFromEvent={(value) => {
+                        updateCustomConfig({ coze_bot_id: value as string });
+                        onBotChange({ value: value as string, option: bots.find(b => b.value === value) });
+                        return value;
+                      }}
+                    >
+                      <SelectPlus
+                        t={t}
+                        className="w-full"
+                        useI18n={false}
+                        options={bots.map((item) => ({
+                          value: item.value,
+                          label: item.label,
+                          icon: item.logo,
+                          description: item.description,
+                        }))}
+                      />
+                    </Form.Item>
+                  </div>
+                ) : null}
+              </div>
+              { agentType === AGENT_TYPES.COZE_WORKFLOW_CN && (
                 <>
                   <FieldInput
                     list={inputFields}
@@ -236,6 +236,7 @@ export const CozeCN = forwardRef<CozeCNRef, CozeCNProps>(
                     allowAdd
                     type="input"
                     agentType={agentType}
+                    className="mt-2"
                   />
                   <FieldInput
                     list={outputFields}
@@ -244,14 +245,26 @@ export const CozeCN = forwardRef<CozeCNRef, CozeCNProps>(
                     allowAdd
                     type="output"
                     agentType={agentType}
+                    className="mt-2"
                   />
+                </>
+              ) }
+            </>
+          ) : (
+            <>
+              {agentType === AGENT_TYPES.COZE_WORKFLOW_CN ? (
+                <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <RelateAgents />
+                  <div className="h-3"></div>
                 </>
               ) : (
                 <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <BaseConfig />
                   <RelateAgents />
                   <ExpandConfig />
+                  <div className="h-3"></div>
                 </>
               )}
             </>

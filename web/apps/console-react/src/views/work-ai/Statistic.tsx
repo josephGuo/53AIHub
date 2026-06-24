@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Table, Input, Select, Button, Tag, Spin, Tooltip } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Table, Select, Button, Tag, Spin, Tooltip } from "antd";
 import { t } from "@/locales";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import recordApi from "@/api/modules/record";
 import userApi from "@/api/modules/user";
 import { DateRangeFilter } from "@/components/Filter/date-range";
 import Detail, { DetailRef } from "@/views/search/components/detail";
 import {
-  SEARCH_TYPE
+    SEARCH_TYPE
 } from "@/api/modules/feedback/types";
 import {
-  type RecordDisplayItem,
-  THINKING_MODE,
-  RESPONSE_STATUS,
-  SOURCE_TYPE,
+    type RecordDisplayItem,
+    THINKING_MODE,
+    RESPONSE_STATUS,
+    SOURCE_TYPE,
 } from "@/api/modules/record/types";
 import { getLastTimeAsDay } from "@km/shared-utils";
 
@@ -354,7 +353,7 @@ const WorkAIStatistic: React.FC<StatisticProps> = ({ agentId, showSourceFilter, 
       render: (_: any, record: RecordDisplayItem, index: number) => (
         <Button
           type="link"
-          className="invisible group-hover:visible hover:!text-[#2563EB]"
+          className="invisible group-hover:visible hover:!text-brand"
           icon={<SvgIcon name="view" />}
           onClick={(e) => {
             e.stopPropagation();
@@ -398,7 +397,7 @@ const WorkAIStatistic: React.FC<StatisticProps> = ({ agentId, showSourceFilter, 
               >
                 <SvgIcon name={item.svg} />
               </div>
-              <span className="ml-2 mr-1 text-[#1D1E1F] text-sm">
+              <span className="ml-2 mr-1 text-primary text-sm">
                 {item.label}
               </span>
               <Tooltip title={item.tip} placement="top">
@@ -457,21 +456,16 @@ const WorkAIStatistic: React.FC<StatisticProps> = ({ agentId, showSourceFilter, 
               }}
             />
           </div>
-          <Input
-            value={detailedForm.keyword}
-            onChange={(e) =>
-              setDetailedForm((prev) => ({ ...prev, keyword: e.target.value }))
-            }
-            placeholder={t("action_search")}
-            style={{ width: 240 }}
-            allowClear
-            onPressEnter={() => handleFilterChange()}
-            prefix={<SearchOutlined />}
-            onClear={() => {
-              const newForm = { ...detailedForm, keyword: "" };
+          <Search
+            mode="expanded"
+            value={detailedForm.keyword || ""}
+            onDebouncedChange={(val) => {
+              const newForm = { ...detailedForm, keyword: val };
               setDetailedForm(newForm);
               handleFilterChange(newForm, detailedDateValue);
             }}
+            placeholder={t("action_search")}
+            className="w-[240px]"
           />
           {
             showStatusFilter && (<Select

@@ -53,7 +53,7 @@ export const AgentPreview = forwardRef<AgentPreviewRef>((_, ref) => {
             onClick={onRestart}
           >
             <ReloadOutlined />
-            <span className="text-sm text-[#1D1E1F]">
+            <span className="text-sm text-primary">
               {t('restart')}
             </span>
           </div>

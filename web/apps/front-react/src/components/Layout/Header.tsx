@@ -1,12 +1,18 @@
-import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Tooltip } from "antd";
-import { LeftOutlined } from "@ant-design/icons";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useEnterpriseStore } from "@/stores/modules/enterprise";
 import { checkPermission } from "@/utils/permission";
 import { t } from "@/locales";
 import { ExpandSidebarButton } from "./ExpandSidebarButton";
 // import { Upgrade } from '@/components/Upgrade'
+
+// 新增：面包屑项类型
+export interface BreadcrumbItem {
+  label: string;
+  path?: string; // 可选，没有 path 则不可点击
+}
 
 interface LayoutHeaderProps {
   className?: string;
@@ -23,6 +29,9 @@ interface LayoutHeaderProps {
   titleSlot?: React.ReactNode;
   after?: React.ReactNode;
   right?: React.ReactNode;
+  expandSidebar?: boolean;
+  // 新增
+  breadcrumb?: BreadcrumbItem[];
 }
 
 export function Header({
@@ -40,6 +49,8 @@ export function Header({
   titleSlot,
   after,
   right,
+  expandSidebar = true,
+  breadcrumb,
 }: LayoutHeaderProps) {
   const navigate = useNavigate();
   const enterpriseStore = useEnterpriseStore();
@@ -82,15 +93,47 @@ export function Header({
     }
   };
 
+  // 新增：渲染面包屑
+  const renderBreadcrumb = () => {
+    if (!breadcrumb || breadcrumb.length === 0) return null;
+
+    return (
+      <div className="flex items-center gap-1 overflow-hidden">
+        {breadcrumb.map((item, index) => {
+          return (
+            <React.Fragment key={index}>
+              {index > 0 && (
+                <RightOutlined
+                  style={{ fontSize: 12 }}
+                  className="text-regular flex-shrink-0"
+                />
+              )}
+              {item.path ? (
+                <Link
+                  to={item.path}
+                  className="text-sm text-[#6B7280] font-normal hover-text-theme truncate"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-sm text-primary truncate">{item.label}</span>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <header
-      className={`flex-none h-16 sticky top-0 z-10 bg-white ${border ? "border-b" : ""} ${className}`}
+      className={`flex-none h-14 sticky top-0 z-10 bg-white ${border ? "border-b" : ""} ${className}`}
     >
       <div
-        className={`mx-auto px-4 flex items-center justify-between h-full ${mainClass}`}
+        className={`mx-auto px-5 flex items-center justify-between h-full ${mainClass}`}
       >
         <div className="flex-1 flex items-center gap-2 overflow-hidden">
-          <ExpandSidebarButton />
+          { expandSidebar && <ExpandSidebarButton />}
           {beforePrefix}
           {back && (
             <Tooltip title={t("action.back")}>
@@ -106,8 +149,13 @@ export function Header({
             </Tooltip>
           )}
           {titlePrefix}
-          {titleSlot || (
-            <div className="text-base text-primary font-bold line-clamp-1 max-md:flex-1 max-md:text-center">
+          {/* 新增：优先渲染 breadcrumb，否则渲染 titleSlot 或 title */}
+          {breadcrumb ? (
+            renderBreadcrumb()
+          ) : titleSlot ? (
+            titleSlot
+          ) : (
+            <div className="text-base text-primary line-clamp-1 max-md:flex-1 max-md:text-center">
               {title}
             </div>
           )}

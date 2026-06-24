@@ -1,5 +1,37 @@
 import { MODEL_VALUES } from './config'
 
+// 模型值分隔符，用于拼接 model_type 和 model_id
+export const MODEL_VALUE_SEPARATOR = '_53aikm_'
+
+// 模型默认配置常量
+export const DEFAULT_MAX_TOKENS = 4096
+export const DEFAULT_CONTEXT_LENGTH = 128000
+export const DEFAULT_VECTOR_DIMENSION = 4096
+
+export const MAX_TOKENS_LIMIT = 128000
+export const CONTEXT_LENGTH_LIMIT = 200000
+
+// 防抖延迟常量
+export const DEBOUNCE_DELAY = 300
+
+// 外部模型 API 地址
+export const EXTERNAL_MODEL_API_URL = 'https://dashboard.53ai.com/api/v1/models'
+
+// 构建模型选择值
+export const buildModelValue = (modelType: number, modelId: string) =>
+  `${modelType}${MODEL_VALUE_SEPARATOR}${modelId}`
+
+// 解析模型选择值
+export const parseModelValue = (
+  value: string,
+): { modelType: string; modelId: string } | null => {
+  const parts = value.split(MODEL_VALUE_SEPARATOR)
+  if (parts.length === 2) {
+    return { modelType: parts[0], modelId: parts[1] }
+  }
+  return null
+}
+
 export interface FormConfig {
   label: string
   prop: string
@@ -11,6 +43,7 @@ export interface FormConfig {
   multiple?: boolean
   default?: string | boolean | number
   min?: number
+  max?: number
   allowCreate?: boolean
   options?: { label: string; value: string | boolean }[]
   showWhen?: (form: any) => boolean
@@ -195,19 +228,21 @@ export const CUSTOM_OPENAI_FORM_CONFIG: FormConfig[] = [
     type: 'input_number',
     placeholder: window.$t('module.platform_model_context_length_placeholder'),
     required: true,
-    default: 4096,
+    default: DEFAULT_CONTEXT_LENGTH,
     min: 1,
+    max: CONTEXT_LENGTH_LIMIT,
   },
-  // 最大token上限
-  {
-    label: window.$t('module.platform_model_max_tokens'),
-    prop: 'config.max_tokens',
-    type: 'input_number',
-    placeholder: window.$t('module.platform_model_max_tokens_placeholder'),
-    default: 4096,
-    min: 1,
-    showWhen: (form: any) => form.model_type === '1',
-  },
+  // // 最大token上限
+  // {
+  //   label: window.$t('module.platform_model_max_tokens'),
+  //   prop: 'config.max_tokens',
+  //   type: 'input_number',
+  //   placeholder: window.$t('module.platform_model_max_tokens_placeholder'),
+  //   default: DEFAULT_MAX_TOKENS,
+  //   min: 1,
+  //   max: MAX_TOKENS_LIMIT,
+  //   showWhen: (form: any) => form.model_type === '1',
+  // },
   // Agent Thought
   {
     label: 'Agent Thought',

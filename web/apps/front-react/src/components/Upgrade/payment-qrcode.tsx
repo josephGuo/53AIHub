@@ -9,7 +9,7 @@ import paymentApi from '@/api/modules/payment'
 import { useSubscriptionContext } from './context'
 import { md5 } from '@km/shared-utils'
 
-interface PaymentQrcodeRef {
+export interface PaymentQrcodeRef {
   open: () => Promise<void>
   close: () => void
 }

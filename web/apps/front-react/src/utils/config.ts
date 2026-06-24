@@ -7,8 +7,12 @@ const formatUrl = (url: string = ''): string => {
   const { origin } = window.location
   let formattedUrl = ''
   // 如果已经是完整的URL，直接返回
-  if (url.startsWith('http')) {
+  if (/^[a-z][a-z\d+.-]*:\/\//i.test(url)) {
     formattedUrl = url
+  } else if (url.startsWith('/')) {
+    formattedUrl = origin + url
+  } else if (/^[\w.-]+(?::\d+)?(?:\/.*)?$/.test(url)) {
+    formattedUrl = `http://${url}`
   } else {
     formattedUrl = origin + url
   }
@@ -29,7 +33,8 @@ const getConfigValue = (
   envKey: string,
   defaultValue: string = ''
 ): string => {
-  return (window as any)[windowKey] || import.meta.env[envKey] || defaultValue
+  const searchValue = new URLSearchParams(window.location.search).get(windowKey)
+  return (window as any)[windowKey] || searchValue || import.meta.env[envKey] || defaultValue
 }
 
 

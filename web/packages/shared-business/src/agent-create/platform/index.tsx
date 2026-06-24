@@ -43,7 +43,10 @@ const componentMap: Record<
   [AGENT_TYPES.MAXKB_AGENT]: lazy(() => import("./MaxKB")),
   [AGENT_TYPES.N8N_WORKFLOW]: lazy(() => import("./N8N")),
   [AGENT_TYPES.TENCENT]: lazy(() => import("./Tencent")),
-  // OPENCLAW 不注册到 componentMap，使用独立的 OpenclawPage 页面组件
+  [AGENT_TYPES.OPENCLAW]: lazy(() => import("./Openclaw")),
+  [AGENT_TYPES.QCLAW]: lazy(() => import("./Openclaw")),
+  [AGENT_TYPES.CODEX]: lazy(() => import("./Openclaw")),
+  [AGENT_TYPES.MANUS]: lazy(() => import("./Openclaw")),
 };
 
 export const AgentForm = forwardRef<AgentFormRef, AgentFormProps>(

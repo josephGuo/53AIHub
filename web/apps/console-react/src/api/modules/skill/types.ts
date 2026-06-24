@@ -295,3 +295,42 @@ export interface SkillFileContentResult {
 export interface SkillFileListResponse {
   files: SkillFileItem[];
 }
+
+// ========== 技能环境变量相关 ==========
+
+/** 环境变量 */
+export interface SkillEnvVar {
+  id: string;         // HashID，如 "PQNMcn"
+  key: string;        // 环境变量名，如 "API_KEY"
+  value: string;      // 值（敏感字段返回 "***"）
+  sensitive: boolean; // 是否敏感
+}
+
+/** 环境变量列表响应 */
+export interface SkillEnvVarListData {
+  items: SkillEnvVar[];
+}
+
+/** 创建环境变量请求 */
+export interface CreateSkillEnvVarRequest {
+  key: string;         // 必填
+  value?: string;      // 可选，默认 ""
+  sensitive?: boolean; // 可选，默认 false
+}
+
+/** 更新环境变量请求（所有字段可选，只传需要改的） */
+export interface UpdateSkillEnvVarRequest {
+  key?: string;
+  value?: string;
+  sensitive?: boolean;
+}
+
+/** 批量替换环境变量请求 */
+export interface BatchUpdateSkillEnvVarsRequest {
+  items: CreateSkillEnvVarRequest[];
+}
+
+/** 强制导入高风险技能请求 */
+export interface ForceImportSkillRequest {
+  scan_job_id: string;
+}

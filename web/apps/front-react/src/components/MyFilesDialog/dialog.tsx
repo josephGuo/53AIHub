@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo, useRef, forwardRef, useImperativeHandle, useEffect } from "react";
-import { Modal, Input, Spin, Empty, Button, Popover, Tree, message } from "antd";
+import { Modal, Spin, Empty, Button, Popover, Tree, message } from "antd";
 import type { TreeDataNode, TreeProps } from "antd";
-import { DownOutlined, CloseOutlined, SearchOutlined } from "@ant-design/icons";
+import { DownOutlined, CloseOutlined } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
 import mySpaceApi from '@/api/modules/my-space';
 import recordingApi from '@/api/modules/recording';
 import { formatFile } from '@/api/modules/files/transform';
@@ -541,13 +542,12 @@ export const MyFilesDialog = forwardRef<MyFilesDialogRef, MyFilesDialogProps>(
       >
         <div className="p-0">
           <div className="py-4">
-            <Input
+            <Search
+              mode="expanded"
               placeholder="搜索"
-              prefix={<SearchOutlined />}
               value={searchKeyword}
-              onChange={(e) => handleSearch(e.target.value)}
-              allowClear
-              style={{ maxWidth: 240 }}
+              onDebouncedChange={handleSearch}
+              className="max-w-[240px]"
             />
           </div>
           <div className="h-[450px] overflow-y-auto p-3 border border-[#E5E5E5] rounded-xl">

@@ -7,14 +7,14 @@ import {
   useImperativeHandle,
   useRef,
 } from "react";
-import { Table, Button, Select, Input, Modal, message } from "antd";
-import { Dropdown } from "@km/shared-components-react";
-import { SearchOutlined, PlusOutlined, MoreOutlined } from "@ant-design/icons";
+import { Table, Button, Select, Modal, message } from "antd";
+import { Dropdown, Search, SvgIcon } from "@km/shared-components-react";
+import { MoreOutlined } from "@ant-design/icons";
 import { t } from "@/locales";
-import { SvgIcon } from "@km/shared-components-react";
 import { userApi, groupApi } from "@/api";
 import { useEnterpriseStore, useUserStore } from "@/stores";
 import { useEnv } from "@/hooks/useEnv";
+import { useVersion } from "@/hooks";
 import {
   INTERNAL_USER_STATUS_ALL,
   INTERNAL_USER_STATUS_DISABLED,
@@ -32,6 +32,7 @@ import { GROUP_TYPE, Group } from "@/constants/group";
 import {
   ENTERPRISE_SYNC_FROM,
   EnterpriseSyncFrom,
+  VERSION_MODULE,
 } from "@/constants/enterprise";
 
 // Types
@@ -55,6 +56,8 @@ interface AccountRef {
 
 interface AccountProps {
   syncFrom?: EnterpriseSyncFrom;
+  onDataChange?: () => void;
+  internalUserCount?: number;
 }
 
 // Status options
@@ -70,11 +73,10 @@ const getStatusOptions = () =>
   }));
 
 export const UserAccount = forwardRef<AccountRef, AccountProps>(
-  ({ syncFrom = ENTERPRISE_SYNC_FROM.DEFAULT }, ref) => {
+  ({ syncFrom = ENTERPRISE_SYNC_FROM.DEFAULT, onDataChange }, ref) => {
     const enterpriseStore = useEnterpriseStore();
     const userStore = useUserStore();
     const { isWorkEnv } = useEnv();
-
     const [loading, setLoading] = useState(false);
     const [tableData, setTableData] = useState<AccountUser[]>([]);
     const [tableTotal, setTableTotal] = useState(0);
@@ -97,6 +99,13 @@ export const UserAccount = forwardRef<AccountRef, AccountProps>(
     const dialogueRecordRef = useRef<DialogueRecordDrawerRef>(null);
 
     const statusOptions = useMemo(() => getStatusOptions(), []);
+
+    // Version limit check
+    const { guard: guardInternalUserVersion } = useVersion({
+      module: VERSION_MODULE.INTERNAL_USER,
+      count: tableTotal,
+      content: t("version.internal_user_limit"),
+    });
 
     const isSsoSync = useMemo(
       () => syncFrom !== ENTERPRISE_SYNC_FROM.DEFAULT,
@@ -159,13 +168,16 @@ export const UserAccount = forwardRef<AccountRef, AccountProps>(
 
     // Refresh
     const refresh = useCallback(() => {
+      filterFormRef.current = { ...filterFormRef.current, page: 1 };
       setFilterForm((prev) => ({ ...prev, page: 1 }));
       fetchUserList({ page: 1 });
     }, [fetchUserList]);
 
     // Handle add
     const handleAdd = () => {
-      setAddDialogOpen(true);
+      if (guardInternalUserVersion()) {
+        setAddDialogOpen(true);
+      }
     };
 
     // Handle edit
@@ -184,6 +196,7 @@ export const UserAccount = forwardRef<AccountRef, AccountProps>(
             await userApi.delete_user({ user_id: record.user_id });
             message.success(t("action_delete_success"));
             fetchUserList();
+            onDataChange?.();
           } catch (error) {
             console.error("Delete user error:", error);
           }
@@ -227,7 +240,7 @@ export const UserAccount = forwardRef<AccountRef, AccountProps>(
           key: "mobile",
           width: 140,
           render: (value: string) => (
-            <span className={!value ? "text-[#9B9B9B]" : ""}>
+            <span className={!value ? "text-disabled" : ""}>
               {value || "--"}
             </span>
           ),
@@ -364,16 +377,16 @@ export const UserAccount = forwardRef<AccountRef, AccountProps>(
           </Select>
 
           <div className="flex gap-3">
-            <Input
+            <Search
+              mode="expanded"
               value={filterForm.keyword}
-              onChange={(e) =>
-                setFilterForm((prev) => ({ ...prev, keyword: e.target.value }))
-              }
-              onPressEnter={refresh}
+              onDebouncedChange={(val) => {
+                filterFormRef.current = { ...filterFormRef.current, keyword: val };
+                setFilterForm((prev) => ({ ...prev, keyword: val }));
+                refresh();
+              }}
               placeholder={t("internal_user.account.search_placeholder")}
-              prefix={<SearchOutlined className="text-gray-300" />}
-              allowClear
-              style={{ width: 268 }}
+              className="w-[268px]"
             />
             {!isSsoSync && (
               <Button type="primary" onClick={handleAdd}>
@@ -416,6 +429,7 @@ export const UserAccount = forwardRef<AccountRef, AccountProps>(
           onSuccess={() => {
             setAddDialogOpen(false);
             refresh();
+            onDataChange?.();
           }}
         />
 

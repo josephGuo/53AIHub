@@ -35,11 +35,18 @@ export const showUpgradeModal = (): void => {
 }
 
 /**
+ * Check if user is logged in
+ */
+export function isLoggedIn(): boolean {
+  return !!localStorage.getItem('access_token')
+}
+
+/**
  * 检查登录状态
  */
 export const checkLoginStatus = (): boolean => {
-  const token = localStorage.getItem('access_token')
-  if (!token) {
+  const isLogined = isLoggedIn()
+  if (!isLogined) {
     showLoginModal()
     return false
   }
@@ -114,13 +121,6 @@ export const checkPermission = (options: AuthOptions = {}): boolean => {
   onClick?.()
 
   return true
-}
-
-/**
- * Check if user is logged in
- */
-export function isLoggedIn(): boolean {
-  return !!localStorage.getItem('access_token')
 }
 
 /**

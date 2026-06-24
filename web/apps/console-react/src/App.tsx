@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { ConfigProvider, App as AntApp } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import zhTW from "antd/locale/zh_TW";
@@ -41,6 +41,18 @@ export function App() {
 
   // 多账号登录冲突检测
   useMultiAccountGuard();
+
+  // 清理 URL 中空的 ?（如 /console?#/index），避免企微 opendata 初始化失败
+  useEffect(() => {
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) return;
+
+    const { href, origin, pathname, hash, search } = window.location;
+    // 登录后检查原始 URL 中是否有 ?# 模式
+    if (href.includes('?') && !search) {
+      window.history.replaceState(null, '', `${origin}${pathname}${hash}`);
+    }
+  }, []);
 
   // chunk 加载失败处理（部署后旧代码失效）
   useEffect(() => {

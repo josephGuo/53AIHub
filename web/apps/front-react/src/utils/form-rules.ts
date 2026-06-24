@@ -265,7 +265,7 @@ export const getRequiredRules = (message: string, trigger: string | string[] = '
 }
 
 export const generateInputRules = ({
-  message = 'form_input_placeholder',
+  message = 'form.input_placeholder',
   trigger = ['blur', 'change'],
   validator = ['text']
 } = {}) => {

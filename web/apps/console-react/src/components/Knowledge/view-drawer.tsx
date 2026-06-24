@@ -105,7 +105,7 @@ function KnowledgeViewDrawerInner(
           <div className="w-6 h-6 flex-shrink-0">
             {currentFile?.icon && <img className="w-6 h-6" src={currentFile.icon} alt="" />}
           </div>
-          <div className="flex-1 text-base text-[#1D1E1F] truncate">
+          <div className="flex-1 text-base text-primary truncate">
             {currentFile?.name || '--'}
           </div>
           {currentFile?.id && (

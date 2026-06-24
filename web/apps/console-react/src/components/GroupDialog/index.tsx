@@ -231,6 +231,7 @@ export const GroupDialog = forwardRef<GroupDialogRef, GroupDialogProps>(
 
         deletedGroupList.current = [];
         message.success(t("action_save_success"));
+        groupApi.clearCache(groupType);
         await refresh();
         close();
       } catch (error) {
@@ -261,7 +262,7 @@ export const GroupDialog = forwardRef<GroupDialogRef, GroupDialogProps>(
           </div>
         }
       >
-        <div className="text-[#182B50] text-opacity-60 text-sm pb-4">
+        <div className="text-dark text-opacity-60 text-sm pb-4">
           {t("display_order")}
         </div>
         <div className="w-full flex flex-col gap-4 max-h-[60vh] overflow-y-auto">

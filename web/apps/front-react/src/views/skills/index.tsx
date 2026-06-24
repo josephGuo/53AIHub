@@ -1,78 +1,85 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
 import { useIsSoftStyle } from "@/stores/modules/enterprise";
 import { useSkillsStore } from "@/stores/modules/skills";
-import ExploreSkills from "./components/explore/index";
-import MySkills from "./components/my/index";
+import { useUserStore } from "@/stores/modules/user";
+import { GroupList } from "./components/GroupList";
+import MyList from "./components/MyList";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import { t } from "@/locales";
+import { checkLoginStatus } from "@/utils/permission";
 
-const SkillsPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+export function SkillsView() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const isSoftStyle = useIsSoftStyle();
   const skillsStore = useSkillsStore();
+  const userStore = useUserStore();
   const [activeType, setActiveType] = useState<"explore" | "my">("explore");
 
   useEffect(() => {
+
     if (searchParams.get("from") === "my") {
       setActiveType("my");
     }
+    // 只加载分类，列表数据由子组件 GroupList/MyList 自行加载
     skillsStore.loadCategorys();
-    skillsStore.loadSkillList();
-    skillsStore.loadMySkillList();
-  }, [searchParams]);
+  }, [searchParams, userStore.is_login]);
 
   return (
-    <div className="size-full flex">
+    <>
+      {isSoftStyle && <Header back={false} title={t("module.skill")} border={false} />}
       <div
-        className={`w-full flex-1 flex flex-col ${isSoftStyle ? "overflow-y-auto" : ""}`}
+        className={`w-11/12 lg:w-4/5 max-w-[1200px] mx-auto ${isSoftStyle ? "" : "pt-4"}`}
       >
-        {isSoftStyle && <Header back={false} title="" border={false} />}
-        <div className="w-11/12 lg:w-4/5 max-w-[1200px] mx-auto">
+        <div
+          className="sticky z-[101] bg-white w-full py-4 flex items-center gap-5"
+          style={{ top: isSoftStyle ? "56px" : "0px" }}
+        >
           <div
-            className={`sticky z-[100] bg-white w-full flex gap-3 `}
-            style={{ top: isSoftStyle ? "60px" : "0px" }}
+            className={`h-8 text-xl font-medium flex items-center cursor-pointer relative ${activeType === "explore" ? "text-[#1D1E1F]" : "text-[#999999]"}`}
+            onClick={() => {
+              checkLoginStatus()
+              setActiveType("explore");
+              setSearchParams({ from: "explore" });
+            }}
           >
-            <Button
-              type="link"
-              className={`text-xl py-4 px-0 ${activeType === "explore" ? "font-bold" : "text-[#999999]"}`}
-              onClick={() => setActiveType("explore")}
-            >
-              {t("agent.explore")}
-              {activeType === "explore" && (
-                <SvgIcon
-                  name="explore"
-                  size={20}
-                  color="var(--el-color-primary, #2563eb)"
-                  className="relative left-1 -top-1"
-                />
-              )}
-            </Button>
-            <Button
-              type="link"
-              className={`text-xl py-4 px-0 ${activeType === "my" ? "font-bold" : "text-[#999999]"}`}
-              onClick={() => setActiveType("my")}
-            >
-              {t("module.mine")}
-              {activeType === "my" && (
-                <SvgIcon
-                  name="explore"
-                  size={20}
-                  color="var(--el-color-primary, #2563eb)"
-                  className="relative left-1 -top-1"
-                />
-              )}
-            </Button>
+            {t("agent.explore")}
+            {activeType === "explore" && (
+              <SvgIcon
+                name="explore"
+                size={20}
+                className="absolute -right-5 -top-2"
+                color="var(--el-color-primary, #2563eb)"
+              />
+            )}
           </div>
-          {activeType === "explore" ? <ExploreSkills /> : <MySkills />}
+          <div
+            className={`h-8 text-xl font-medium flex items-center cursor-pointer relative ${activeType === "my" ? "text-[#1D1E1F]" : "text-[#999999]"}`}
+            onClick={() => {
+              checkLoginStatus()
+              setActiveType("my");
+              setSearchParams({ from: "my" });
+            }}
+          >
+            {t("module.mine")}
+            {activeType === "my" && (
+              <SvgIcon
+                name="explore"
+                size={20}
+                className="absolute -right-5 -top-2"
+                color="var(--el-color-primary, #2563eb)"
+              />
+            )}
+          </div>
         </div>
-        <Footer />
-      </div>
-    </div>
-  );
-};
 
-export default SkillsPage;
+        {activeType === "explore" ? <GroupList /> : <MyList />}
+      </div>
+      <Footer />
+    </>
+  );
+}
+
+export default SkillsView;

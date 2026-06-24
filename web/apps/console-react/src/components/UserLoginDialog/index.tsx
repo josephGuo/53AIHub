@@ -121,17 +121,17 @@ export const UserLoginDialog = forwardRef<UserLoginDialogRef>((_, ref) => {
           onClick={close}
         />
 
-        <h4 className="text-3xl text-[#1D1E1F] font-bold text-center mb-3">
+        <h4 className="text-3xl text-primary font-bold text-center mb-3">
           {t("login.password_login")}
         </h4>
-        <p className="text-sm text-[#9A9A9A] text-center">
+        <p className="text-sm text-disabled text-center">
           {t("login.unregistered_account_desc")}
         </p>
 
         <Form form={form} layout="vertical" className="mt-8">
           <Form.Item
             name="username"
-            label={<span className="text-[#1D1E1F]">{t("account")}</span>}
+            label={<span className="text-primary">{t("account")}</span>}
             rules={[{ required: true, message: t("login.account_placeholder") }]}
           >
             <Input
@@ -143,7 +143,7 @@ export const UserLoginDialog = forwardRef<UserLoginDialogRef>((_, ref) => {
 
           <Form.Item
             name="password"
-            label={<span className="text-[#1D1E1F]">{t("password")}</span>}
+            label={<span className="text-primary">{t("password")}</span>}
             rules={[{ required: true, message: t("login.password_placeholder") }]}
             className="relative"
           >
@@ -154,7 +154,7 @@ export const UserLoginDialog = forwardRef<UserLoginDialogRef>((_, ref) => {
             />
             <Button
               type="link"
-              className="text-[#9A9A9A] text-sm absolute right-0 -bottom-8"
+              className="text-disabled text-sm absolute right-0 -bottom-8"
               onClick={handleForgetPassword}
             >
               {t("login.forget_password")}
@@ -179,7 +179,7 @@ export const UserLoginDialog = forwardRef<UserLoginDialogRef>((_, ref) => {
             )}
           </Form.Item>
 
-          <div className="text-xs text-[#9A9A9A] text-center mt-5">
+          <div className="text-xs text-disabled text-center mt-5">
             {
               t("login.agree_and_policy", {
                 agree: "",
@@ -188,14 +188,14 @@ export const UserLoginDialog = forwardRef<UserLoginDialogRef>((_, ref) => {
             }
             <Button
               type="link"
-              className="text-[#4F5052] text-xs underline"
+              className="text-secondary text-xs underline"
               onClick={handleAgree}
             >
               {t("login.agree")}
             </Button>
             <Button
               type="link"
-              className="text-[#4F5052] text-xs underline"
+              className="text-secondary text-xs underline"
               onClick={handlePolicy}
             >
               {t("login.policy")}

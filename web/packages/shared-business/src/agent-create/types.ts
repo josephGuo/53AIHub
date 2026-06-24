@@ -81,6 +81,9 @@ export interface AgentFormState {
   group_options: GroupOption[]
   support_image: boolean
   is_new: boolean
+  // 修改追踪
+  initial_form_data: AgentFormData | null
+  is_dirty: boolean
 }
 
 /** Store 操作方法 */
@@ -251,5 +254,7 @@ export function getInitialState(): AgentFormState {
     group_options: [],
     support_image: false,
     is_new: false,
+    initial_form_data: null,
+    is_dirty: false,
   }
 }

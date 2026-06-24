@@ -138,14 +138,14 @@ export function PlatformFileEditor() {
               {/* 中间：服务器地址 */}
               <div className="flex-1 px-6 flex items-center gap-2 overflow-hidden">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm text-[#999]">APPID：</span>
-                  <span className="flex-1 text-sm text-[#1D1E1F] truncate">
+                  <span className="text-sm text-placeholder">APPID：</span>
+                  <span className="flex-1 text-sm text-primary truncate">
                     {wpsSetting.setting["app_id"]}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-sm text-[#999]">AppSecret</span>
-                  <span className="flex-1 text-sm text-[#1D1E1F] truncate">
+                  <span className="text-sm text-placeholder">AppSecret</span>
+                  <span className="flex-1 text-sm text-primary truncate">
                     {formatSecret(wpsSetting.setting["app_secret"])}
                   </span>
                 </div>
@@ -213,7 +213,7 @@ export function PlatformFileEditor() {
                     className="w-10 h-10"
                   />
                 </div>
-                <span className="text-base font-medium text-[#1D1E1F]">
+                <span className="text-base font-medium text-primary">
                   WPS WebOffice
                 </span>
               </div>
@@ -244,7 +244,7 @@ export function PlatformFileEditor() {
               alt="WPS WebOffice"
               className="w-8 h-8"
             />
-            <span className="text-base font-medium text-[#1D1E1F]">
+            <span className="text-base font-medium text-primary">
               WPS WebOffice
             </span>
           </div>
@@ -295,7 +295,7 @@ export function PlatformFileEditor() {
             </Form.Item>
           </Form>
           {/* 说明文字 */}
-          <div className="p-4 text-sm text-[#1D1E1F] bg-[#F6F9FC]">
+          <div className="p-4 text-sm text-primary bg-[#F6F9FC]">
             <p className="mb-3">
               通过调用WPS开放平台服务接口，实现文件的预览和编辑。
             </p>
@@ -305,7 +305,7 @@ export function PlatformFileEditor() {
                 <a
                   href="https://solution.wps.cn/"
                   target="_blank"
-                  className="text-[#2563EB]"
+                  className="text-brand"
                 >
                   WPS开放平台
                 </a>
@@ -316,9 +316,9 @@ export function PlatformFileEditor() {
               </li>
               <li>
                 数据回调地址：
-                <span className="text-[#FA5151]">{api_host}/api/wps</span>
+                <span className="text-tag-red">{api_host}/api/wps</span>
                 <span
-                  className="inline-block ml-1 cursor-pointer text-[#3664EF]"
+                  className="inline-block ml-1 cursor-pointer text-brand"
                   onClick={handleCopy}
                 >
                   复制

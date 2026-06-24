@@ -21,7 +21,6 @@ import {
 } from "@/stores/modules/enterprise";
 import { useNavigationStore } from "@/stores/modules/navigation";
 import { useUserStore } from "@/stores/modules/user";
-import { AGENT_TYPES } from "@/constants/platform/config";
 import agentsApi from "@/api/modules/agents";
 import conversationApi, { ConversationType } from "@/api/modules/conversation";
 import { eventBus } from "@km/shared-utils";
@@ -29,6 +28,7 @@ import { EVENT_NAMES } from "@/constants/events";
 import { t } from "@/locales";
 import ChatIndex, { ChatIndexRef } from "./chat";
 import Completion, { CompletionRef } from "./completion";
+import { isOpenClawCompatibleChannelType } from "@km/shared-business/agent-create";
 import "./index.css";
 
 export interface ChatViewRef {
@@ -120,8 +120,8 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
         }
       }
 
-      // 检查智能体是否为 Openclaw 类型（URL 参数或智能体属性）
-      const isOpenclaw = searchParams.get("type") === "openclaw" || agent?.custom_config_obj?.agent_type === AGENT_TYPES.OPENCLAW
+      // 检查智能体是否为 Openclaw 渠道类型
+      const isOpenclaw = isOpenClawCompatibleChannelType(agent?.channel_type)
 
       // 更新 store - Openclaw 智能体和"我的智能体"一样隐藏底部操作
       if (isMyAgent || isOpenclaw) {
@@ -311,7 +311,7 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
       >
         <div
           className={
-            isWebsite ? "w-11/12 lg:w-4/5 mx-auto flex-1 h-full" : "h-full"
+            isWebsite ? "w-11/12 lg:w-4/5 mx-auto max-w-[1200px] flex-1 h-full" : "h-full"
           }
         >
           {isCompletion ? (

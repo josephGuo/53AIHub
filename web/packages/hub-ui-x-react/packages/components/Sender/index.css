@@ -187,7 +187,7 @@
 
 .x-sender__action-button--stop {
   background-color: var(--hubx-color-bg);
-  color: var(--hubx-color-primary);
+  color: var(--hubx-color-bg);
 }
 
 .x-sender__action-button--send {
@@ -197,7 +197,7 @@
 
 .x-sender__action-button--disabled {
   background-color: var(--hubx-color-bg-tertiary);
-  color: var(--hubx-color-text-tertiary);
+  color: var(--hubx-color-bg);
 }
 
 .x-sender__loading-border {

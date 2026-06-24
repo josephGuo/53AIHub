@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Button, Input, Table, Tooltip, Modal, message, Spin } from "antd";
+import { Button, Table, Tooltip, Modal, message, Spin } from "antd";
 import {
-  SearchOutlined,
   ReloadOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
 import { filesApi } from "@/api/modules/files";
 import { formatRecycleList, type RecycleListItem } from "@/api/modules/files/transform";
 import { useLibraryStore } from "@/stores/modules/library";
@@ -34,13 +34,13 @@ export function LibraryRecycleSettingsView() {
   });
   const tableRef = useRef<any>(null);
 
-  const loadList = async () => {
+  const loadList = async (searchKeyword?: string) => {
     if (!libraryStore.library?.id) return;
     setLoading(true);
     try {
       const res = await filesApi.recycleList({
         library_id: libraryStore.library.id,
-        q: keyword,
+        q: searchKeyword ?? keyword,
         offset: (pagination.current - 1) * pagination.pageSize,
         limit: pagination.pageSize,
         sort: "desc",
@@ -147,9 +147,9 @@ export function LibraryRecycleSettingsView() {
     });
   };
 
-  const handleSearch = () => {
+  const handleSearch = (kw?: string) => {
     setPagination((prev) => ({ ...prev, current: 1 }));
-    loadList();
+    loadList(kw);
   };
 
   const handleTableChange: TableProps["onChange"] = (pag) => {
@@ -247,13 +247,15 @@ export function LibraryRecycleSettingsView() {
       <div className="bg-[#ffffff] flex-1 gap-6 px-10 py-8 overflow-y-auto mb-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <Input
-              prefix={<SearchOutlined />}
+            <Search
+              mode="expanded"
               placeholder="搜索名称"
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onPressEnter={handleSearch}
-              style={{ width: 200 }}
+              onDebouncedChange={(val) => {
+                setKeyword(val);
+                handleSearch(val);
+              }}
+              className="w-[200px]"
             />
           </div>
           {selectedRows.length === 0 ? (

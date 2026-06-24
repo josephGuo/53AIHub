@@ -274,6 +274,7 @@ const ChatAssistant = forwardRef<ChatRef, ChatProps>(
       question: string,
       links: any[] = [],
       options: any = {},
+      overrideOptions?: { networkSearch?: boolean },
     ) => {
       if (isStreaming || !question.trim()) return;
 
@@ -330,8 +331,8 @@ const ChatAssistant = forwardRef<ChatRef, ChatProps>(
       }
     };
 
-    const handleSend = (data: { textContent: string; from?: string }) => {
-      const { textContent: content, from } = data;
+    const handleSend = (data: { textContent: string; from?: string, specifiedContent?: string }) => {
+      const { textContent: content, from, specifiedContent = '' } = data;
       if (from === "map") {
         setTextContent(content);
       }
@@ -348,8 +349,8 @@ const ChatAssistant = forwardRef<ChatRef, ChatProps>(
           : content;
 
       sendMessage(processedContent, [], {
-        prompt: slideContent,
-        text: slideContent,
+        prompt: slideContent || specifiedContent,
+        text: slideContent || specifiedContent,
       });
     };
 
@@ -561,7 +562,7 @@ const ChatAssistant = forwardRef<ChatRef, ChatProps>(
           ref={bubbleListRef}
           autoScroll={true}
           messages={messageState.messageList}
-          className="flex-1 overflow-hidden"
+          className="flex-1"
           mainClass="mx-5"
           enablePullUp={messageState.hasMore && !messageState.isLoadingMore}
           onPullUp={handleLoadListMore}
@@ -675,7 +676,7 @@ const ChatAssistant = forwardRef<ChatRef, ChatProps>(
                     checked={shareState.selectMessageIds.includes(msg.id)}
                   />
                 )}
-                <div className="flex-1">
+                <div className="flex-1 overflow-hidden">
                   <BubbleAssistant
                     content={msg.answer}
                     reasoning={msg.reasoning_content}
@@ -737,13 +738,19 @@ const ChatAssistant = forwardRef<ChatRef, ChatProps>(
                         <span
                           className="text-blue-500 cursor-pointer underline ml-1"
                           onClick={() => {
-                            msg.showErrorDetails = !msg.showErrorDetails;
+                            updateMessageList((list: any[]) =>
+                              list.map((item) =>
+                                item.id === msg.id
+                                  ? { ...item, showErrorDetails: !item.showErrorDetails }
+                                  : item,
+                              ),
+                            );
                           }}
                         >
                           {t("agent.error_details")}
                         </span>
                         {msg.showErrorDetails && (
-                          <div className="mt-2 whitespace-pre-wrap text-red-500">
+                          <div className="mt-2 whitespace-pre-wrap break-words text-red-500">
                             {msg.answer}
                           </div>
                         )}

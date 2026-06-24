@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
-import { Modal, Table, Input, Tabs, Button, message } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Modal, Table, Tabs, Button, message } from "antd";
 import { t } from "@/locales";
+import { Search } from "@km/shared-components-react";
 import { useUserStore } from "@/stores";
 import { userApi, USER_ROLE_ADMIN, USER_ROLE_CREATOR } from "@/api/modules/user";
 import type { ColumnsType, TableProps } from "antd/es/table";
@@ -33,6 +33,8 @@ export default function UserSelectDialog({
   const [loading, setLoading] = useState(false);
   const [tabActiveName, setTabActiveName] = useState<"register" | "internal">("register");
   const [keyword, setKeyword] = useState("");
+  const keywordRef = useRef(keyword);
+  keywordRef.current = keyword;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [tableData, setTableData] = useState<UserItem[]>([]);
@@ -56,7 +58,7 @@ export default function UserSelectDialog({
     setLoading(true);
     try {
       const reqParams = {
-        keyword,
+        keyword: keywordRef.current,
         offset: (currentPage - 1) * currentPageSize,
         limit: currentPageSize,
       };
@@ -216,14 +218,16 @@ export default function UserSelectDialog({
           }}
           className="mb-0"
         />
-        <Input
+        <Search
+          mode="expanded"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onPressEnter={handleRefresh}
+          onDebouncedChange={(val) => {
+            keywordRef.current = val;
+            setKeyword(val);
+            handleRefresh();
+          }}
           placeholder={t("module.operation_user_search_placeholder")}
-          prefix={<SearchOutlined className="text-gray-300" />}
-          allowClear
-          style={{ width: 220 }}
+          className="w-[220px]"
         />
       </div>
 

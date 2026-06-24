@@ -272,8 +272,6 @@ VITE_GLOB_ADMIN_URL=https://admin.example.com
 ## 依赖说明
 
 ### 共享包
-- `@km/shared-api` - 共享 API 配置
-- `@km/shared-types` - 共享类型定义
 - `@km/shared-utils` - 共享工具函数
 - `@km/shared-components-react` - 共享 React 组件
 

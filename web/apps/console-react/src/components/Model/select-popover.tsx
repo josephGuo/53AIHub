@@ -48,7 +48,7 @@ export function ModelSelectPopover({
 
   const content = (
     <>
-      <div className="text-sm text-[#4F5052]">{t("model.select_model")}</div>
+      <div className="text-sm text-secondary">{t("model.select_model")}</div>
       <ModelSelect
         className="w-full mt-2"
         value={value}
@@ -58,7 +58,7 @@ export function ModelSelectPopover({
         valueKey="model_value"
       />
       <div className="flex items-center mt-2">
-        <div className="flex-none w-[58px] text-sm text-[#4F5052] flex items-center">
+        <div className="flex-none w-[58px] text-sm text-secondary flex items-center">
           {t("model.temperature")}
           <Tooltip title={t("model.temperature_desc")} placement="top">
             <QuestionCircleOutlined className="ml-1 cursor-pointer" />
@@ -73,7 +73,7 @@ export function ModelSelectPopover({
             onChange={handleTemperatureChange}
           />
         </div>
-        <div className="flex-none w-9 text-center text-sm text-[#182B50]">
+        <div className="flex-none w-9 text-center text-sm text-dark">
           {temperature}
         </div>
       </div>
@@ -100,7 +100,7 @@ export function ModelSelectPopover({
           channelId={channelId || ""}
           model={modelName || ""}
           placeholder={
-            <div className="flex-1 text-sm text-[#999999]">
+            <div className="flex-1 text-sm text-placeholder">
               {t("form_select_placeholder")}
             </div>
           }

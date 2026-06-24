@@ -25,11 +25,11 @@ export function ExpandConfig() {
       {supportFile && (
         <div className="flex items-center gap-2 mt-4">
           <div className="flex-1">
-            <div className="text-sm text-[#4F5052]">
+            <div className="text-sm text-secondary">
               {t("agent_file_parse")}
             </div>
           </div>
-          <div className="flex-none text-sm text-[#4F5052] flex gap-2">
+          <div className="flex-none text-sm text-secondary flex gap-2">
             {fileParseEnable ? t("action_open") : t("action_close")}
             <Switch checked={fileParseEnable} onChange={updateFileParse} />
           </div>
@@ -39,11 +39,11 @@ export function ExpandConfig() {
       {supportImage && (
         <div className="flex items-center gap-2 mt-2">
           <div className="flex-1">
-            <div className="text-sm text-[#4F5052]">
+            <div className="text-sm text-secondary">
               {t("agent_image_parse")}
             </div>
           </div>
-          <div className="flex-none text-sm text-[#4F5052] flex gap-2">
+          <div className="flex-none text-sm text-secondary flex gap-2">
             {imageParseEnable ? t("action_open") : t("action_close")}
             <Switch checked={imageParseEnable} onChange={updateImageParse} />
           </div>

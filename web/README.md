@@ -98,7 +98,7 @@ pnpm install
 
 ### 2. 构建共享包（首次或依赖变更后）
 
-应用依赖 `@km/shared-utils`、`@km/shared-api`、`@km/shared-types`、`@km/shared-components-react`、`@km/shared-business`、`@km/hub-ui-x-react` 的构建产物，需先构建：
+应用依赖 `@km/shared-utils`、`@km/shared-components-react`、`@km/shared-business`、`@km/hub-ui-x-react` 的构建产物，需先构建：
 
 ```bash
 # 构建所有共享包（推荐，会按依赖顺序构建）
@@ -109,7 +109,6 @@ pnpm build:shared
 
 ```bash
 pnpm --filter @km/shared-utils build
-pnpm --filter @km/shared-types build
 pnpm --filter @km/shared-components-react build
 pnpm --filter @km/shared-business build
 pnpm --filter @km/hub-ui-x-react build
@@ -259,22 +258,6 @@ React 应用与 Vue 应用共用一批依赖，版本在**根目录 `package.jso
 - `Search` — 搜索组件
 - `TablePlus` — 增强表格组件
 - `SvgIcon` — 统一 SVG 图标组件
-
-### `@km/shared-api`
-
-统一的 API 请求层，包含：
-
-- 请求配置与拦截器
-- 业务状态码定义
-- 统一错误处理
-- 请求签名
-
-### `@km/shared-types`
-
-共享的 TypeScript 类型定义，涵盖：
-
-- API 响应类型
-- 业务实体类型（Agent、会话、企业等）
 
 ### `@km/shared-utils`
 

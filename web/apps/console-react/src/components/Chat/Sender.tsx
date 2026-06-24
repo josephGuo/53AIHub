@@ -1,31 +1,29 @@
 import React, {
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  forwardRef,
-  useImperativeHandle,
-  useReducer,
+    useState,
+    useRef,
+    useCallback,
+    useEffect,
+    useMemo,
+    forwardRef,
+    useImperativeHandle
 } from "react";
-import { Button, Input, Spin, Tooltip, message } from "antd";
+import { Button, Tooltip, message } from "antd";
 import {
-  CloseOutlined,
-  FileOutlined,
-  ArrowRightOutlined,
-  MoreOutlined,
-  SearchOutlined,
-  LoadingOutlined,
-  PaperClipOutlined,
+    CloseOutlined,
+    FileOutlined,
+    ArrowRightOutlined,
+    MoreOutlined,
+    LoadingOutlined,
+    PaperClipOutlined,
 } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import { filesApi } from "@/api";
 import { formatFile } from "@/api/modules/files/transform";
 import { skillApi } from "@/api/modules/skill";
 import { SkillMyItem } from "@/api/modules/skill/types";
 import {
-  FileSelectDialog,
-  FileSelectDialogRef,
+    FileSelectDialog,
+    FileSelectDialogRef,
 } from "@/components/Space/FileSelectDialog";
 import type { FileItem } from "@/api/modules/files/types";
 import type { LibraryItem } from "@/api/modules/libraries/types";
@@ -1702,7 +1700,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
           {uploadFileList.map((file, index) => (
             <div
               key={index}
-              className="max-w-40 h-7 px-2 rounded-lg cursor-pointer text-[#4F5052] bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-center gap-1 relative group"
+              className="max-w-40 h-7 px-2 rounded-lg cursor-pointer text-secondary bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-center gap-1 relative group"
             >
               <FileOutlined />
               <span className="text-sm truncate">{file.name}</span>
@@ -1734,7 +1732,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
             {links.map((link) => (
               <div
                 key={link.id}
-                className="h-6 px-1.5 rounded bg-[#F3F3F5] flex items-center text-sm text-[#6B6C70] group cursor-pointer relative whitespace-nowrap"
+                className="h-6 px-1.5 rounded bg-[#F3F3F5] flex items-center text-sm text-tertiary group cursor-pointer relative whitespace-nowrap"
               >
                 <div className="size-4 rounded mr-1">
                   <img src={link.icon} className="size-4" alt="" />
@@ -1759,7 +1757,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
           <div
             ref={editorRef}
             contentEditable={!disabled && !loading}
-            className="h-20 overflow-y-auto w-full text-sm leading-relaxed text-[#1F1E25] focus:outline-none transition"
+            className="h-20 overflow-y-auto w-full text-sm leading-relaxed text-primary focus:outline-none transition"
             style={{ ...(showCaret ? {} : { caretColor: "transparent" }) }}
             spellCheck={false}
             onInput={handleInput}
@@ -1775,7 +1773,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
           {/* Placeholder */}
           {isShowPlaceholder && (
             <span
-              className="pointer-events-none absolute inset-0 px-0 py-0 text-sm leading-relaxed text-[#9CA1B7]"
+              className="pointer-events-none absolute inset-0 px-0 py-0 text-sm leading-relaxed text-hint"
               style={placeholderStyle}
             >
               {showPlaceholderText}
@@ -1788,7 +1786,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
               className="pointer-events-auto absolute z-20 max-h-[334px] w-[300px] px-2 py-1.5 overflow-hidden rounded-xl shadow-[0_3px_8px_rgba(0,0,0,0.15)] bg-white"
               style={popupStyle}
             >
-              <div className="h-9 flex items-center justify-between px-2 text-xs text-[#999999]">
+              <div className="h-9 flex items-center justify-between px-2 text-xs text-placeholder">
                 <span>最近访问</span>
                 <Button
                   type="link"
@@ -1807,14 +1805,14 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
                       <div className="size-4 rounded">
                         <img src={doc.icon} className="size-4" alt="" />
                       </div>
-                      <p className="flex-1 text-sm text-[#1D1E1F] truncate">
+                      <p className="flex-1 text-sm text-primary truncate">
                         {doc.name}
                       </p>
                     </div>
                   </div>
                 ))}
                 {filteredKnowledge.length === 0 && (
-                  <div className="px-4 py-6 text-center text-xs text-[#9FA4C5]">
+                  <div className="px-4 py-6 text-center text-xs text-light">
                     没有匹配项，试试更换关键词
                   </div>
                 )}
@@ -1826,7 +1824,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
                 <div className="size-4 border rounded-full flex-center">
                   <MoreOutlined style={{ color: "#999999" }} />
                 </div>
-                <span className="flex-1 text-[#999999]">查看更多</span>
+                <span className="flex-1 text-placeholder">查看更多</span>
                 <ArrowRightOutlined />
               </div>
             </div>
@@ -1840,13 +1838,11 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
             >
               {/* 搜索框 */}
               <div className="py-3">
-                <Input
+                <Search
+                  mode="expanded"
                   placeholder="搜索知识"
-                  prefix={<SearchOutlined />}
                   value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                  allowClear
-                  suffix={searchLoading ? <LoadingOutlined /> : null}
+                  onDebouncedChange={setSearchKeyword}
                 />
               </div>
 
@@ -1869,7 +1865,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
               {/* 知识列表 */}
               {activeTab === "knowledge" && (
                 <div className="max-h-[280px] overflow-y-auto">
-                  <div className="h-9 flex items-center text-xs text-[#999999] px-2">
+                  <div className="h-9 flex items-center text-xs text-placeholder px-2">
                     最近访问
                   </div>
                   <div className="space-y-1">
@@ -1883,20 +1879,20 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
                           <div className="size-5 rounded flex-center bg-[#F5F5F5]">
                             <img src={doc.icon} className="size-4" alt="" />
                           </div>
-                          <p className="flex-1 text-sm text-[#1D1E1F] truncate">
+                          <p className="flex-1 text-sm text-primary truncate">
                             {doc.name}
                           </p>
                         </div>
                       </div>
                     ))}
                     {searchLoading && (
-                      <div className="px-4 py-6 text-center text-xs text-[#9FA4C5]">
+                      <div className="px-4 py-6 text-center text-xs text-light">
                         <LoadingOutlined />
                         搜索中...
                       </div>
                     )}
                     {!searchLoading && filteredKnowledge.length === 0 && (
-                      <div className="px-4 py-6 text-center text-xs text-[#9FA4C5]">
+                      <div className="px-4 py-6 text-center text-xs text-light">
                         {searchKeyword.trim()
                           ? "没有找到相关文件"
                           : "没有匹配项，试试更换关键词"}
@@ -1916,7 +1912,7 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
               {/* 技能列表 */}
               {activeTab === "skill" && (
                 <div className="max-h-[280px] overflow-y-auto">
-                  <div className="h-9 flex items-center text-xs text-[#999999] px-2">
+                  <div className="h-9 flex items-center text-xs text-placeholder px-2">
                     最近访问
                   </div>
                   <div className="space-y-1">
@@ -1931,19 +1927,19 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
                           alt=""
                           className="size-6"
                         />
-                        <span className="text-sm text-[#1D1E1F]">
+                        <span className="text-sm text-primary">
                           {skill.label}
                         </span>
                       </div>
                     ))}
                     {searchLoading && (
-                      <div className="px-4 py-6 text-center text-xs text-[#9FA4C5]">
+                      <div className="px-4 py-6 text-center text-xs text-light">
                         <LoadingOutlined />
                         搜索中...
                       </div>
                     )}
                     {!searchLoading && filteredSkillList.length === 0 && (
-                      <div className="px-4 py-6 text-center text-xs text-[#9FA4C5]">
+                      <div className="px-4 py-6 text-center text-xs text-light">
                         {searchKeyword.trim()
                           ? "没有找到相关技能"
                           : "没有匹配的技能"}
@@ -1963,12 +1959,11 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
             >
               {/* 搜索框 */}
               <div className="pb-3">
-                <Input
+                <Search
+                  mode="expanded"
                   placeholder="搜索技能"
-                  prefix={<SearchOutlined />}
                   value={skillSearchKeyword}
-                  onChange={(e) => setSkillSearchKeyword(e.target.value)}
-                  allowClear
+                  onDebouncedChange={setSkillSearchKeyword}
                 />
               </div>
 
@@ -1984,20 +1979,20 @@ const SenderInner = forwardRef<SenderRef, SenderProps>((props, ref) => {
                       <div className="size-5 rounded flex items-center justify-center bg-[#F5F5F5]">
                         <SvgIcon name="skill" size="14" color="#2563EB" />
                       </div>
-                      <p className="flex-1 text-sm text-[#1D1E1F] truncate">
+                      <p className="flex-1 text-sm text-primary truncate">
                         {skill.display_name}
                       </p>
                     </div>
                   </div>
                 ))}
                 {mySkillLoading && (
-                  <div className="px-4 py-6 text-center text-xs text-[#9FA4C5]">
+                  <div className="px-4 py-6 text-center text-xs text-light">
                     <LoadingOutlined />
                     加载中...
                   </div>
                 )}
                 {!mySkillLoading && filteredMySkills.length === 0 && (
-                  <div className="px-4 py-6 text-center text-xs text-[#9FA4C5]">
+                  <div className="px-4 py-6 text-center text-xs text-light">
                     {skillSearchKeyword.trim()
                       ? "没有找到相关技能"
                       : "暂无可用技能"}

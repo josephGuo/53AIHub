@@ -1,10 +1,14 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Button, Modal, Input, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
 import { Dropdown } from "@km/shared-components-react";
 import type { MenuProps } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
-import { useConversationStore } from "./conversation";
+import { useConversationStore, isRunRunning } from "./conversation";
+import { agentRunApi } from "@/api/modules/agentRun";
 import { t } from "@/locales";
+
+const POLL_INTERVAL = 5000
 
 interface HistoryProps {
   onCollapse?: () => void;
@@ -26,6 +30,89 @@ export function ChatHistory({
 
   // 新增：哨兵元素引用
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // 轮询定时器引用
+  const pollingTimersRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map())
+  // 记录上次已启动轮询的会话 ID
+  const polledConvIdsRef = useRef<Set<string>>(new Set())
+
+  // 轮询单个会话的 latest_run 状态
+  const pollConversationRun = useCallback(async (conversationId: string) => {
+    try {
+      const res = await agentRunApi.latest(conversationId)
+      const run = res.data || res
+      if (!isRunRunning(run)) {
+        // 状态已变为终态，停止轮询并更新状态
+        convStore.updateConversationLatestRun(conversationId, null)
+        const timer = pollingTimersRef.current.get(conversationId)
+        if (timer) {
+          clearInterval(timer)
+          pollingTimersRef.current.delete(conversationId)
+          polledConvIdsRef.current.delete(conversationId)
+        }
+      }
+    } catch (error: any) {
+      // 404 表示没有运行中的 run，停止轮询
+      if (error?.response?.status === 404) {
+        convStore.updateConversationLatestRun(conversationId, null)
+        const timer = pollingTimersRef.current.get(conversationId)
+        if (timer) {
+          clearInterval(timer)
+          pollingTimersRef.current.delete(conversationId)
+          polledConvIdsRef.current.delete(conversationId)
+        }
+      }
+    }
+  }, [convStore])
+
+  // 为单个会话启动轮询
+  const startPolling = useCallback((conversationId: string) => {
+    if (pollingTimersRef.current.has(conversationId)) return
+    // 立即查询一次
+    pollConversationRun(conversationId)
+    // 设置定时轮询
+    const timer = setInterval(() => pollConversationRun(conversationId), POLL_INTERVAL)
+    pollingTimersRef.current.set(conversationId, timer)
+    polledConvIdsRef.current.add(conversationId)
+  }, [pollConversationRun])
+
+  // 监听会话列表，对运行中的会话启动轮询，对删除的会话停止轮询
+  useEffect(() => {
+    const allConvIds = new Set(convStore.conversations.map((conv: any) => String(conv.id)))
+    const runningConvIds = convStore.conversations
+      .filter((conv: any) => isRunRunning(conv.latest_run))
+      .map((conv: any) => String(conv.id))
+
+    // 停止已删除会话的轮询
+    for (const polledId of polledConvIdsRef.current) {
+      if (!allConvIds.has(polledId)) {
+        const timer = pollingTimersRef.current.get(polledId)
+        if (timer) {
+          clearInterval(timer)
+          pollingTimersRef.current.delete(polledId)
+        }
+        polledConvIdsRef.current.delete(polledId)
+      }
+    }
+
+    // 启动新的轮询
+    for (const convId of runningConvIds) {
+      if (!polledConvIdsRef.current.has(convId)) {
+        startPolling(convId)
+      }
+    }
+  }, [convStore.conversations, startPolling])
+
+  // 组件卸载时清理所有轮询
+  useEffect(() => {
+    return () => {
+      for (const timer of pollingTimersRef.current.values()) {
+        clearInterval(timer)
+      }
+      pollingTimersRef.current.clear()
+      polledConvIdsRef.current.clear()
+    }
+  }, [])
 
   // 新增：IntersectionObserver 监听
   useEffect(() => {
@@ -207,24 +294,30 @@ export function ChatHistory({
                       <p className="text-sm text-gray-700 truncate flex-1">
                         {conversation.title}
                       </p>
-                      <Dropdown
-                        trigger={["hover"]}
-                        placement="bottom"
-                        menu={{
-                          items: getConversationMenuItems(conversation),
-                          onClick: ({ key, domEvent }) => {
-                            domEvent.stopPropagation();
-                            handleMenuCommand(key, conversation);
-                          },
-                        }}
-                      >
-                        <div
-                          className="invisible group-hover:visible transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <SvgIcon name="more-h" />
+                      {isRunRunning(conversation.latest_run) ? (
+                        <div className="flex items-center justify-center w-5 h-5">
+                          <Spin indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />} />
                         </div>
-                      </Dropdown>
+                      ) : (
+                        <Dropdown
+                          trigger={["hover"]}
+                          placement="bottom"
+                          menu={{
+                            items: getConversationMenuItems(conversation),
+                            onClick: ({ key, domEvent }) => {
+                              domEvent.stopPropagation();
+                              handleMenuCommand(key, conversation);
+                            },
+                          }}
+                        >
+                          <div
+                            className="invisible group-hover:visible transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <SvgIcon name="more-h" />
+                          </div>
+                        </Dropdown>
+                      )}
                     </div>
                   </div>
                 ))}

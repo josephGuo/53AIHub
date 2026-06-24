@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { SvgIcon } from "@km/shared-components-react";
 import { useEnterpriseStore, useUserStore } from "@/stores";
 import systemLogApi from "@/api/modules/system-log";
-import { enterpriseLoginApi } from "@/api/modules/enterprise-login";
 import { sleep } from "@/utils";
 import { useEnv } from "@/hooks/useEnv";
 import { SYSTEM_LOG_ACTION } from "@/constants/system-log";
@@ -169,7 +168,7 @@ export function EnterpriseList(props: EnterpriseListProps) {
         {t("create_new_enterprise")}
       </button>
       <div className="relative w-full max-w-[440px]">
-        <h4 className="text-3xl text-[#1D1E1F] font-bold text-center mb-8 mt-10">
+        <h4 className="text-3xl text-primary font-bold text-center mb-8 mt-10">
           {t("login.select_enterprise")}
         </h4>
 
@@ -192,7 +191,7 @@ export function EnterpriseList(props: EnterpriseListProps) {
                   alt=""
                 />
                 <div className="w-[230px] mr-1">
-                  <div className="max-w-64 text-base text-[#182B50] truncate flex items-center">
+                  <div className="max-w-64 text-base text-dark truncate flex items-center">
                     <span className="max-w-[220px] overflow-hidden whitespace-nowrap text-ellipsis">
                       {item.name || "- -"}
                     </span>
@@ -202,7 +201,7 @@ export function EnterpriseList(props: EnterpriseListProps) {
                       </Tag>
                     )}
                   </div>
-                  <div className="text-sm text-[#9A9A9A] mt-2 max-w-[220px] overflow-hidden whitespace-nowrap text-ellipsis">
+                  <div className="text-sm text-disabled mt-2 max-w-[220px] overflow-hidden whitespace-nowrap text-ellipsis">
                     {item.domain || "- -"}
                   </div>
                 </div>
@@ -264,7 +263,7 @@ export function EnterpriseList(props: EnterpriseListProps) {
         </Button>
 
         <div
-          className="flex items-center text-sm text-[#5B6A91] cursor-pointer w-max mx-auto mt-2"
+          className="flex items-center text-sm text-link cursor-pointer w-max mx-auto mt-2"
           onClick={() => setServiceVisible(true)}
         >
           <SvgIcon name="service" width="14px" height="14px" className="mr-2" />

@@ -94,8 +94,9 @@ export const useUserStore = create<UserState>((set, get) => ({
       username: query.username || ''
     })
     if (res.code === 0) {
-      get().setAccessToken(res.data.access_token)
-      await get().getUserInfo()
+      const token = res.data.access_token
+      get().setAccessToken(token)
+      await get().getUserInfo(true, token)
       eventBus.emit(EVENT_NAMES.LOGIN_SUCCESS)
     }
   },
@@ -143,7 +144,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }))
   },
 
-  getUserInfo: async (force = true) => {
+  getUserInfo: async (force = true, access_token = '') => {
     const state = get()
     if ((!localStorage.getItem(TOKEN_KEY) || state.is_login) && !force) return
 
@@ -153,7 +154,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         subscriptionApi.list()
       ])
       const info: RawUserInfo = {
-        access_token: res.access_token || '',
+        access_token: res.access_token || access_token || '',
         user_id: res.user_id || '',
         openid: res.openid || '',
         username: res.username || '',

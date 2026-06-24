@@ -234,10 +234,9 @@ export const useEnterpriseStore = create<EnterpriseState>((set, get) => ({
 
   async loadSelfInfo() {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : ''
-    const userInfo =
-      typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem('user_info') || '{}') : {}
-    const is_invalid_user = !token || !userInfo.eid
-    if (is_invalid_user) return get()
+    // 只检查 token 是否存在，不依赖 user_info.eid
+    // 因为 user_info 可能在首次加载时还未被 user.loadSelfInfo() 更新
+    if (!token) return get()
 
     try {
       const saasRes = await enterpriseApi.is_saas().catch(() => ({ data: {} }))

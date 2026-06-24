@@ -1,10 +1,10 @@
 import { Table, Button, message } from "antd";
 import {
-  forwardRef,
-  useImperativeHandle,
-  useState,
-  useCallback,
-  useMemo,
+    forwardRef,
+    useImperativeHandle,
+    useState,
+    useCallback,
+    useMemo,
 } from "react";
 import type { ColumnsType } from "antd/es/table";
 import { librariesApi } from "@/api/modules/libraries";
@@ -118,7 +118,7 @@ function KnowledgeListDrawerInner(
         key: "created_time",
         minWidth: 140,
         render: (time: string) => (
-          <span className={time ? "" : "text-[#9B9B9B]"}>{time || "--"}</span>
+          <span className={time ? "" : "text-disabled"}>{time || "--"}</span>
         ),
       },
       {
@@ -139,7 +139,7 @@ function KnowledgeListDrawerInner(
               />
             ) : (
               <div className="size-6 bg-[#E0EEFF] flex items-center justify-center rounded-full">
-                <div className="text-xs text-[#2563EB]">系</div>
+                <div className="text-xs text-brand">系</div>
               </div>
             )}
             <span>{(record as any).creator_name || "--"}</span>

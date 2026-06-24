@@ -124,7 +124,7 @@ export function ForgetForm(props: ForgetFormProps) {
           username_type: "email",
         }}
       >
-        <h4 className="text-3xl text-[#1D1E1F] font-bold text-center mb-10">
+        <h4 className="text-3xl text-primary font-bold text-center mb-10">
           {t("login.reset_password")}
         </h4>
 

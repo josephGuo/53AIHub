@@ -14,6 +14,8 @@ export interface CollapsibleSectionProps {
   className?: string
   /** 展开时的回调 */
   onExpand?: (expanded: boolean) => void
+  // 是否纯净模式
+  plain?: boolean
 }
 
 export function CollapsibleSection({
@@ -23,23 +25,25 @@ export function CollapsibleSection({
   children,
   className = '',
   onExpand,
+  plain = false
 }: CollapsibleSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
 
   const handleToggle = () => {
+    if (plain) return
     const newExpanded = !expanded
     setExpanded(newExpanded)
     onExpand?.(newExpanded)
   }
 
   return (
-    <div className={`border-b ${className}`}>
+    <div className={`${ plain ? '': 'border-b'} ${className}`}>
       <div
         className="h-11 flex items-center gap-2 cursor-pointer hover:bg-[#F5F5F7]"
         onClick={handleToggle}
       >
-        <SvgIcon name={expanded ? 'down' : 'right'} color="#9CA3AF" />
-        <div className="flex-1 text-sm text-[#373A3D] font-semibold">
+        { !plain && <SvgIcon name={expanded ? 'down' : 'right'} color="#9CA3AF" />}
+        <div className="flex-1 text-sm text-[#373A3D] font-medium">
           {title}
         </div>
         {actions && (
@@ -49,7 +53,7 @@ export function CollapsibleSection({
         )}
       </div>
       {expanded && (
-        <div className="pt-1 pb-4">
+        <div className={ plain ? '' : 'pt-1 pb-4' }>
           {children}
         </div>
       )}

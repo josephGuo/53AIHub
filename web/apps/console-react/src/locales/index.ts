@@ -1,6 +1,7 @@
 import { parseCSV, csvToMessages } from '@km/shared-utils'
 import { useLocaleStore } from '@/stores/modules/locale'
 import { agentCreateMessages } from '@km/shared-business/agent-create'
+import { chatMessages } from '@km/shared-business/chat'
 
 // 直接复用 console 的 CSV 源，保证 key 与文案完全一致
 // eslint-disable-next-line import/no-relative-packages
@@ -8,30 +9,51 @@ import csvRaw from './source.csv?raw'
 
 const localeMessages = csvToMessages(parseCSV(csvRaw))
 
-/** 深度合并两个对象，解决嵌套结构覆盖问题 */
-function deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
-  const result = { ...target }
-  for (const key of Object.keys(source)) {
-    const targetVal = result[key]
-    const sourceVal = source[key]
-    // 如果两边都是对象，递归合并
-    if (key in result && typeof targetVal === 'object' && targetVal !== null && typeof sourceVal === 'object' && sourceVal !== null) {
-      result[key] = deepMerge(
-        targetVal as Record<string, unknown>,
-        sourceVal as Record<string, unknown>
-      )
-    } else {
-      result[key] = sourceVal
+/** 深度合并多个对象，支持任意数量的 source */
+function deepMerge<T extends Record<string, unknown>>(target: T, ...sources: Record<string, unknown>[]): T {
+  let result = { ...target } as T
+  for (const source of sources) {
+    for (const key of Object.keys(source)) {
+      const targetVal = result[key]
+      const sourceVal = source[key]
+      if (key in result && typeof targetVal === 'object' && targetVal !== null && typeof sourceVal === 'object' && sourceVal !== null) {
+        result[key] = deepMerge(
+          targetVal as Record<string, unknown>,
+          sourceVal as Record<string, unknown>
+        ) as T[Extract<keyof T, string>]
+      } else {
+        (result as Record<string, unknown>)[key] = sourceVal
+      }
     }
   }
   return result
 }
 
 const messages = {
-  'zh-cn': deepMerge(agentCreateMessages['zh-cn'] as Record<string, unknown>, localeMessages['zh-cn'] as Record<string, unknown>),
-  'zh-tw': deepMerge(agentCreateMessages['zh-tw'] as Record<string, unknown>, localeMessages['zh-tw'] as Record<string, unknown>),
-  en: deepMerge(agentCreateMessages.en as Record<string, unknown>, localeMessages.en as Record<string, unknown>),
-  ja: deepMerge(agentCreateMessages.ja as Record<string, unknown>, localeMessages.ja as Record<string, unknown>),
+  'zh-cn': deepMerge(
+    {},
+    agentCreateMessages['zh-cn'],
+    chatMessages['zh-cn'],
+    localeMessages['zh-cn']
+  ),
+  'zh-tw': deepMerge(
+    {},
+    agentCreateMessages['zh-tw'],
+    chatMessages['zh-tw'],
+    localeMessages['zh-tw']
+  ),
+  en: deepMerge(
+    {},
+    agentCreateMessages.en,
+    chatMessages.en,
+    localeMessages.en
+  ),
+  ja: deepMerge(
+    {},
+    agentCreateMessages.ja,
+    chatMessages.ja,
+    localeMessages.ja
+  ),
 }
 
 function getByPath(obj: Record<string, unknown> | undefined, path: string): unknown {

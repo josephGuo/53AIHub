@@ -138,7 +138,7 @@ export function WebSettingPage() {
         />
         <div className="flex-1 flex flex-col gap-0.5">
           <span>{navigationDetail.name || t("navigation.web_setting")}</span>
-          <span className="text-xs text-[#9A9BA0]">
+          <span className="text-xs text-hint">
             {t("last_edit")}:{" "}
             {formatLastEditTime(navigationDetail.content_update_time)}
           </span>
@@ -176,7 +176,7 @@ export function WebSettingPage() {
                   alt="logo"
                 />
               )}
-              <h2 className="flex-none text-[#1D1E1F] font-semibold">
+              <h2 className="flex-none text-primary font-semibold">
                 {enterpriseInfo.display_name || "--"}
               </h2>
               <Menu
@@ -186,7 +186,7 @@ export function WebSettingPage() {
                 items={navigationList.map((item) => ({
                   key: item.jump_path || String(item.navigation_id),
                   label: (
-                    <span className="!text-base !text-[#1D1E1F]">
+                    <span className="!text-base !text-primary">
                       {item.name}
                     </span>
                   ),
@@ -202,7 +202,7 @@ export function WebSettingPage() {
             </div>
 
             {/* 版权信息 */}
-            <div className="w-full h-[64px] px-[56px] box-border flex items-center bg-[#22252E] rounded-sm text-sm text-[#989A9D]">
+            <div className="w-full h-[64px] px-[56px] box-border flex items-center bg-[#22252E] rounded-sm text-sm text-hint">
               {enterpriseInfo.copyright}
             </div>
           </div>

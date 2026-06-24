@@ -3,9 +3,15 @@ import type {
   IAgentApi,
   ChatCompletionParams,
 } from "@km/shared-business/chat/adapters/types";
+import {
+  buildOpenClawConversation as buildSharedOpenClawConversation,
+  buildOpenClawMessages as buildSharedOpenClawMessages,
+  createOpenClawConversationApiAdapter as createSharedOpenClawConversationApiAdapter,
+} from "@km/shared-business/chat";
 import conversationApi from "@/api/modules/conversation";
 import agentsApi from "@/api/modules/agents";
 import chatApi from "@/api/modules/chat";
+import openclawApi, { type OpenClawSession } from "@/api/modules/openclaw";
 
 /**
  * front-react Conversation API Adapter
@@ -62,6 +68,31 @@ export const conversationApiAdapter: IConversationApi = {
     });
   },
 };
+
+export function buildOpenClawConversation(session: OpenClawSession, agentId: string | number) {
+  return buildSharedOpenClawConversation(session as any, agentId);
+}
+
+export const buildOpenClawMessages = buildSharedOpenClawMessages;
+
+/**
+ * OpenClaw Conversation API Adapter
+ * OpenClaw 会话与消息来自插件侧，不走 53AIHub 平台会话接口。
+ */
+export function createOpenClawConversationApiAdapter(agentId: string | number): IConversationApi {
+  return createSharedOpenClawConversationApiAdapter({
+    agentId,
+    openclawApi,
+    completions: (params, options) =>
+      chatApi.completions(params as any, {
+        responseType: "stream",
+        onDownloadProgress: options.onDownloadProgress,
+        signal: options.signal,
+      }),
+    requestSource: "web",
+    canonicalOnly: true,
+  });
+}
 
 /**
  * front-react Agent API Adapter

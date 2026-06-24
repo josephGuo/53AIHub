@@ -14,6 +14,4 @@ export { ThinkKnowledge } from './ThinkKnowledge'
 export type { ThinkKnowledgeRef } from './ThinkKnowledge'
 export { AddAnswerAsMd } from './AddAnswerAsMd'
 export type { AddAnswerAsMdRef } from './AddAnswerAsMd'
-export { ProcessFlowHeader } from './ProcessFlow'
-export type { ProcessFlowHeaderProps, ProcessFlowType } from './ProcessFlow'
 

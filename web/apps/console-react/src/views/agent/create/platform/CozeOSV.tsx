@@ -184,7 +184,7 @@ export const CozeOSV = forwardRef<CozeOSVRef, CozeOSVProps>(
           <>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1">
-                <h3 className="text-base text-[#1D1E1F]">
+                <h3 className="text-base text-primary">
                   {t('agent_app.coze_agent_cn')}
                 </h3>
               </div>

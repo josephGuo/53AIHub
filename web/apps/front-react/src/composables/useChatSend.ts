@@ -34,6 +34,8 @@
  */
 import { useRef, useCallback } from 'react'
 import chatApi from '@/api/modules/chat/index'
+import recentUsedApi from '@/api/modules/recent-used'
+import type { RecentUsedSaveItem } from '@/api/modules/recent-used/types'
 import { useChatStream } from './useChatStream'
 import { useRagStats } from './useRagStats'
 import { t } from '@/locales'
@@ -132,12 +134,15 @@ function buildFileContent(file: any, useUploadId: boolean = false) {
     filename: file.name,
     size: file.file_size ?? file.size,
     mime_type: file.file_mime ?? file.mime_type,
-    preview_key: file.preview_key
+    preview_key: file.preview_key,
+    file_id: file.id ?? '',
+    library_id: file.library_id ?? '',
   }
 }
 
 /**
  * 构建 specified_files（用于 info 消息）
+ * 包含文件、知识库和空间
  */
 function buildSpecifiedFilesInfo(links: any[]) {
   return {
@@ -146,8 +151,11 @@ function buildSpecifiedFilesInfo(links: any[]) {
       list: links.map(item => ({
         id: item.id,
         name: item.name,
+        icon: item.icon,
         library_id: item.library_id,
-        ...(item.isfolder !== undefined && { isfolder: item.isfolder })
+        ...(item.isfolder !== undefined && { isfolder: item.isfolder }),
+        ...(item.islibrary && { islibrary: item.islibrary }),
+        ...(item.isspace && { isspace: item.isspace })
       }))
     }),
     role: 'info'
@@ -200,7 +208,15 @@ export function useChatSend() {
     const isFromWorkAI = type === 'work-ai'
     const isAgentType = type === 'agent'
     const hasFiles = files.length > 0
-    const hasLinks = links.length > 0
+
+
+    // 从 links 中区分文件、知识库和空间
+    const linkFiles = links.filter(link => !link.islibrary && !link.isspace)
+    const linkLibraries = links.filter(link => link.islibrary)
+    const linkSpaces = links.filter(link => link.isspace)
+    const hasLinkFiles = linkFiles.length > 0
+    const hasLinkLibraries = linkLibraries.length > 0
+    const hasLinkSpaces = linkSpaces.length > 0
 
     // ========== 清理上一次请求状态 ==========
     clearBuffer()
@@ -211,12 +227,12 @@ export function useChatSend() {
     const userMessageContent: any[] = [{ type: 'text', content: formattedQuestion }]
     const uploadedFiles: any[] = []
     const specifiedFiles: any[] = []
-    
+
     if (isAgentType && hasFiles) {
       // agent 场景：文件直接序列化
       userMessageContent.push(...files)
       uploadedFiles.push(...files)
-    } else if (hasFiles || hasLinks) {
+    } else if (hasFiles || hasLinkFiles) {
       // 其他场景：文件转为 file_id 格式
       // work-ai 场景：links 也用 upload_file_id 加入 user 消息
       files.forEach(file => {
@@ -225,21 +241,42 @@ export function useChatSend() {
       })
       uploadedFiles.push(...files)
 
-      links.forEach(file => {
-        const item = buildFileContent(file, isFromWorkAI ?true : false)
+      // 只处理非知识库的 links
+      linkFiles.forEach(file => {
+        const item = buildFileContent(file, isFromWorkAI ? true : false)
         if (item) userMessageContent.push(item)
       })
     }
 
-    // UI 展示用的 specified_files
-    if (hasLinks) {
-      specifiedFiles.push(...links.map(item => ({
+    // UI 展示用的 specified_files（包含文件、知识库和空间）
+    if (hasLinkFiles) {
+      specifiedFiles.push(...linkFiles.map(item => ({
         id: item.id,
         name: item.name,
         icon: item.icon,
         library_id: item.library_id,
         ...(item.file_size && { file_size: item.file_size }),
-        ...(item.file_mime && { file_mime: item.file_mime })
+        ...(item.file_mime && { file_mime: item.file_mime }),
+        islibrary: false,
+        isspace: false
+      })))
+    }
+    if (hasLinkLibraries) {
+      specifiedFiles.push(...linkLibraries.map(item => ({
+        id: item.id,
+        name: item.name,
+        icon: item.icon,
+        islibrary: true,
+        isspace: false
+      })))
+    }
+    if (hasLinkSpaces) {
+      specifiedFiles.push(...linkSpaces.map(item => ({
+        id: item.id,
+        name: item.name,
+        icon: item.icon,
+        isspace: true,
+        islibrary: false
       })))
     }
 
@@ -256,13 +293,13 @@ export function useChatSend() {
       messages.push(buildSpecifiedContentInfo(sendOptions.text))
     }
 
-    // specified_files（非 work-ai 场景）
-    if (!isFromWorkAI && hasLinks) {
-      messages.push(buildSpecifiedFilesInfo(links))
+    // specified_files（包含文件、知识库和空间）
+    if (hasLinkFiles || hasLinkLibraries || hasLinkSpaces) {
+      messages.push(buildSpecifiedFilesInfo([...linkFiles, ...linkLibraries, ...linkSpaces]))
     }
 
     // user 消息
-    const userContent = hasFiles || hasLinks
+    const userContent = hasFiles || hasLinkFiles
       ? JSON.stringify(userMessageContent)
       : formattedQuestion
     messages.push({ role: 'user', content: userContent })
@@ -326,8 +363,13 @@ export function useChatSend() {
           top_p: 1,
           presence_penalty: 0,
           stream: true,
-          knowledge_base_ids: networkSearch || hasLinks ? [] : library?.value || (fileInfo ? [] : [-1]),
-          file_ids: hasLinks ? links.map(item => item.id) : [],
+          knowledge_base_ids: networkSearch
+            ? []
+            : hasLinkLibraries
+              ? linkLibraries.map(lib => String(lib.id))
+              : (library?.value || (fileInfo ? [] : [-1])),
+          file_ids: hasLinkFiles ? linkFiles.map(item => item.id) : [],
+          space_ids: hasLinkSpaces ? linkSpaces.map(item => String(item.id)) : [],
           message_file_id: fileInfo?.id,
           solo_file_mode: !!fileInfo,
           search_config: {
@@ -344,8 +386,18 @@ export function useChatSend() {
     let processedLength = 0
     let lastUpdateTime = 0
     const UPDATE_INTERVAL = 100 // 每 100ms 最多更新一次 UI
-
     try {
+      // 保存最近使用记录
+      if (!isAgentType && links.length > 0) {
+        const recentItems: RecentUsedSaveItem[] = links.map(link => ({
+          resource_type: (link as any).isspace ? 0 : (link.islibrary ? 1 : 2),
+          resource_id: link.id || ''
+        }))
+        if (recentItems.length > 0) {
+          recentUsedApi.save(recentItems)
+        }
+      }
+
       await chatApi.completions(completionsPayload, {
         responseType: 'stream',
         onDownloadProgress: (e: any) => {

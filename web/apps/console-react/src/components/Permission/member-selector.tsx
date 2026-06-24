@@ -121,11 +121,12 @@ export function MemberSelector({ onConfirm, children }: MemberSelectorProps) {
           {memberList.map((item, index) => (
             <div key={item.value} className="h-8 flex items-center justify-between gap-2">
               <img src={item.avatar} alt="avatar" className="w-5 h-5 rounded-full" />
-              <p className="flex-1 text-sm text-[#1D1E1F] truncate">{item.label}</p>
+              <p className="flex-1 text-sm text-primary truncate">{item.label}</p>
               <PermissionSelector
                 value={item.permission}
                 onChange={(permission) => handlePermissionChange(index, permission)}
                 buttonType="link"
+                none={true}
                 teleported={false}
               />
             </div>

@@ -99,7 +99,7 @@ export function NormalViewer({ url, content }: NormalViewerProps) {
     return (
       <div className="h-full flex items-center justify-center">
         <Spin />
-        <span className="ml-2 text-[#4F5052]">加载中...</span>
+        <span className="ml-2 text-secondary">加载中...</span>
       </div>
     )
   }
@@ -108,8 +108,8 @@ export function NormalViewer({ url, content }: NormalViewerProps) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-8">
         <WarningOutlined className="text-6xl text-red-500 mb-4" />
-        <h3 className="text-lg font-medium text-[#1D1E1F] mb-2">文件加载失败</h3>
-        <p className="text-[#9B9B9B] mb-4">{error}</p>
+        <h3 className="text-lg font-medium text-primary mb-2">文件加载失败</h3>
+        <p className="text-disabled mb-4">{error}</p>
         <Button type="primary" icon={<ReloadOutlined />} onClick={loadFile}>
           重试
         </Button>
@@ -182,8 +182,8 @@ export function NormalViewer({ url, content }: NormalViewerProps) {
   return (
     <div className="h-full flex flex-col items-center justify-center text-center p-8">
       <WarningOutlined className="text-6xl text-orange-500 mb-4" />
-      <h3 className="text-lg font-medium text-[#1D1E1F] mb-2">不支持的文件类型</h3>
-      <p className="text-[#9B9B9B] mb-4">当前文件类型 {fileType} 暂不支持预览</p>
+      <h3 className="text-lg font-medium text-primary mb-2">不支持的文件类型</h3>
+      <p className="text-disabled mb-4">当前文件类型 {fileType} 暂不支持预览</p>
       <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownload}>
         下载文件
       </Button>
@@ -264,13 +264,13 @@ function highlightJson(json: string): string {
   return json.replace(
     /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
     (match) => {
-      let cls = 'text-[#9B9B9B]'
+      let cls = 'text-disabled'
       if (/^"/.test(match)) {
-        cls = /:$/.test(match) ? 'text-[#2563EB] font-semibold' : 'text-[#059669]'
+        cls = /:$/.test(match) ? 'text-brand font-semibold' : 'text-[#059669]'
       } else if (/true|false/.test(match)) {
         cls = 'text-[#DC2626]'
       } else if (/null/.test(match)) {
-        cls = 'text-[#9B9B9B]'
+        cls = 'text-disabled'
       } else if (/^-?\d/.test(match)) {
         cls = 'text-[#7C3AED]'
       }
@@ -299,14 +299,14 @@ function highlightXml(xml: string): string {
 
   // Highlight comments
   escaped = escaped.replace(/&lt;!--[\s\S]*?--&gt;/g, (match: string) => {
-    return `<span class="text-[#9B9B9B] italic">${match}</span>`
+    return `<span class="text-disabled italic">${match}</span>`
   })
 
   // Highlight tags
   escaped = escaped.replace(
     /&lt;([\w\-:]+)(\s+[^&]*?)?(\s*\/?&gt;)/g,
     (_match, tagName, attrs, closing) => {
-      const openTag = `<span class="text-[#DC2626]">&lt;</span><span class="text-[#2563EB] font-semibold">${tagName}</span>`
+      const openTag = `<span class="text-[#DC2626]">&lt;</span><span class="text-brand font-semibold">${tagName}</span>`
       if (attrs?.trim()) {
         const highlightedAttrs = attrs.replace(
           /([\w\-:]+)\s*=\s*(["'])(.*?)\2/g,
@@ -321,14 +321,14 @@ function highlightXml(xml: string): string {
 
   // Highlight closing tags
   escaped = escaped.replace(/&lt;(\/)([\w\-:]+)&gt;/g, (_, slash, tagName) => {
-    return `<span class="text-[#DC2626]">&lt;${slash}</span><span class="text-[#2563EB] font-semibold">${tagName}</span><span class="text-[#DC2626]">&gt;</span>`
+    return `<span class="text-[#DC2626]">&lt;${slash}</span><span class="text-brand font-semibold">${tagName}</span><span class="text-[#DC2626]">&gt;</span>`
   })
 
   // Highlight XML declaration and processing instructions
   escaped = escaped.replace(
     /&lt;\?([\w\-:]+)(\s+[^&]*?)?\?&gt;/g,
     (_match, name, attrs) => {
-      const decl = `<span class="text-[#DC2626]">&lt;?</span><span class="text-[#2563EB] font-semibold">${name}</span>`
+      const decl = `<span class="text-[#DC2626]">&lt;?</span><span class="text-brand font-semibold">${name}</span>`
       if (attrs?.trim()) {
         const highlightedAttrs = attrs.replace(
           /([\w\-:]+)\s*=\s*(["'])(.*?)\2/g,

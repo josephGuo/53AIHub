@@ -178,8 +178,8 @@ export function ParseConfig({ config, onUpdateConfig }: ParseConfigProps) {
               <div className="w-[50px] h-[50px] mb-4 rounded overflow-hidden">
                 <img src={method.icon} className="w-full h-full object-cover" alt={method.name} />
               </div>
-              <div className="text-base font-semibold text-[#1D1E1F] mb-1">{method.name}</div>
-              <div className="text-sm text-[#9A9A9A] leading-normal">{method.desc}</div>
+              <div className="text-base font-semibold text-primary mb-1">{method.name}</div>
+              <div className="text-sm text-disabled leading-normal">{method.desc}</div>
             </div>
           ))}
         </div>
@@ -199,13 +199,13 @@ export function ParseConfig({ config, onUpdateConfig }: ParseConfigProps) {
       {config.engine && (
         <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100 space-y-6">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-700">
-            <SettingOutlined className="text-[#2563EB]" />
+            <SettingOutlined className="text-brand" />
             <span>{getMethodName(config.engine)}{t('data_pipeline.parse_config_suffix')}</span>
           </div>
 
           {/* Info Box */}
           <div className="bg-[#F0F4FF] p-4 rounded-xl flex items-start gap-3">
-            <p className="text-xs text-[#999999] leading-relaxed">
+            <p className="text-xs text-placeholder leading-relaxed">
               {activeMethodInfo?.detailedDesc}
             </p>
           </div>

@@ -1,28 +1,28 @@
 import {
-  DndContext,
-  PointerSensor,
-  closestCenter,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragOverEvent,
+    DndContext,
+    PointerSensor,
+    closestCenter,
+    useDroppable,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+    type DragOverEvent,
 } from "@dnd-kit/core";
 
 import { useState, type ReactNode } from "react";
 import {
-  SortableContext,
-  arrayMove,
-  rectSortingStrategy,
-  useSortable,
+    SortableContext,
+    arrayMove,
+    rectSortingStrategy,
+    useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 import type {
-  SortableGroup,
-  SortableHandleProps,
-  SortableItem,
-  SortableItemId,
+    SortableGroup,
+    SortableHandleProps,
+    SortableItem,
+    SortableItemId,
 } from "./types";
 
 const dragHandleClass = ".sort-icon";
@@ -300,7 +300,7 @@ export const SortableGroupGrid = <T,>({
         {renderGroups.map((group) => (
           <div key={group.id} className="flex flex-col gap-3">
             {showGroupTitle && group.title ? (
-              <div className="text-[#4F5052] text-opacity-60 text-sm">
+              <div className="text-secondary text-opacity-60 text-sm">
                 {group.title}
               </div>
             ) : null}

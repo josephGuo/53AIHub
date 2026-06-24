@@ -5,7 +5,7 @@ export function KnowledgeOverview() {
 
   return (
     <div className="p-6">
-      <div className="text-sm text-[#4F5052]">
+      <div className="text-sm text-secondary">
         {t('knowledge.overview_desc')}
       </div>
     </div>

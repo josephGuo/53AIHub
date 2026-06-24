@@ -33,6 +33,8 @@ export interface GroupTabsProps {
   hideFooter?: boolean;
   /** 是否隐藏前缀 */
   hidePrefix?: boolean;
+  /** 单选模式（仅 dropdown 生效） */
+  single?: boolean;
   /** 自定义类名 */
   className?: string;
   /** 值变化回调 */
@@ -100,6 +102,7 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
       disabled = false,
       hideFooter = false,
       hidePrefix = false,
+      single = false,
       className,
       onChange,
       onOptionsChange,
@@ -108,6 +111,7 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
   ) => {
     const isDropdown = type === "dropdown";
     const isTabsPure = type === "tabs-pure";
+    const isSingle = single && isDropdown; // 单选模式
     const includeAll = !isTabsPure && !isDropdown; // dropdown 模式不包含 "全部"
 
     // Refs
@@ -126,16 +130,23 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
       () => filterAllOption(toArray(value)),
     );
     const [selectOpen, setSelectOpen] = useState(false);
+    // 标记是否刚确认过，避免 handleOpenChange 中 handleCancel 覆盖
+    const confirmedRef = useRef(false);
 
     // 同步外部 value
     useEffect(() => {
       if (isDropdown) {
-        // dropdown 模式过滤掉 "-1"（全部选项）
-        setSelectedValue(filterAllOption(toArray(value)));
+        if (isSingle) {
+          // 单选模式：value 是单值
+          setSelectedValue(value ? [value as string | number] : []);
+        } else {
+          // 多选模式：过滤掉 "-1"（全部选项）
+          setSelectedValue(filterAllOption(toArray(value)));
+        }
       } else {
         setActiveTab((value as string | number) ?? "");
       }
-    }, [value, isDropdown]);
+    }, [value, isDropdown, isSingle]);
 
     // 同步外部 options（带比较防护，避免无限循环）
     useEffect(() => {
@@ -186,13 +197,24 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
 
     // 取消选择 - 恢复到原始值
     const handleCancel = () => {
-      setSelectedValue(filterAllOption(toArray(value)));
+      if (isSingle) {
+        setSelectedValue(value ? [value as string | number] : []);
+      } else {
+        setSelectedValue(filterAllOption(toArray(value)));
+      }
       setSelectOpen(false);
     };
 
     // 确认选择
     const handleConfirm = () => {
-      onChange?.(selectedValue as string[]);
+      confirmedRef.current = true; // 标记已确认
+      if (isSingle) {
+        // 单选模式：返回单值
+        const selectedId = selectedValue[0] ?? 0;
+        onChange?.(selectedId);
+      } else {
+        onChange?.(selectedValue as string[]);
+      }
       setSelectOpen(false);
     };
 
@@ -200,6 +222,11 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
     const handleOpenChange = (open: boolean) => {
       setSelectOpen(open);
       if (!open) {
+        // 如果刚确认过，不再重置
+        if (confirmedRef.current) {
+          confirmedRef.current = false;
+          return;
+        }
         handleCancel();
       }
     };
@@ -226,9 +253,19 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
         ? t("group") + "：" + (selectedOptions[0].group_name || "--")
         : t("group") + "：";
 
-      // 选中一个时隐藏 tags，选中多个时显示 tag "+N"
-      const showTags = selectedOptions.length > 1;
-      const extraCount = selectedOptions.length > 1 ? selectedOptions.length - 1 : 0;
+      // 单选模式：选择后保持打开状态，限制只能选一个
+      const handleSingleChange = (vals: (string | number)[]) => {
+        // 如果选择了新值，替换旧值（保持单选）
+        if (vals.length > 1) {
+          setSelectedValue([vals[vals.length - 1]]);
+        } else {
+          setSelectedValue(vals);
+        }
+        // 选择后保持打开，等用户点击确定
+      };
+
+      // 多选模式下超过1个时显示 "+N"
+      const extraCount = !isSingle && selectedValue.length > 1 ? selectedValue.length - 1 : 0;
 
       return (
         <div className="group-tabs-dropdown">
@@ -236,13 +273,14 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
             ref={selectRef}
             open={selectOpen}
             mode="multiple"
-            maxTagCount={0}
+            maxTagCount={isSingle ? 0 : 1}
+            maxTagPlaceholder={isSingle ? undefined : (omittedValues) => `+${omittedValues.length}`}
             disabled={disabled}
             prefix={
               hidePrefix ? undefined : (
                 <span className="flex items-center max-w-48 text-sm truncate">
                   <span className="truncate">{prefixText}</span>
-                  {showTags && (
+                  {!isSingle && extraCount > 0 && (
                     <span className="ml-1 px-1.5 h-5 text-xs text-gray-600 bg-[#f4f4f5] rounded inline-flex items-center">
                       +{extraCount}
                     </span>
@@ -252,7 +290,7 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
             }
             placeholder={t("all")}
             value={selectedValue}
-            onChange={setSelectedValue}
+            onChange={isSingle ? handleSingleChange : setSelectedValue}
             onOpenChange={handleOpenChange}
             options={tabOptions.map((opt) => ({
               label: opt.group_name,
@@ -263,7 +301,7 @@ export const GroupTabs = forwardRef<GroupTabsRef, GroupTabsProps>(
               popup: { root: "!w-[220px]" },
             }}
             notFoundContent={
-              <div className="text-center text-[#A4AABA] text-sm py-8">
+              <div className="text-center text-hint text-sm py-8">
                 {t("no_data")}
               </div>
             }

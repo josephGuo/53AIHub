@@ -17,6 +17,7 @@ interface FieldInputProps {
   updateRequest?: () => Promise<FieldItem[]>;
   type: "input" | "output";
   agentType?: string;
+  className?: string
 }
 
 export function FieldInput({
@@ -28,6 +29,7 @@ export function FieldInput({
   updateRequest = () => Promise.resolve([]),
   type = "input",
   agentType = "",
+  className = ""
 }: FieldInputProps) {
   const fieldSaveRef = useRef<FieldInputSettingRef>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -146,14 +148,19 @@ export function FieldInput({
       <CollapsibleSection
         title={title}
         actions={actions}
+        defaultExpanded={true}
+        plain
+        className={className}
       >
-        <Table
-          dataSource={list}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-          className="border"
-        />
+        <div className="p-4 border rounded-xl bg-white">
+          <Table
+            dataSource={list}
+            columns={columns}
+            rowKey="id"
+            pagination={false}
+            className="border rounded"
+          />
+        </div>
       </CollapsibleSection>
 
       <FieldInputSetting

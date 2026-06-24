@@ -388,7 +388,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       {/* 智能匹配开关 */}
       <div className="flex items-center gap-2 mb-5">
-        <span className="text-base text-[#1D1E1F]">{t("data_pipeline.smart_match")}</span>
+        <span className="text-base text-primary">{t("data_pipeline.smart_match")}</span>
         <Switch
           checked={Boolean(config.enable_smart_match)}
           onChange={(checked) => {
@@ -399,7 +399,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
             });
           }}
         />
-        <span className="text-sm text-[#9A9A9A]">
+        <span className="text-sm text-disabled">
           {config.enable_smart_match
             ? t("data_pipeline.smart_match_on_desc")
             : t("data_pipeline.smart_match_off_desc")}
@@ -438,10 +438,10 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                   alt={type.name}
                 />
               </div>
-              <div className="text-base font-semibold text-[#1D1E1F] mb-1">
+              <div className="text-base font-semibold text-primary mb-1">
                 {type.name}
               </div>
-              <div className="text-sm text-[#9A9A9A] leading-normal">
+              <div className="text-sm text-disabled leading-normal">
                 {type.desc}
               </div>
             </div>
@@ -455,7 +455,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
           <div className="border rounded">
             <div className="h-12 flex items-center gap-2 px-5 border-b">
               <SvgIcon name="notebook-one" width={16} height={16} />
-              <h4 className="text-sm text-[#1D1E1F]">
+              <h4 className="text-sm text-primary">
                 {t("data_pipeline.chunk_knowledge_point")}
               </h4>
             </div>
@@ -526,10 +526,10 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                       handleChangeChunkMode("knowledge", CHUNK_MODE.LENGTH)
                     }
                   >
-                    <div className="size-5 rounded bg-[#E0EAFF] flex items-center justify-center text-[#2563EB]">
+                    <div className="size-5 rounded bg-[#E0EAFF] flex items-center justify-center text-brand">
                       <SvgIcon name="list-numbers" width={14} height={14} />
                     </div>
-                    <span className="flex-1 text-sm text-[#1D1E1F]">
+                    <span className="flex-1 text-sm text-primary">
                       {t("data_pipeline.chunk_length_first")}
                     </span>
                     <Radio
@@ -557,7 +557,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                     <div className="size-5 rounded bg-[#FFF1D6] flex items-center justify-center text-[#F0A105]">
                       #
                     </div>
-                    <span className="flex-1 text-sm text-[#1D1E1F]">
+                    <span className="flex-1 text-sm text-primary">
                       标识符优先
                     </span>
                     <Radio
@@ -578,7 +578,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
               ) && (
                 <div className="p-4 bg-[#F8F9FA] rounded-md space-y-3">
                   <div className="flex items-center">
-                    <div className="flex-none w-20 text-sm text-[#4F5052]">
+                    <div className="flex-none w-20 text-sm text-secondary">
                       {t("data_pipeline.chunk_identifier")}
                     </div>
                     <Checkbox.Group
@@ -606,14 +606,14 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                         }}
                         trigger={["click"]}
                       >
-                        <div className="flex items-center mr-5 ml-2 text-sm text-[#4F5052] cursor-pointer">
+                        <div className="flex items-center mr-5 ml-2 text-sm text-secondary cursor-pointer">
                           {getHeadingLabel("knowledge")}
                           <DownOutlined className="ml-1" />
                         </div>
                       </Dropdown>
                       <Checkbox value={SPLIT_TYPE.CUSTOM} />
                       <div className="flex items-center gap-2 ml-2">
-                        <span className="text-sm text-[#4F5052] whitespace-nowrap">
+                        <span className="text-sm text-secondary whitespace-nowrap">
                           指定标识符
                         </span>
                         <Select
@@ -640,7 +640,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                   </div>
 
                   <div className="flex items-center">
-                    <div className="flex-none w-20 text-sm text-[#4F5052]">
+                    <div className="flex-none w-20 text-sm text-secondary">
                       {t("data_pipeline.chunk_length")}
                     </div>
                     <InputNumber
@@ -668,7 +668,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                   </div>
 
                   <div className="flex items-center">
-                    <div className="flex-none w-20 text-sm text-[#4F5052]">
+                    <div className="flex-none w-20 text-sm text-secondary">
                       召回语料
                     </div>
                     <div className="flex gap-4">
@@ -722,7 +722,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
           <div className="border rounded">
             <div className="h-12 flex items-center gap-2 px-5 border-b">
               <SvgIcon name="layers" width={16} height={16} />
-              <h4 className="text-sm text-[#1D1E1F]">
+              <h4 className="text-sm text-primary">
                 {t("data_pipeline.chunk_retrieval_block")}
               </h4>
             </div>
@@ -790,10 +790,10 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                       handleChangeChunkMode("index", CHUNK_MODE.LENGTH)
                     }
                   >
-                    <div className="size-5 rounded bg-[#E0EAFF] flex items-center justify-center text-[#2563EB]">
+                    <div className="size-5 rounded bg-[#E0EAFF] flex items-center justify-center text-brand">
                       <SvgIcon name="list-numbers" width={14} height={14} />
                     </div>
-                    <span className="flex-1 text-sm text-[#1D1E1F]">
+                    <span className="flex-1 text-sm text-primary">
                       {t("data_pipeline.chunk_length_first")}
                     </span>
                     <Radio
@@ -820,7 +820,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                     <div className="size-5 rounded bg-[#FFF1D6] flex items-center justify-center text-[#F0A105]">
                       #
                     </div>
-                    <span className="flex-1 text-sm text-[#1D1E1F]">
+                    <span className="flex-1 text-sm text-primary">
                       {t("data_pipeline.chunk_identifier_first")}
                     </span>
                     <Radio
@@ -841,7 +841,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                 <>
                   <div className="p-4 bg-[#F8F9FA] rounded-md space-y-3">
                     <div className="flex items-center">
-                      <div className="flex-none w-20 text-sm text-[#4F5052]">
+                      <div className="flex-none w-20 text-sm text-secondary">
                         {t("data_pipeline.chunk_identifier")}
                       </div>
                       <Checkbox.Group
@@ -871,14 +871,14 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                           }}
                           trigger={["click"]}
                         >
-                          <div className="flex items-center mr-5 ml-2 text-sm text-[#4F5052] cursor-pointer">
+                          <div className="flex items-center mr-5 ml-2 text-sm text-secondary cursor-pointer">
                             {getHeadingLabel("index")}
                             <DownOutlined className="ml-1" />
                           </div>
                         </Dropdown>
                         <Checkbox value={SPLIT_TYPE.CUSTOM} />
                         <div className="flex items-center gap-2 ml-2">
-                          <span className="text-sm text-[#4F5052] whitespace-nowrap">
+                          <span className="text-sm text-secondary whitespace-nowrap">
                             指定标识符
                           </span>
                           <Select
@@ -905,7 +905,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                     </div>
 
                     <div className="flex items-center">
-                      <div className="flex-none w-20 text-sm text-[#4F5052]">
+                      <div className="flex-none w-20 text-sm text-secondary">
                         {t("data_pipeline.chunk_length")}
                       </div>
                       <InputNumber
@@ -934,11 +934,11 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                   </div>
 
                   <div className="p-4 bg-[#F8F9FA] rounded-md space-y-3">
-                    <div className="text-sm text-[#1D1E1F] font-semibold">
+                    <div className="text-sm text-primary font-semibold">
                       {t("data_pipeline.chunk_index_enhance")}
                     </div>
                     <div className="flex items-center">
-                      <div className="flex-none w-20 text-sm text-[#4F5052]">
+                      <div className="flex-none w-20 text-sm text-secondary">
                         {t("data_pipeline.chunk_default_index")}
                       </div>
                       <div className="flex gap-4">
@@ -998,7 +998,7 @@ export function ChunkConfig({ config, onUpdateConfig }: ChunkConfigProps) {
                       </div>
                     </div>
                     <div className="flex items-center">
-                      <div className="flex-none w-20 text-sm text-[#4F5052]">
+                      <div className="flex-none w-20 text-sm text-secondary">
                         {t("data_pipeline.chunk_auto_generate")}
                       </div>
                       <div className="flex gap-4">

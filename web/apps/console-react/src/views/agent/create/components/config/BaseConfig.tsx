@@ -1,7 +1,7 @@
 import { Button, Input, message } from "antd";
 import {
-  PlusOutlined,
-  HolderOutlined,
+    PlusOutlined,
+    HolderOutlined,
 } from "@ant-design/icons";
 import { SvgIcon } from "@km/shared-components-react";
 import { useEffect, useMemo } from "react";
@@ -9,19 +9,19 @@ import { t } from "@/locales";
 import { useAgentForm } from "../../hooks";
 import { MarkdownEditor } from "@/components/Markdown/editor";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -148,7 +148,7 @@ export function BaseConfig() {
   return (
     <>
       <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="text-sm text-[#4F5052]">{t("opening_statement")}</div>
+        <div className="text-sm text-secondary">{t("opening_statement")}</div>
       </div>
       <MarkdownEditor
         value={openingStatement}
@@ -158,7 +158,7 @@ export function BaseConfig() {
         height="200px"
       />
       <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="text-sm text-[#4F5052]">{t("suggested_questions")}</div>
+        <div className="text-sm text-secondary">{t("suggested_questions")}</div>
         <Button type="link" className="px-0" onClick={handleAdd}>
           <PlusOutlined className="size-3" />
           {t("action_add")}

@@ -1,10 +1,10 @@
 /**
  * System Log 模块状态管理
- * 使用 Zustand 统一管理列表页状态
+ * 使用 Zustand 统一管理列表页数据状态
+ * 注意：筛选状态由 useListState hook 管理（URL持久化）
  */
 import { create } from 'zustand'
-import { systemLogApi, getDefaultListParams, transformSystemLogList } from './api/systemLogApi'
-import { DEFAULT_PAGE_SIZE } from './constants'
+import { systemLogApi, transformSystemLogList } from './api/systemLogApi'
 import type {
   SystemLogDisplayItem,
   SystemLogListParams,
@@ -19,21 +19,13 @@ interface SystemLogState {
   actions: ActionItem[]
   modules: ModuleItem[]
 
-  // 筛选状态
-  params: SystemLogListParams
-  dateRange: [number | null, number | null]
-
   // UI 状态
   loading: boolean
 
   // Actions
-  loadList: (params?: Partial<SystemLogListParams>) => Promise<void>
+  loadList: (params: SystemLogListParams) => Promise<void>
   loadActions: () => Promise<void>
   loadModules: () => Promise<void>
-  setParams: (params: Partial<SystemLogListParams>) => void
-  setFilterParams: (params: Partial<SystemLogListParams>) => void
-  setDateRange: (range: [number | null, number | null]) => void
-  resetParams: () => void
   refresh: () => Promise<void>
 }
 
@@ -57,27 +49,16 @@ export const useSystemLogStore = create<SystemLogState>((set, get) => ({
   total: 0,
   actions: [],
   modules: [],
-  params: getDefaultListParams(),
-  dateRange: [null, null],
   loading: false,
 
   // 加载日志列表
-  loadList: async (overrideParams?: Partial<SystemLogListParams>) => {
-    const { params, dateRange } = get()
-    const finalParams: SystemLogListParams = {
-      ...params,
-      ...overrideParams,
-      start_time: dateRange[0],
-      end_time: dateRange[1],
-    }
-
+  loadList: async (params: SystemLogListParams) => {
     set({ loading: true })
     try {
-      const response = await systemLogApi.list(finalParams)
+      const response = await systemLogApi.list(params)
       set({
         list: transformSystemLogList(response.system_logs || []),
         total: response.count || 0,
-        params: finalParams,
       })
     } finally {
       set({ loading: false })
@@ -96,59 +77,10 @@ export const useSystemLogStore = create<SystemLogState>((set, get) => ({
     set({ modules: data })
   },
 
-  // 设置请求参数
-  setParams: (newParams) => {
-    const { params, loadList, dateRange } = get()
-    const finalParams: SystemLogListParams = {
-      ...params,
-      ...newParams,
-      start_time: dateRange[0],
-      end_time: dateRange[1],
-    }
-    set({ params: finalParams })
-    loadList()
-  },
-
-  // 设置筛选参数（会重置页码）
-  setFilterParams: (newParams) => {
-    const { params, loadList, dateRange } = get()
-    const finalParams: SystemLogListParams = {
-      ...params,
-      ...newParams,
-      offset: 0, // 筛选条件变化时重置页码
-      start_time: dateRange[0],
-      end_time: dateRange[1],
-    }
-    set({ params: finalParams })
-    loadList()
-  },
-
-  // 设置日期范围（会重置页码）
-  setDateRange: (range) => {
-    const { params } = get()
-    set({ dateRange: range })
-    // 日期变化时重置页码并重新加载
-    const finalParams: SystemLogListParams = {
-      ...params,
-      offset: 0,
-      start_time: range[0],
-      end_time: range[1],
-    }
-    set({ params: finalParams })
-    get().loadList()
-  },
-
-  // 重置参数
-  resetParams: () => {
-    set({
-      params: getDefaultListParams(),
-      dateRange: [null, null],
-    })
-    get().loadList()
-  },
-
-  // 刷新数据
+  // 刷新数据（需要外部传入参数）
   refresh: async () => {
-    await get().loadList()
+    // refresh 仅触发 loading 状态，实际数据加载由组件控制
+    set({ loading: true })
+    set({ loading: false })
   },
 }))

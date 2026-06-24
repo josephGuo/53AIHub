@@ -138,7 +138,7 @@ export function ModelGroup({
           src={primary.platform_icon}
           alt=""
         />
-        <div className="flex-1 text-[#1B2B51] font-semibold">
+        <div className="flex-1 text-dark font-semibold">
           {primary.platform_name}
         </div>
         {!group.multiple ? (
@@ -169,10 +169,10 @@ export function ModelGroup({
             key: group.multiple ? `models-${index}` : entry.modelType,
             label: (
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[#1D1E1F] text-sm">
+                <span className="text-primary text-sm">
                   {entry.modelTypeName}
                 </span>
-                <span className="px-1.5 leading-5 rounded text-[#999999] text-xs bg-[#F5F6F7]">
+                <span className="px-1.5 leading-5 rounded text-placeholder text-xs bg-[#F5F6F7]">
                   {t("module.platform_model_models_total", {
                     total: entry.options.length,
                   })}
@@ -201,13 +201,13 @@ export function ModelGroup({
                         />
                       )}
                       <div className="flex-1 flex items-center gap-1">
-                        <label className="text-sm text-[#1D1E1F]">
+                        <label className="text-sm text-primary">
                           {model.label}
                         </label>
                         {model.label !== model.value && (
                           <>
-                            <span className="text-[#999999] text-xs">|</span>
-                            <span className="text-[#999999] text-xs">
+                            <span className="text-placeholder text-xs">|</span>
+                            <span className="text-placeholder text-xs">
                               {model.value}
                             </span>
                           </>
@@ -215,7 +215,7 @@ export function ModelGroup({
 
                         {model.deep_thinking && (
                           <Tooltip title={t("model.deep_thinking")}>
-                            <div className="w-5 h-5 rounded flex items-center justify-center bg-[#EDF3FF] text-[#2563EB]">
+                            <div className="w-5 h-5 rounded flex items-center justify-center bg-[#EDF3FF] text-brand">
                               <SvgIcon
                                 name="smart-optimization"
                                 width="12"
@@ -226,7 +226,7 @@ export function ModelGroup({
                         {model.vision && (
                           <Tooltip title={t("platform_model.vision")}>
                             <div className="w-5 h-5 rounded flex items-center justify-center bg-[#FFF9ED] text-[#F0A105]">
-                              <SvgIcon name="view" width="12"></SvgIcon>
+                              <SvgIcon name="preview-open" width="12"></SvgIcon>
                             </div>
                           </Tooltip>
                         )}
@@ -264,7 +264,7 @@ export function ModelGroup({
                         </Tooltip>
                         <Tooltip title={t("action_setting")}>
                           <span
-                            className={`${group.multiple ? "flex-none" : ""} cursor-pointer text-[#999999]`}
+                            className={`${group.multiple ? "flex-none" : ""} cursor-pointer text-placeholder`}
                             onClick={() => handleSettingClick(model, entry)}
                           >
                             <SvgIcon name="config" width="14"></SvgIcon>
@@ -272,7 +272,7 @@ export function ModelGroup({
                         </Tooltip>
                         <Tooltip title={t("action_delete")}>
                           <span
-                            className={`${group.multiple ? "flex-none" : ""} cursor-pointer text-[#999999]`}
+                            className={`${group.multiple ? "flex-none" : ""} cursor-pointer text-placeholder`}
                             onClick={() => handleDeleteClick(model, entry)}
                           >
                             <SvgIcon name="delete" width="14"></SvgIcon>

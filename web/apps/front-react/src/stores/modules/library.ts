@@ -529,6 +529,11 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     }).then(() => {
       // 触发文件列表刷新
       set((state) => ({ fileRefreshKey: state.fileRefreshKey + 1 }))
+      // 清除 Space 弹窗知识目录文件缓存
+      const libraryId = get().library_id
+      if (libraryId) {
+        cache.delete(`files_all_${libraryId}_root`)
+      }
     })
   },
 
@@ -539,6 +544,11 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   deleteFile: (file: FileItem) => {
     return filesApi.delete(file.id).then((res) => {
       get().loadFilesAll()
+      // 清除 Space 弹窗知识目录文件缓存
+      const libraryId = get().library_id
+      if (libraryId) {
+        cache.delete(`files_all_${libraryId}_root`)
+      }
     })
   },
 

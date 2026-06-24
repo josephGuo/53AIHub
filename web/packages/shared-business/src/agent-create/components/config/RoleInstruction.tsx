@@ -32,7 +32,7 @@ export function RoleInstruction() {
   return (
     <div className="flex-1 min-h-0 flex flex-col relative">
       <div
-        className={`h-[22px] flex items-center mb-3`}
+        className={`h-11 flex items-center`}
       >
         <div
           className="flex-1 text-sm text-[var(--ant-form-label-color] truncate"
@@ -78,16 +78,16 @@ export function RoleInstruction() {
           </Tooltip>
         </div>
       </div>
-      <div className="flex-1  overflow-y-auto">
+      <div className="flex-1 border rounded-xl bg-white overflow-y-auto">
         <PromptInput
           value={prompt}
           onChange={onPromptChange}
           style={{
             height: '100%',
-            minHeight: 'max-content',
+            minHeight: '200px',
             borderRadius: 4,
           }}
-          showLine
+          placeholder={t('agent.role_instruction_placeholder')}
           wordWrap
           t={t}
         />

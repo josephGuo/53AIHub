@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Spin } from "antd";
 import { PageLayoutTabs } from "@/components/PageLayout";
-import { SvgIcon } from "@km/shared-components-react";
 import type { AgentInfo } from "@/api/modules/agents/index";
 import { t } from "@/locales";
 import { getPublicPath } from "@/utils/config";
@@ -64,7 +63,9 @@ const WorkAIPage: React.FC = () => {
         description: t("work_ai.description"),
         icon: {
           src: getPublicPath("/images/work-ai.png"),
-          bgColor: "bg-[#5899FC]",
+          customStyle: {
+            background: "linear-gradient(135deg, #61A3FF 0%, #2563EB 100%)",
+          },
         },
       }}
       tabs={tabs}

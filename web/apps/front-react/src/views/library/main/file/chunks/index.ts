@@ -1,4 +1,3 @@
-export { GraphView } from './graph'
 export { MetadataView } from './metadata'
 export { ChunksPipeline } from './pipeline'
 export { SliceView } from './slice'

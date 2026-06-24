@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import { Modal, Form, Input, Button, message } from 'antd'
 import { t } from '@/locales'
 import { useChannelStore } from '@/stores'
@@ -10,9 +10,7 @@ interface ModelData {
   label?: string
   icon?: string
   models?: string[]
-  config?: {
-    model_alias_map?: Record<string, string>
-  }
+  config?: {}
   channel_id?: string
   key?: string
   base_url?: string
@@ -23,6 +21,8 @@ interface ModelData {
   channel_type?: number
   custom_config?: {
     alias_map?: Record<string, string>
+    deep_thinking?: string[]
+    vision?: string[]
   }
 }
 
@@ -116,7 +116,7 @@ export const ModelSettingDialog = forwardRef<ModelSettingDialogRef, ModelSetting
         footer={
           <>
             <Button
-              className="text-[#1D1E1F]"
+              className="text-primary"
               onClick={close}
             >
               {t('action_cancel')}

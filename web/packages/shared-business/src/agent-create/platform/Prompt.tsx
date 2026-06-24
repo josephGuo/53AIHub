@@ -97,27 +97,35 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
         >
           {showChannelConfig ? (
             <>
-              <Form.Item
-                label={t("term.access_model")}
-                name="model"
-                rules={[{ required: true, message: t("form.select_placeholder") }]}
-                getValueProps={() => ({ value: model })}
-              >
-                <ModelSelect
-                  valueKey="model_value"
-                  onChange={onModelChange}
-                  options={modelOptions}
-                  loading={modelLoading}
-                  t={t}
-                />
-              </Form.Item>
+              <div className="flex items-center text-sm text-[#373A3D] mb-3">{t('agent.model_settings')}</div>
+              <div className="p-4 border rounded-xl bg-white flex items-center gap-5">
+                <span className="text-[#1D1E1F]">{t("term.access_model")}</span>
+                <Form.Item
+                  name="model"
+                  rules={[{ required: true, message: t("form.select_placeholder") }]}
+                  getValueProps={() => ({ value: model })}
+                  layout="horizontal"
+                  className="flex-1 mb-0"
+                >
+                  <ModelSelect
+                    valueKey="model_value"
+                    onChange={onModelChange}
+                    options={modelOptions}
+                    loading={modelLoading}
+                    t={t}
+                  />
+                </Form.Item>
+              </div>
+              <div className="border-t mt-4"></div>
               <RoleInstruction />
             </>
           ) : (
             <>
+              <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
               <BaseConfig />
               <RelateAgents />
               <ExpandConfig />
+              <div className="h-3"></div>
             </>
           )}
         </Form>

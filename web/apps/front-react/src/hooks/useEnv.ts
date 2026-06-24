@@ -4,7 +4,7 @@ export function useEnv() {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
 
   const isOpLocalEnv = useMemo(() => {
-    return import.meta.env.VITE_PLATFORM === 'op-local'
+    return true
   }, [])
 
   const isPrivatePremEnv = useMemo(() => {

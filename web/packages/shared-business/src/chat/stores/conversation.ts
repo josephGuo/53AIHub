@@ -132,10 +132,10 @@ export const useConversationStore = create<ConversationState & ConversationActio
         const currentId = get().current_conversationid;
         if (currentId && currentId !== 0) {
           const currentInNew = conversations.find(
-            (c: ConversationInfo) => c.conversation_id === currentId
+            (c: ConversationInfo) => String(c.conversation_id) === String(currentId)
           );
           const oldCurrent = get().conversations.find(
-            (c: ConversationInfo) => c.conversation_id === currentId
+            (c: ConversationInfo) => String(c.conversation_id) === String(currentId)
           );
           if (!currentInNew && oldCurrent) {
             conversations.unshift(oldCurrent);

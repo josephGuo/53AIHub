@@ -71,6 +71,7 @@
   background: #9ca3af;
 }
 
+
 /* Selection */
 ::selection {
   background: var(--primary-light);
@@ -78,10 +79,10 @@
 }
 
 /* Focus styles */
-:focus-visible {
+/* :focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
-}
+} */
 
 /* Utility classes */
 .flex-center {
@@ -90,19 +91,6 @@
   justify-content: center;
 }
 
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.text-truncate-2 {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
 
 /* Ant Design overrides */
 .ant-btn-primary {

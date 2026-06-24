@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Modal, Form, Input, Button, message } from 'antd'
 import { createIconFileFromStatic } from '@km/shared-utils'
 import type { Pipeline } from '../types'
-import { SetIcon } from '@/views/space/components/SetIcon'
+import { SetIcon } from '@/views/knowledge/components/SetIcon'
 import { t } from '@/locales'
 import './PipelineBasicDialog.css'
 

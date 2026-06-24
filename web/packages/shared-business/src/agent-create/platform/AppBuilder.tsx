@@ -87,48 +87,53 @@ export const AppBuilder = forwardRef<AppBuilderRef, AppBuilderProps>(
           {showChannelConfig ? (
             <>
               <div className="text-sm font-medium text-primary mb-3">{t("provider_platform.platform_auth")}</div>
-              <Form.Item label={t("agent_app.app_builder")}>
-                <Select
-                  value={customConfig.provider_id}
-                  className="w-full"
-                  onChange={(value) => {
-                    updateCustomConfig({ provider_id: value });
-                    onProviderChange();
+              <div className="p-4 border rounded-xl bg-white flex items-center gap-4">
+                <Form.Item label={t("agent_app.app_builder")} className="flex-1 mb-0">
+                  <Select
+                    value={customConfig.provider_id}
+                    className="w-full"
+                    onChange={(value) => {
+                      updateCustomConfig({ provider_id: value });
+                      onProviderChange();
+                    }}
+                    options={providers.map((item) => ({
+                      label: item.name,
+                      value: item.provider_id,
+                    }))}
+                  />
+                </Form.Item>
+                <Form.Item
+                  label={t("term.select_agent")}
+                  name={["custom_config", "app_builder_bot_id"]}
+                  rules={[
+                    { required: true, message: t("form.select_placeholder") },
+                  ]}
+                  getValueProps={() => ({ value: customConfig.app_builder_bot_id })}
+                  getValueFromEvent={(value) => {
+                    updateCustomConfig({ app_builder_bot_id: value as string });
+                    return value;
                   }}
-                  options={providers.map((item) => ({
-                    label: item.name,
-                    value: item.provider_id,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item
-                label={t("term.select_agent")}
-                name={["custom_config", "app_builder_bot_id"]}
-                rules={[
-                  { required: true, message: t("form.select_placeholder") },
-                ]}
-                getValueProps={() => ({ value: customConfig.app_builder_bot_id })}
-                getValueFromEvent={(value) => {
-                  updateCustomConfig({ app_builder_bot_id: value as string });
-                  return value;
-                }}
-              >
-                <SelectPlus
-                  t={t}
-                  useI18n={false}
-                  options={bots.map((item) => ({
-                    value: item.value,
-                    label: item.label,
-                    icon: item.logo,
-                  }))}
-                />
-              </Form.Item>
+                   className="flex-1 mb-0"
+                >
+                  <SelectPlus
+                    t={t}
+                    useI18n={false}
+                    options={bots.map((item) => ({
+                      value: item.value,
+                      label: item.label,
+                      icon: item.logo,
+                    }))}
+                  />
+                </Form.Item>
+              </div>
             </>
           ) : (
             <>
+              <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
               <BaseConfig />
               <RelateAgents />
               <ExpandConfig />
+              <div className="h-3"></div>
             </>
           )}
         </Form>

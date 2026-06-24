@@ -196,7 +196,7 @@ export function AgentGuide() {
     <div>
       <div className="p-5 bg-[#F7F8FA] rounded">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm text-[#4F5052]">
+          <h4 className="text-sm text-secondary">
             {t('usage_scene')}
           </h4>
           <Button
@@ -216,7 +216,7 @@ export function AgentGuide() {
                 className="w-full flex justify-between items-center py-[10px] px-3 mt-2 bg-white rounded"
               >
                 <h6
-                  className="text-sm text-[#1D1E1F] max-w-[10em] truncate"
+                  className="text-sm text-primary max-w-[10em] truncate"
                   title={item.scene || ''}
                 >
                   {item.scene || ''}
@@ -241,7 +241,7 @@ export function AgentGuide() {
 
       <div className="p-5 bg-[#F7F8FA] rounded mt-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm text-[#4F5052]">
+          <h4 className="text-sm text-secondary">
             {t('usage_case')}
           </h4>
           <Button
@@ -259,7 +259,7 @@ export function AgentGuide() {
               key={item.id || index}
               className="w-full flex justify-between items-center py-[10px] px-3 mt-2 bg-white rounded break-inside-avoid"
             >
-              <div className="text-sm text-[#1D1E1F] break-words">
+              <div className="text-sm text-primary break-words">
                 {item.input_text || '--'}
               </div>
               <div className="flex gap-2">
@@ -288,7 +288,7 @@ export function AgentGuide() {
         destroyOnHidden
         footer={
           <>
-            <Button className="text-[#1D1E1F]" onClick={onCaseCancel}>
+            <Button className="text-primary" onClick={onCaseCancel}>
               {t('action_cancel')}
             </Button>
             <Button type="primary" onClick={onCaseConfirm}>
@@ -330,7 +330,7 @@ export function AgentGuide() {
         destroyOnHidden
         footer={
           <>
-            <Button className="text-[#1D1E1F]" onClick={onSceneCancel}>
+            <Button className="text-primary" onClick={onSceneCancel}>
               {t('action_cancel')}
             </Button>
             <Button type="primary" onClick={onSceneConfirm}>

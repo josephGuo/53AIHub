@@ -48,6 +48,10 @@ const defaultRetryConfig: RetryConfig = {
 
 service.interceptors.request.use(
   (config) => {
+    if ((config.responseType as string | undefined) === 'stream' && typeof XMLHttpRequest !== 'undefined') {
+      config.responseType = 'text'
+    }
+
     const params = config.params || {}
     const access_token = params.access_token || localStorage.getItem('access_token') || ''
     if (access_token) config.headers.set('Authorization', `Bearer ${access_token}`)

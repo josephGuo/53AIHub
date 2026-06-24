@@ -185,3 +185,29 @@
   opacity: 0;
   transform: translateY(30px);
 }
+
+/* OpenClaw 历史会话下拉只保留内部列表容器，去掉 Ant Design Popover 默认外壳 */
+.openclaw-history-popover-root {
+  width: min(520px, 45vw);
+  max-width: calc(100vw - 32px);
+}
+
+.openclaw-history-popover-root .ant-popover-inner {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.openclaw-history-popover-root .ant-popover-container {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.openclaw-history-popover-root .ant-popover-content {
+  width: 100%;
+  background: transparent;
+}

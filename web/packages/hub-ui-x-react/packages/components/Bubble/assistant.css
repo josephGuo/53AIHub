@@ -92,10 +92,11 @@
 .x-assistant-bubble__reasoning-arrow {
   font-size: 14px;
   transition: transform 0.3s ease;
+  transform: rotate(-90deg);
 }
 
 .x-assistant-bubble__reasoning-arrow--expanded {
-  transform: rotate(-90deg);
+  transform: rotate(0deg);
 }
 
 .x-assistant-bubble__reasoning-content-wrapper {

@@ -1,5 +1,6 @@
-import { Table, Button, Input, Tag, message } from 'antd'
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons'
+import { Table, Button, Tag, message } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import { Search } from '@km/shared-components-react'
 import { useEffect, useState } from 'react'
 import { t } from '@/locales'
 import { knowledgeApi } from '@/api/modules/knowledge'
@@ -96,13 +97,12 @@ export function KnowledgeLibrary() {
   return (
     <div className="p-6">
       <div className="flex justify-between mb-4">
-        <Input
+        <Search
+          mode="expanded"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          onDebouncedChange={setKeyword}
           placeholder={t('library.search_placeholder')}
-          prefix={<SearchOutlined />}
-          allowClear
-          style={{ width: 300 }}
+          className="w-[300px]"
         />
         <Button type="primary" icon={<PlusOutlined />} onClick={() => message.info(t('coming_soon'))}>
           {t('action_add')}

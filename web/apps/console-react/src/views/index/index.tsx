@@ -183,7 +183,7 @@ export function HomePage() {
                   alt=""
                 />
               )}
-              <h3 className="text-2xl text-[#1D1E1F] font-semibold truncate">
+              <h3 className="text-2xl text-primary font-semibold truncate">
                 {enterpriseInfo.name}
               </h3>
               <SvgIcon
@@ -193,7 +193,7 @@ export function HomePage() {
                 onClick={() => navigate("/config")}
               />
             </div>
-            <div className="text-sm text-[#9A9A9A] mt-3">
+            <div className="text-sm text-disabled mt-3">
               {enterpriseInfo.description || ""}
             </div>
 
@@ -213,7 +213,7 @@ export function HomePage() {
                       href={`${domainUrl}?access_token=${userInfo.access_token}&eid=${enterpriseInfo.eid}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[#1D1E1F]"
+                      className="flex items-center gap-1 text-primary"
                       style={{ fontSize: 16 }}
                     >
                       {domainUrl}
@@ -344,10 +344,10 @@ export function HomePage() {
                   src={getRealPath("/images/index/qrcode.png")}
                   alt=""
                 />
-                <h6 className="text-base text-[#1D1E1F] font-medium mb-2 group-hover:hidden">
+                <h6 className="text-base text-primary font-medium mb-2 group-hover:hidden">
                   {t("join_group")}
                 </h6>
-                <p className="text-sm text-[#999999] group-hover:hidden">
+                <p className="text-sm text-placeholder group-hover:hidden">
                   {t("join_group_desc")}
                 </p>
               </div>
@@ -355,14 +355,14 @@ export function HomePage() {
 
             {/* Quick links */}
             <div className="flex-1 bg-white rounded-lg p-5">
-              <div className="text-base text-[#1D1E1F] font-semibold mb-3">
+              <div className="text-base text-primary font-semibold mb-3">
                 快速链接
               </div>
               <div className="flex flex-col gap-1.5">
                 {quickLinks.map((item) => (
                   <div
                     key={item.path + JSON.stringify(item.query || {})}
-                    className="h-9 flex items-center gap-2 px-3 cursor-pointer text-[#1D1E1F] hover:bg-[#F5F7FA] rounded"
+                    className="h-9 flex items-center gap-2 px-3 cursor-pointer text-primary hover:bg-[#F5F7FA] rounded"
                     onClick={() => handleQuickLinkClick(item)}
                   >
                     <div className="size-4 flex items-center justify-center">
@@ -377,7 +377,7 @@ export function HomePage() {
         </div>
       </Spin>
 
-      <div className="text-sm text-[#9A9A9A] text-center py-11">
+      <div className="text-sm text-disabled text-center py-11">
         {t("copyright_desc", { year })}
       </div>
 
@@ -404,9 +404,9 @@ function StatRow({
 }) {
   return (
     <div className="flex max-md:gap-2 md:gap-8 max-md:flex-col md:items-center">
-      <div className="flex-none w-[64px] text-base text-[#9A9A9A]">{label}</div>
+      <div className="flex-none w-[64px] text-base text-disabled">{label}</div>
       <div className="flex items-center gap-3">
-        <div className="text-base text-[#1D1E1F]">{children}</div>
+        <div className="text-base text-primary">{children}</div>
       </div>
     </div>
   );

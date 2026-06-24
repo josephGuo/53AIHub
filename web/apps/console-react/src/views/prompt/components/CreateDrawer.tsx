@@ -79,7 +79,7 @@ const CreateDrawer = forwardRef<CreateDrawerRef, CreateDrawerProps>(
               placeholder={t("form_input_placeholder")}
             />
           </Form.Item>
-          <div className="w-full text-sm text-[#9A9A9A] -mt-3 mb-4">
+          <div className="w-full text-sm text-disabled -mt-3 mb-4">
             {t("module.agent_sort_desc")}
           </div>
 

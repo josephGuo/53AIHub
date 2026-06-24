@@ -342,19 +342,10 @@ export const useSkillEditStore = create<SkillEditState>((set, get) => ({
         await skillApi.updateFiles(skillId, { files })
       }
 
-      // 更新暂存区中的原始内容为编辑后的内容（用于后续切换文件时正确加载）
-      const newPendingChanges = new Map<string, PendingFileChange>()
-      pendingChanges.forEach((value, key) => {
-        newPendingChanges.set(key, {
-          original: value.edited,
-          edited: value.edited,
-        })
-      })
-
       // 更新状态
       const { currentFile, currentFileContent } = get()
       set({
-        pendingChanges: newPendingChanges,
+        pendingChanges: new Map(),  // 清空暂存区
         hasAnyChanges: false,
         saving: false,
         // 如果当前文件有修改，更新原始内容为保存后的内容

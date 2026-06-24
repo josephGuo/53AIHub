@@ -10,7 +10,7 @@ import {
 import { Empty, Spin, message, Modal, Input, Breadcrumb } from "antd";
 import { useSearchParams } from "react-router-dom";
 import { recordingApi } from "@/api/modules/recording";
-import type { RecordingFileItem } from "@/api/modules/recording/types";
+import type { RecordingFileItem, RecordingConfig } from "@/api/modules/recording/types";
 import { SvgIcon } from "@km/shared-components-react";
 import { MoreDropdown } from "@/components/MoreDropdown";
 import { getPublicPath } from "@/utils/config";
@@ -56,7 +56,7 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
     const [dirList, setDirList] = useState<AudioItem[]>([]);
     const currentPath = searchParams.get("path") || "/";
     const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([
-      { name: "全部录音", path: "/" },
+      { name: t("mine.all_recording"), path: "/" },
     ]);
 
     // 分页状态
@@ -69,6 +69,9 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
     const loadingMoreRef = useRef(false);
 
     const PAGE_SIZE = 30;
+
+    // 录音配置
+    const [recordingConfig, setRecordingConfig] = useState<RecordingConfig | null>(null);
 
     // 录音状态
     const status = useRecordingStore((s) => s.status);
@@ -364,10 +367,10 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
     // 面包屑
     useEffect(() => {
       if (currentPath === "/") {
-        setBreadcrumb([{ name: "全部录音", path: "/" }]);
+        setBreadcrumb([{ name: t("mine.all_recording"), path: "/" }]);
       } else {
         const parts = currentPath.split("/").filter(Boolean);
-        const crumbs: BreadcrumbItem[] = [{ name: "全部录音", path: "/" }];
+        const crumbs: BreadcrumbItem[] = [{ name: t("mine.all_recording"), path: "/" }];
         let accumulated = "";
         parts.forEach((part) => {
           accumulated += "/" + part;
@@ -375,7 +378,7 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
         });
         setBreadcrumb(crumbs);
       }
-    }, [currentPath]);
+    }, [currentPath, t]);
 
     // IntersectionObserver for infinite scroll
     useEffect(() => {
@@ -397,6 +400,19 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
       observer.observe(el);
       return () => observer.disconnect();
     }, [loadMore]);
+
+    // 加载录音配置
+    useEffect(() => {
+      const loadConfig = async () => {
+        try {
+          const config = await recordingApi.getConfig();
+          setRecordingConfig(config);
+        } catch (e) {
+          console.error("Failed to load recording config:", e);
+        }
+      };
+      loadConfig();
+    }, []);
 
     // 进入页面隐藏浮层，离开恢复
     useEffect(() => {
@@ -421,7 +437,7 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
           resource_type: 2,
           resource_id: fileId,
         });
-        message.success(isFavorite ? "已取消" : "已收藏");
+        message.success(isFavorite ? t("mine.unfavorite_success") : t("mine.favorited"));
         setFileList((prev) =>
           prev.map((item) =>
             item.id === fileId ? { ...item, isFavorite: !isFavorite } : item,
@@ -433,7 +449,7 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
           ),
         );
       } catch (error) {
-        message.error("操作失败");
+        message.error(t("action.operation_failed"));
       }
     };
 
@@ -495,14 +511,14 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
 
         // 根据移动的是文件夹还是文件，只刷新对应的列表
         loadFiles(currentPath, true, !dragFile.isfolder, dragFile.isfolder)
-        message.success('已移动')
+        message.success(t("mine.moved"))
       } catch (error) {
         console.error('移动文件失败:', error)
-        message.error('移动失败')
+        message.error(t("mine.move_failed"))
       } finally {
         setDragItemId(null)
       }
-    }, [fileList, dirList, currentPath, loadFiles])
+    }, [fileList, dirList, currentPath, loadFiles, t])
 
     const handleDragEnd = useCallback(() => {
       setDragItemId(null)
@@ -575,15 +591,15 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
         }
 
         await filesApi.rename({ id: renamingFile.id, path: newPath });
-        message.success("已重命名");
+        message.success(t("mine.rename_success"));
         // 根据重命名的是文件夹还是文件，只刷新对应的列表
         loadFiles(currentPath, true, !renamingFile.isfolder, renamingFile.isfolder);
         setRenameModalVisible(false);
         setRenamingFile(null);
       } catch (error) {
-        message.error("重命名失败");
+        message.error(t("mine.rename_failed"));
       }
-    }, [renamingFile, renameValue, currentPath, loadFiles]);
+    }, [renamingFile, renameValue, currentPath, loadFiles, t]);
 
     // Handle delete
     const handleDelete = useCallback(
@@ -596,16 +612,16 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
           onOk: async () => {
             try {
               await filesApi.delete(item.id);
-              message.success("已删除");
+              message.success(t("action.delete_success"));
               // 根据删除的是文件夹还是文件，只刷新对应的列表
               loadFiles(currentPath, true, !item.isfolder, item.isfolder);
             } catch (error) {
-              message.error("删除失败");
+              message.error(t("mine.delete_failed"));
             }
           },
         });
       },
-      [currentPath, loadFiles],
+      [currentPath, loadFiles, t],
     );
 
     // Handle open in new tab
@@ -638,6 +654,13 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
                 updated_time: getFormatTimeStamp(formattedFile.updated_time),
                 isFavorite: formattedFile.is_favorite,
                 rawData: formattedFile,
+                // 传递录音配置，用于控制预览页轮询行为
+                recordingConfig: recordingConfig
+                  ? {
+                      enabled: recordingConfig.enabled,
+                      parser_platform: recordingConfig.parser_platform,
+                    }
+                  : undefined,
               },
               "",
             );
@@ -676,14 +699,14 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
         return `${baseName}(${maxNumber + 1})`;
       };
 
-      const folderName = generateUniqueName("无标题文件夹");
+      const folderName = generateUniqueName(t("mine.untitled_folder"));
       setCreateFolderValue(folderName);
       setCreateFolderModalVisible(true);
-    }, [dirList]);
+    }, [dirList, t]);
 
     // 确认新建录音文件夹
     const handleCreateFolderConfirm = useCallback(async () => {
-      const name = createFolderValue.trim() || "无标题文件夹";
+      const name = createFolderValue.trim() || t("mine.untitled_folder");
       const folderPath =
         currentPath === "/" ? `/${name}` : `${currentPath}/${name}`;
 
@@ -692,20 +715,20 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
           path: folderPath,
         });
 
-        message.success("已创建");
+        message.success(t("mine.created"));
         setCreateFolderModalVisible(false);
         loadFiles(currentPath, true);
       } catch (error: any) {
         const errorCode = error?.response?.data?.code;
-        const errorMsg = error?.response?.data?.message || "创建失败";
+        const errorMsg = error?.response?.data?.message || t("mine.create_failed");
 
         if (errorCode === 100402) {
-          message.error("当前没有活跃录音任务，无法创建录音文件夹");
+          message.error(t("mine.no_recording_task"));
         } else {
           message.error(errorMsg);
         }
       }
-    }, [createFolderValue, currentPath, loadFiles]);
+    }, [createFolderValue, currentPath, loadFiles, t]);
 
     // 暴露给父组件的方法
     useImperativeHandle(
@@ -767,12 +790,12 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
             <div className="h-12 flex items-center gap-2 px-4 border-b border-gray-100">
               {/* 名称列 */}
               <div className="flex-1 min-w-0 text-sm text-[#4F5052] font-medium">
-                名称
+                {t("name")}
               </div>
 
               {/* 上传时间列 */}
               <div className="w-[140px] flex-shrink-0 text-sm text-[#4F5052] font-medium text-right">
-                创建时间
+                {t("common.create_time")}
               </div>
 
               {/* 操作列 */}
@@ -841,20 +864,20 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
                                 {
                                   key: "favorite",
                                   icon: item.isFavorite ? "star-cancel" : "star",
-                                  label: item.isFavorite ? "取消收藏" : "收藏",
+                                  label: item.isFavorite ? t("action.unfavorite") : t("action.favorite"),
                                 },
                               ]
                             : []),
                           {
                             key: "rename",
                             icon: "edit",
-                            label: "重命名",
+                            label: t("action.rename"),
                           },
                           { key: "divider-2", divided: true },
                           {
                             key: "delete",
                             icon: "delete",
-                            label: "删除",
+                            label: t("action.delete"),
                             danger: true,
                           },
                         ]}
@@ -892,8 +915,8 @@ export const MineAudioView = forwardRef<MineAudioViewRef, MineAudioViewProps>(
                 image={getPublicPath("/images/empty.png")}
                 description={
                   keyword
-                    ? "未找到相关内容"
-                    : "暂无录音记录，你可以导入音频或直接录制新内容"
+                    ? t("mine.no_recording_found")
+                    : t("mine.no_recording_empty")
                 }
               />
             </div>

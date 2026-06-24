@@ -4,7 +4,8 @@ import groupApi from '@/api/modules/group'
 import skillApi from '@/api/modules/skill'
 import type { Skill } from '@/api/modules/skill/types'
 import { GROUP_TYPE } from '@/constants/group'
-import { t } from "@/locales";
+import { t } from "@/locales"
+import { api_host } from '@/utils/config'
 
 const CACHE_KEYS = {
   SKILL_LIST: 'skill_list',
@@ -34,7 +35,10 @@ export const useSkillsStore = create<SkillsState>((set, get) => ({
     const { offset = 0, limit = 500, isRefresh, group_id, ...rest } = params || {}
     const fetchSkills = async () => {
       const res = await skillApi.explore({ offset, limit, group_id: group_id || undefined, ...rest })
-      return res.items || []
+      return (res.items || []).map(item => {
+        item.logo = item.logo || `${ api_host }/api/images/prompt/logo.png`
+        return item
+      })
     }
 
     if (params?.keyword !== undefined || isRefresh) {
@@ -65,7 +69,10 @@ export const useSkillsStore = create<SkillsState>((set, get) => ({
     try {
       const fetchMySkills = async () => {
         const res = await skillApi.getMyList({ offset: 0, limit: 500 })
-        return res.items || []
+        return (res.items || []).map(item => {
+        item.logo = item.logo || `${ api_host }/api/images/prompt/logo.png`
+        return item
+      })
       }
 
       if (isRefresh) {

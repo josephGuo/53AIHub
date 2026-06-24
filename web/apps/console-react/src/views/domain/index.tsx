@@ -11,10 +11,10 @@ import { VERSION_MODULE } from "@/constants/enterprise";
 import { useVersion } from "@/hooks";
 import { VersionGuard } from "@/components/VersionGuard";
 import ExclusiveSettingDialog, {
-  ExclusiveSettingDialogRef,
+    ExclusiveSettingDialogRef,
 } from "./ExclusiveSettingDialog";
 import IndependentSettingDialog, {
-  IndependentSettingDialogRef,
+    IndependentSettingDialogRef,
 } from "./IndependentSettingDialog";
 
 type DomainConfig = {
@@ -198,11 +198,11 @@ export function DomainPage() {
         <div className="flex-1 max-h-[calc(100vh-100px)] overflow-auto">
           {/* 专属域名部分 */}
           <section className="mb-8">
-            <h2 className="font-semibold text-base text-[#1D1E1F]">
+            <h2 className="font-semibold text-base text-primary">
               {t("module.domain_exclusive")}
             </h2>
             <div className="mt-4 border rounded overflow-hidden p-6">
-              <label className="text-[#1D1E1F] text-sm">
+              <label className="text-primary text-sm">
                 {t("module.domain_exclusive_label")}
               </label>
               <div className="w-full mt-4 flex items-center gap-3">
@@ -213,7 +213,7 @@ export function DomainPage() {
                   disabled
                 />
                 <Button
-                  className="flex-none text-[#3664EF]"
+                  className="flex-none text-brand"
                   onClick={() => handleCopyDomain(exclusiveDomainUrl)}
                 >
                   <SvgIcon name="copy" color="#3664EF" width="12" height="12" />
@@ -222,7 +222,7 @@ export function DomainPage() {
                 <div className="flex-1 h-2" />
                 <Button
                   type="link"
-                  className="flex-none text-[#5A6D9E] !p-0"
+                  className="flex-none text-link !p-0"
                   onClick={handleOpenExclusiveSetting}
                 >
                   <SettingOutlined />
@@ -234,7 +234,7 @@ export function DomainPage() {
 
           {/* 独立域名部分 */}
           <section>
-            <h2 className="font-semibold text-base text-[#1D1E1F]">
+            <h2 className="font-semibold text-base text-primary">
               {t("module.domain_independent")}
             </h2>
             <VersionGuard
@@ -243,7 +243,7 @@ export function DomainPage() {
               content={t("version.not_support")}
             >
               <div className="mt-4 border rounded overflow-hidden p-6">
-              <label className="text-[#1D1E1F] text-sm flex items-center gap-2">
+              <label className="text-primary text-sm flex items-center gap-2">
                 {t("module.domain_independent_label")}
                 {independentDomainUrl && (
                   <>
@@ -269,7 +269,7 @@ export function DomainPage() {
                       disabled
                     />
                     <Button
-                      className="flex-none text-[#3664EF]"
+                      className="flex-none text-brand"
                       onClick={() => handleCopyDomain(independentDomainUrl)}
                     >
                       <SvgIcon
@@ -282,14 +282,14 @@ export function DomainPage() {
                     </Button>
                   </>
                 ) : (
-                  <div className="flex-1 text-sm text-[#9A9A9A]">
+                  <div className="flex-1 text-sm text-disabled">
                     {t("module.domain_independent_desc")}
                   </div>
                 )}
                 <div className="flex-1 h-2" />
                 <Button
                   type="link"
-                  className="flex-none text-[#5A6D9E] !p-0"
+                  className="flex-none text-link !p-0"
                   onClick={handleIndependentSettingClick}
                 >
                   <SettingOutlined />

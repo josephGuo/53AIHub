@@ -160,7 +160,7 @@ export function AudioView({ currentFile }: AudioViewProps) {
       .catch(() => {
         setTranscriptList([])
       })
-  }, [currentFile?.id, insightSummary.conversational_summary])
+  }, [currentFile?.id])
 
   // Toggle play
   const togglePlay = () => {

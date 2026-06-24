@@ -1,4 +1,5 @@
 import { Spin } from 'antd'
+import { t } from '@/locales'
 import type { FileItem } from '../types'
 import { FileTableRow, type FileTableRowProps } from './FileTableRow'
 
@@ -22,7 +23,7 @@ export function FileTable<T extends FileItem = FileItem>({
   loading,
   loadingMore,
   hasMore,
-  timeLabel = '创建时间',
+  timeLabel = t('common.create_time'),
   onRowClick,
   rowProps,
   sentinelRef,
@@ -44,7 +45,7 @@ export function FileTable<T extends FileItem = FileItem>({
       {/* Table Header */}
       <div className="h-12 flex items-center gap-2 px-4 border-b border-gray-100">
         <div className="flex-1 min-w-0 text-sm text-[#4F5052] font-medium">
-          名称
+          {t("name")}
         </div>
         <div className="w-[140px] flex-shrink-0 text-sm text-[#4F5052] font-medium text-right">
           {timeLabel}

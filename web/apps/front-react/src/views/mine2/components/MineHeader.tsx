@@ -1,7 +1,7 @@
-import { Button, Input, Space } from "antd";
-import { Dropdown } from "@km/shared-components-react";
+import { Button, Space } from "antd";
+import { Dropdown, Search, SvgIcon } from "@km/shared-components-react";
+import { t } from "@/locales";
 import type { MenuProps } from "antd";
-import { SvgIcon } from "@km/shared-components-react";
 import type { MineTabKey } from "../types";
 
 export interface TabItem {
@@ -62,13 +62,12 @@ export function MineHeader({
 
       {/* 搜索和操作按钮 */}
       <Space>
-        <Input
-          placeholder={activeTab === "audio" ? "搜索录音" : "搜索文档"}
-          prefix={<SvgIcon name="search" size={16} />}
+        <Search
+          mode="expanded"
+          placeholder={activeTab === "audio" ? t("mine.search_recording") : t("mine.search_document")}
           value={keyword}
-          onChange={(e) => onKeywordChange(e.target.value)}
+          onDebouncedChange={onKeywordChange}
           className="max-w-[200px] rounded-lg"
-          allowClear
         />
 
         {/* 上传 Tab 操作 */}
@@ -83,7 +82,7 @@ export function MineHeader({
                 variant="filled"
                 icon={<SvgIcon name="download" size={16} />}
               >
-                导入
+                {t("mine.import")}
               </Button>
             </Dropdown>
             <Dropdown
@@ -91,7 +90,7 @@ export function MineHeader({
               placement="bottomRight"
             >
               <Button type="primary" icon={<SvgIcon name="plus" size={16} />}>
-                新建
+                {t("action.create")}
               </Button>
             </Dropdown>
           </>
@@ -109,7 +108,7 @@ export function MineHeader({
                 loading={audioActions.importing}
                 onClick={audioActions.onImportFile}
               >
-                导入
+                {t("mine.import")}
               </Button>
               <Button
                 color="primary"
@@ -117,12 +116,14 @@ export function MineHeader({
                 onClick={audioActions.onCreateFolder}
                 icon={<SvgIcon name="folder-plus" size={16} />}
               >
-                新建文件夹
+                {t("library.create_folder")}
               </Button>
-              <Button type="primary" onClick={audioActions.onStartRecording}>
-                <SvgIcon name="voice" size={16} />
-                录音
-              </Button>
+              {audioActions.onStartRecording && (
+                <Button type="primary" onClick={audioActions.onStartRecording}>
+                  <SvgIcon name="voice" size={16} />
+                  {t("mine.record_btn")}
+                </Button>
+              )}
             </>
           )}
       </Space>

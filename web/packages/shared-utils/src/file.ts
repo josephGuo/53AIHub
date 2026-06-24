@@ -1,4 +1,20 @@
 /**
+ * 文件工具函数
+ */
+
+/** 文件类型扩展名分组 */
+const FILE_TYPE_EXTENSIONS = {
+  doc: ['doc', 'docx'],
+  excel: ['xls', 'xlsx'],
+  ppt: ['ppt', 'pptx'],
+  html: ['html', 'htm'],
+  audio: ['wav', 'm4a', 'wma', 'aac', 'ogg', 'amr', 'flac', 'aiff', 'mp3'],
+  image: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico'],
+  video: ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'],
+  zip: ['zip', 'rar', '7z', 'tar', 'gz'],
+} as const
+
+/**
  * 判断是否为 Office 文件
  */
 export const isOfficeFile = (extension: string) => {
@@ -161,4 +177,98 @@ export const formatFileSize = (size: number): string => {
     return (size / 1024 / 1024).toFixed(2) + 'MB'
   }
   return (size / 1024 / 1024 / 1024).toFixed(2) + 'GB'
+}
+
+/** 格式化文件信息结果 */
+export interface FormatFileInfoResult {
+  ext: string
+  mime: string
+  fname: string
+  icon: string
+}
+
+/**
+ * 获取文件图标路径
+ * @param mime 文件 MIME 类型标识
+ * @returns 图标相对路径
+ */
+export const getFileIconPath = (mime: string): string => {
+  return `/images/file/${mime || 'unknown'}.png`
+}
+
+/**
+ * 格式化文件信息
+ * @param fileName 文件名（可包含路径）
+ * @param isfolder 是否是文件夹
+ * @returns 文件信息（扩展名、MIME、显示名、图标）
+ */
+export const formatFileInfo = (fileName: string, isfolder: boolean = false): FormatFileInfoResult => {
+  let file_ext = ''
+  let file_mime = ''
+  let file_name = fileName?.split('/')?.pop() || ''
+  let displayName = file_name
+
+  if (!isfolder) {
+    const parts = file_name.split('.')
+    const allExtensions = [
+      'pdf', 'txt', 'csv', 'epub', 'xml',
+      ...FILE_TYPE_EXTENSIONS.doc,
+      ...FILE_TYPE_EXTENSIONS.excel,
+      ...FILE_TYPE_EXTENSIONS.ppt,
+      ...FILE_TYPE_EXTENSIONS.html,
+      ...FILE_TYPE_EXTENSIONS.audio,
+      ...FILE_TYPE_EXTENSIONS.image,
+      ...FILE_TYPE_EXTENSIONS.video,
+      ...FILE_TYPE_EXTENSIONS.zip,
+    ]
+
+    // 处理双重扩展名（如 .xls.md, .pdf.md）
+    if (parts.length >= 3) {
+      const lastPart = parts[parts.length - 1]
+      const secondLastPart = parts[parts.length - 2]
+
+      if (lastPart === 'md' && allExtensions.includes(secondLastPart)) {
+        file_ext = secondLastPart
+        displayName = parts.slice(0, -1).join('.')
+      } else {
+        file_ext = lastPart
+        displayName = parts.slice(0, -1).join('.')
+      }
+    } else {
+      file_ext = parts.slice(-1)[0] || ''
+      displayName = file_name
+    }
+
+    // 确定 MIME 类型
+    if (FILE_TYPE_EXTENSIONS.doc.includes(file_ext as any)) {
+      file_mime = 'doc'
+    } else if (FILE_TYPE_EXTENSIONS.excel.includes(file_ext as any)) {
+      file_mime = 'xls'
+    } else if (FILE_TYPE_EXTENSIONS.ppt.includes(file_ext as any)) {
+      file_mime = 'ppt'
+    } else if (FILE_TYPE_EXTENSIONS.html.includes(file_ext as any)) {
+      file_mime = 'html'
+    } else if (FILE_TYPE_EXTENSIONS.audio.includes(file_ext as any)) {
+      file_mime = 'mp3'
+    } else if (FILE_TYPE_EXTENSIONS.video.includes(file_ext as any)) {
+      file_mime = 'mp4'
+    } else if (FILE_TYPE_EXTENSIONS.image.includes(file_ext as any)) {
+      file_mime = 'unknown'
+    } else if (FILE_TYPE_EXTENSIONS.zip.includes(file_ext as any)) {
+      file_mime = 'unknown'
+    } else {
+      file_mime = file_ext
+    }
+  } else {
+    file_ext = 'folder'
+    file_mime = 'folder'
+    displayName = fileName
+  }
+
+  return {
+    ext: file_ext,
+    mime: file_mime,
+    fname: displayName,
+    icon: getFileIconPath(file_mime),
+  }
 }

@@ -48,7 +48,7 @@ export function Header({
           </div>
         )}
         {titlePrefix}
-        <h2 className="text-[26px] text-[#1D1E1F] font-semibold">{title}</h2>
+        <h2 className="text-[26px] text-primary font-semibold">{title}</h2>
         {titleSuffix}
       </div>
       {right}

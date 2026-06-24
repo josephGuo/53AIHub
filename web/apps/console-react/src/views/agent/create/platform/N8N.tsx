@@ -1,28 +1,28 @@
 import {
-  forwardRef,
-  useImperativeHandle,
-  useState,
-  useEffect,
-  useRef,
+    forwardRef,
+    useImperativeHandle,
+    useState,
+    useEffect,
+    useRef,
 } from "react";
 import { Form, Input, Modal, Image } from "antd";
 import { t } from "@/locales";
 import { useAgentFormStore } from "../store";
 import { useAgentForm } from "../hooks";
 import {
-  AgentInfo,
-  BaseConfig,
-  ExpandConfig,
-  UseScope,
-  RelateAgents,
-  FieldInput,
+    AgentInfo,
+    BaseConfig,
+    ExpandConfig,
+    UseScope,
+    RelateAgents,
+    FieldInput,
 } from "../components";
 import { channelApi } from "@/api/modules/channel";
 import { useChannelConfig } from "../context/ChannelConfigContext";
 import {
-  AGENT_TYPES,
-  AGENT_MODES,
-  getAgentByAgentType,
+    AGENT_TYPES,
+    AGENT_MODES,
+    getAgentByAgentType,
 } from "@/constants/platform/config";
 import { SvgIcon } from "@km/shared-components-react";
 import { generateInputRules } from "@/utils/form-rule";
@@ -226,9 +226,9 @@ export const N8N = forwardRef<N8NRef, N8NProps>(
           <>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <h3 className="text-base text-[#1D1E1F]">{t("n8n")}</h3>
+                <h3 className="text-base text-primary">{t("n8n")}</h3>
                 <div
-                  className="flex-center text-[#9A9A9A] gap-1 ml-1 cursor-pointer"
+                  className="flex-center text-disabled gap-1 ml-1 cursor-pointer"
                   onClick={handleOpenDialog}
                 >
                   <SvgIcon name="help" width={14} color="#999" />
@@ -317,7 +317,7 @@ export const N8N = forwardRef<N8NRef, N8NProps>(
             {guideList.map((item, index) => (
               <li
                 key={index}
-                className="flex flex-col gap-2 text-[#1D1E1F] text-sm"
+                className="flex flex-col gap-2 text-primary text-sm"
               >
                 <div
                   className="text-wrap break-words whitespace-pre-wrap"

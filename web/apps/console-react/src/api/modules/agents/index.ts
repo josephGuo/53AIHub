@@ -102,7 +102,7 @@ const agentsApi = {
     offset?: number
     limit?: number
     keyword?: string
-    agent_usages?: string
+    agent_usages?: string | number
   }): Promise<AgentInfoResponse> {
     return service
       .get('/api/agents', { params })

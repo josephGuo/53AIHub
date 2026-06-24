@@ -25,7 +25,7 @@ export function MobileTip() {
           backgroundSize: '100% 100%',
         }}
       />
-      <div className="mt-6 text-sm text-[#182B50]">请前往pc端查看文档详情</div>
+      <div className="mt-6 text-sm text-dark">请前往pc端查看文档详情</div>
       <div
         className="w-[85%] mt-4 py-3 px-3 box-border text-sm text-wrap break-words text-[#BA8550] border border-solid border-[#EBEEF5] bg-white"
       >

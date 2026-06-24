@@ -65,44 +65,47 @@ const NAV_KM_ITEM = {
 /**
  * 默认初始化数据（根据 VITE_INCLUDE_KM 决定是否包含知识库）
  */
-export const NAVIGATION_INIT_DATA = [
-  {
-    jump_path: '/index',
-    name: '首页',
-    sort: 9999,
-    icon: `${img_host}/icon/icon34.png`,
-    config: createDefaultConfig(),
-  },
-  ...(window.$vars?.includeKm ? [NAV_KM_ITEM] : []),
-  {
-    jump_path: '/agent',
-    name: '智能体',
-    sort: 9997,
-    icon: `${img_host}/icon/icon33.png`,
-    config: createDefaultConfig(),
-  },
-  {
-    jump_path: '/prompt',
-    name: '提示词',
-    sort: 9996,
-    icon: `${img_host}/icon/icon32.png`,
-    config: createDefaultConfig(),
-  },
-  {
-    jump_path: '/toolkit',
-    name: 'AI工具',
-    sort: 9996,
-    icon: `${img_host}/navigation/icon10.png`,
-    config: createDefaultConfig(),
-  },
-  {
-    jump_path: '/skills',
-    name: '技能库',
-    sort: 9998,
-    icon: `${img_host}/navigation/icon35.png`,
-    config: createDefaultConfig(),
-  },
+
+export const NAVIGATION_INIT_DATA = () => {
+  return [
+    {
+      jump_path: '/index',
+      name: '首页',
+      sort: 9999,
+      icon: `${img_host}/icon/icon34.png`,
+      config: createDefaultConfig(),
+    },
+    ...(window.$vars?.includeKm ? [NAV_KM_ITEM] : []),
+    {
+      jump_path: '/agent',
+      name: '智能体',
+      sort: 9997,
+      icon: `${img_host}/icon/icon33.png`,
+      config: createDefaultConfig(),
+    },
+    {
+      jump_path: '/prompt',
+      name: '提示词',
+      sort: 9996,
+      icon: `${img_host}/icon/icon32.png`,
+      config: createDefaultConfig(),
+    },
+    {
+      jump_path: '/toolkit',
+      name: 'AI工具',
+      sort: 9996,
+      icon: `${img_host}/navigation/icon10.png`,
+      config: createDefaultConfig(),
+    },
+    {
+      jump_path: '/skills',
+      name: '技能库',
+      sort: 9998,
+      icon: `${img_host}/navigation/icon35.png`,
+      config: createDefaultConfig(),
+    },
 ] as const
+}
 
 /**
  * 表单验证规则配置

@@ -102,7 +102,7 @@ export function CertificateUpload({
       {fileList.map((item, index) => (
         <li
           key={item.id}
-          className="flex items-center gap-2 text-[#9A9A9A] text-sm"
+          className="flex items-center gap-2 text-disabled text-sm"
         >
           <FileOutlined style={{ fontSize: 16 }} />
           <span>{item.name || "--"}</span>

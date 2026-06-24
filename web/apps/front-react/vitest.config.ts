@@ -20,9 +20,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@km/hub-ui-x-react': path.resolve(__dirname, '../../packages/hub-ui-x-react/packages'),
+      '@km/shared-business/chat': path.resolve(__dirname, '../../packages/shared-business/src/chat/index.ts'),
+      '@km/shared-business': path.resolve(__dirname, '../../packages/shared-business/src'),
       '@km/shared-components-react': path.resolve(__dirname, '../../packages/shared-components-react/src'),
       '@km/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
-      '@km/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
     }
   }
 })

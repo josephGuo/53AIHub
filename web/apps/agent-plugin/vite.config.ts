@@ -19,7 +19,6 @@ export default defineConfig({
       '@km/shared-business': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-business', 'src'),
       '@km/shared-components-react': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-components-react', 'src'),
       '@km/shared-utils': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-utils', 'src'),
-      '@km/shared-types': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-types', 'src'),
     },
     dedupe: ['react', 'react-dom']
   },

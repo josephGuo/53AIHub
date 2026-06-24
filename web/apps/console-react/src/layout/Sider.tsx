@@ -6,11 +6,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { SvgIcon } from "@km/shared-components-react";
 import { getRealPath } from "@/utils/config";
 import {
-  menuTree,
-  type MenuItemConfig,
-  type VisibilityContext,
-  getVisibleChildren,
-  isMenuVisible,
+    menuTree,
+    type MenuItemConfig,
+    type VisibilityContext,
+    getVisibleChildren,
+    isMenuVisible,
 } from "../router/menu-config";
 import { useChannelStore, useEnterpriseStore, useUserStore } from "@/stores";
 import { useEnv } from "@/hooks/useEnv";
@@ -156,7 +156,7 @@ export function SiderMenu(props: SiderProps) {
                 return (
                   <div key={group.name} className="mt-4">
                     {!isCollapsed ? (
-                      <div className="h-9 flex items-center text-xs px-[10px] text-[#9CA3AF]">
+                      <div className="h-9 flex items-center text-xs px-[10px] text-hint">
                         {t(group.title ?? "")}
                       </div>
                     ) : null}
@@ -217,11 +217,11 @@ export function SiderMenu(props: SiderProps) {
                 )
               }
             >
-              <div className="size-4 flex items-center justify-center text-[#888994]">
+              <div className="size-4 flex items-center justify-center text-icon-default">
                 <SvgIcon name="update" size={16} />
               </div>
               {!isCollapsed ? (
-                <div className="flex-1 text-[#4C4D4E] text-sm whitespace-nowrap">
+                <div className="flex-1 text-dark text-sm whitespace-nowrap">
                   {t("function_update")}
                 </div>
               ) : null}
@@ -246,11 +246,11 @@ export function SiderMenu(props: SiderProps) {
                 userStore.logoff({ show_confirm: true, back_to_login: true });
               }}
             >
-              <div className="size-4 flex items-center justify-center text-[#888994]">
+              <div className="size-4 flex items-center justify-center text-icon-default">
                 <SvgIcon name="exit_v2" size={16} />
               </div>
               {!isCollapsed ? (
-                <div className="flex-1 text-[#4C4D4E] text-sm whitespace-nowrap">
+                <div className="flex-1 text-dark text-sm whitespace-nowrap">
                   {t("action_exit")}
                 </div>
               ) : null}
@@ -258,7 +258,7 @@ export function SiderMenu(props: SiderProps) {
           </Tooltip>
 
           <div
-            className={`flex items-center justify-start gap-2 px-5 mt-4 text-[#1D1E1F] ${isCollapsed ? "invisible" : ""}`}
+            className={`flex items-center justify-start gap-2 px-5 mt-4 text-primary ${isCollapsed ? "invisible" : ""}`}
             style={{ fontSize: 10 }}
           >
             <span>POWERED BY</span>

@@ -193,7 +193,7 @@ export const MapSetting = forwardRef<MapSettingRef, MapSettingProps>(
           <div className="max-w-2xl">
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("model.select_model")}
                 </div>
               </div>
@@ -207,12 +207,12 @@ export const MapSetting = forwardRef<MapSettingRef, MapSettingProps>(
             </div>
             {/* <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">{t("form.generate_rule")}</div>
+                <div className="text-sm text-primary">{t("form.generate_rule")}</div>
               </div>
               <div className="flex-1">
                 <div className="border rounded-lg px-5 py-4">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm text-[#1D1E1F]">{t("form.auto_generate_map_config")}</div>
+                    <div className="text-sm text-primary">{t("form.auto_generate_map_config")}</div>
                     <Switch
                       checked={form.settings?.auto_generate_map_config?.enable}
                       onChange={(checked) => {
@@ -229,7 +229,7 @@ export const MapSetting = forwardRef<MapSettingRef, MapSettingProps>(
                       }}
                     />
                   </div>
-                  <div className="text-xs text-[#9A9A9A] mt-1">{t("form.auto_generate_map_config_desc")}</div>
+                  <div className="text-xs text-disabled mt-1">{t("form.auto_generate_map_config_desc")}</div>
                 </div>
               </div>
             </div> */}

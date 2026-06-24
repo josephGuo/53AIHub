@@ -119,7 +119,7 @@ export const EntityDisplay = forwardRef<EntityDisplayRef, EntityDisplayProps>(({
     if (isLoading) {
       return (
         <span className={className}>
-          <Skeleton.Input active size="small" style={{ width: 80, height: 20 }} />
+          <Skeleton.Input active size="small" style={{ width: 20, height: 20 }} />
         </span>
       )
     }
@@ -174,7 +174,7 @@ export const EntityDisplay = forwardRef<EntityDisplayRef, EntityDisplayProps>(({
     <div className={`entity-display ${className}`}>
       {renderAvatar()}
       <span className="entity-name-wrapper with-avatar">
-        {isLoading ? <Skeleton.Input active size="small" style={{ width: 80 }} /> : getDisplayName()}
+        {isLoading ? <Skeleton.Input active size="small" style={{ width: 20 }} /> : getDisplayName()}
       </span>
     </div>
   )

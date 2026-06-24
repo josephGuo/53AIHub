@@ -74,6 +74,12 @@ export function useEnv() {
     return isOpLocalEnv || isPrivatePremEnv ? `${baseUrl}/#${path}` : `${baseUrl}${path}`
   }, [getFrontBaseUrl, isOpLocalEnv, isPrivatePremEnv])
 
+  const buildFrontLibraryUrl = useCallback((libraryId: string) => {
+    const baseUrl = getFrontBaseUrl()
+    const path = `/library/${libraryId}`
+    return isOpLocalEnv || isPrivatePremEnv ? `${baseUrl}/#${path}` : `${baseUrl}${path}`
+  }, [getFrontBaseUrl, isOpLocalEnv, isPrivatePremEnv])
+
   return {
     isWorkEnv,
     isRcEnv,
@@ -83,6 +89,7 @@ export function useEnv() {
     getFrontBaseUrl,
     getFrontHomeUrl,
     buildFrontLibraryFileUrl,
+    buildFrontLibraryUrl,
   }
 }
 

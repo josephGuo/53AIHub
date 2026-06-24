@@ -47,7 +47,6 @@ const LOGIN_WAY = {
 
 const LOGIN_WAY_LIST = [
   { icon: "wechat", label: "wechat_login", value: LOGIN_WAY.wechat_login },
-  { icon: "wecom", label: "wecom_login", value: LOGIN_WAY.wecom_login },
   { icon: "safe", label: "password_login", value: LOGIN_WAY.password_login },
   { icon: "iphone", label: "message_login", value: LOGIN_WAY.message_login },
 ];

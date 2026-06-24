@@ -199,7 +199,7 @@ export function ChunkHomeView() {
               {name}
             </p>
             <span className="text-xs text-[#999999] mt-1 block">
-              <EntityDisplay mode="name" id={record.user_id} /> ·{" "}
+              <EntityDisplay type="user" mode="name" id={record.user_id} /> ·{" "}
               {record.updated_at}
             </span>
           </div>
@@ -327,11 +327,22 @@ export function ChunkHomeView() {
     loadStats();
   }, 5000);
 
-  // Initial load
+  // Extract file status changes to trigger stats refresh
+  const fileStatuses = useMemo(() => {
+    return files
+      .filter((f) => f.isfile)
+      .map((f) => f.cleaning_info?.status)
+      .sort()
+      .join(",");
+  }, [files]);
+
+  // Initial load and auto-refresh when file status changes
   useEffect(() => {
+    if (!libraryId) return;
+
     setLoading(true);
     loadStats().finally(() => setLoading(false));
-  }, [libraryId]);
+  }, [libraryId, fileStatuses]);
 
   return (
     <div className="pb-6">
@@ -419,7 +430,10 @@ export function ChunkHomeView() {
                     ? "bg-white text-[#2563EB] shadow-sm"
                     : "text-[#999999] hover:text-[#1e293b]"
                 }`}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setCurrentPage(1);
+                }}
               >
                 {tab.label}
               </button>

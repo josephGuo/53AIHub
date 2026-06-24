@@ -168,7 +168,7 @@ const PromptOptimizeInner = forwardRef<PromptOptimizeRef, PromptOptimizeProps>(
         <div className="h-[450px] flex border-b">
           {/* Left side - Current */}
           <div className="flex-1 px-7 py-5 flex flex-col overflow-hidden">
-            <div className="flex-none text-sm text-[#182B50]">
+            <div className="flex-none text-sm text-dark">
               {t("current") || "当前："}
             </div>
             <div className="flex-1 border rounded bg-[#F9FAFB] mt-3 flex flex-col overflow-hidden">
@@ -198,7 +198,7 @@ const PromptOptimizeInner = forwardRef<PromptOptimizeRef, PromptOptimizeProps>(
                     className="cursor-pointer"
                     onClick={handleBack}
                   />
-                  <span className="text-sm text-[#182B50]">
+                  <span className="text-sm text-dark">
                     {t("debug_result_optimize") || "根据调试结果优化："}
                   </span>
                 </div>
@@ -240,7 +240,7 @@ const PromptOptimizeInner = forwardRef<PromptOptimizeRef, PromptOptimizeProps>(
               </div>
             ) : mode === "result" ? (
               <>
-                <div className="flex-none text-sm text-[#182B50]">
+                <div className="flex-none text-sm text-dark">
                   {t("optimized") || "优化后："}
                 </div>
                 <div className="flex-1 border rounded bg-[#F9FAFB] mt-3 flex flex-col overflow-hidden">

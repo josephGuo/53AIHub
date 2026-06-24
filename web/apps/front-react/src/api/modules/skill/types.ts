@@ -64,6 +64,7 @@ export type GenerationType = typeof GenerationType_TYPE[keyof typeof GenerationT
 export interface SkillPublic {
   id: string;                    // HashID
   eid: number;
+  logo: string
   source_type: SourceType;
   skill_name: string;
   sort: number;
@@ -85,6 +86,7 @@ export interface SkillPublic {
   scan_message: string;
   created_time: number;
   updated_time: number;
+  group_ids: number[]
 }
 
 export interface Skill extends SkillPublic {
@@ -105,6 +107,22 @@ export interface SkillDetail extends SkillPublic {
   binding_id: string;
   added: boolean;
   binding_status: BindingStatus;
+  env_vars?: SkillEnvVarTemplate[];
+  group_id?: number;
+}
+
+/** 技能环境变量模板（企业级 key 列表） */
+export interface SkillEnvVarTemplate {
+  key: string;
+  sensitive: boolean;
+}
+
+/** 我的技能环境变量 */
+export interface SkillEnvVarItem {
+  id: string;
+  key: string;
+  value: string;
+  sensitive: boolean;
 }
 
 /** 我的技能列表项 */

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from 'antd'
 import { SvgIcon } from '@km/shared-components-react'
+import { t } from '@/locales'
 import { useFileMode } from '@/hooks/useFileMode'
 import filesApi from '@/api/modules/files'
 import { debounce } from '@/utils'
@@ -55,9 +56,9 @@ export function FileEditBtn({
       }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { data?: { message?: string } } } }
-      showEditMessageWithTimer(err?.response?.data?.data?.message || '添加文件锁失败')
+      showEditMessageWithTimer(err?.response?.data?.data?.message || t('mine.add_lock_failed'))
     }
-  }, [fileId, onEdit, showEditMessageWithTimer])
+  }, [fileId, onEdit, showEditMessageWithTimer, t])
 
   const debouncedHandleEdit = useCallback(debounce(handleEdit, 300), [handleEdit])
 
@@ -104,7 +105,7 @@ export function FileEditBtn({
   return (
     <div className="inline-flex relative">
       <div className="inline-flex items-center" onClick={debouncedHandleEdit}>
-        {children || <Button type="primary">编辑</Button>}
+        {children || <Button type="primary">{t("mine.edit_btn")}</Button>}
       </div>
       {showEditMessage && (
         <div className="h-full px-2 flex items-center absolute top-10 right-0 z-10 bg-white rounded-md border shadow-lg">

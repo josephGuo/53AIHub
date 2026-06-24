@@ -13,8 +13,8 @@
         const reg = /([^?&=]+)=([^?&=]+)/g;
         const params = {};
         search.match(reg)?.forEach((item) => {
-          const [key, value] = item.split("=");
-          params[key] = value;
+          const [key, value = ""] = item.split("=");
+          params[decodeURIComponent(key)] = decodeURIComponent(value);
         });
         return params;
       }

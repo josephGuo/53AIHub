@@ -9,8 +9,8 @@ import providersApi from "@/api/modules/providers/index";
 import { transformProviderList } from "@/api/modules/providers/transform";
 import { ProviderItem } from "@/api/modules/providers/types";
 import agentApi, {
-  AppBuilderBotItem,
-  transformAppBuilderBotItem,
+    AppBuilderBotItem,
+    transformAppBuilderBotItem,
 } from "@/api/modules/agent";
 import { PROVIDER_VALUES } from "@/constants/platform/config";
 
@@ -112,7 +112,7 @@ export const AppBuilder = forwardRef<AppBuilderRef, AppBuilderProps>(
         >
           {showChannelConfig ? (
             <>
-              <div className="text-base text-[#1D1E1F] font-medium mb-4">
+              <div className="text-base text-primary font-medium mb-4">
                 {t("app_builder")}
               </div>
               <Form.Item label={t("module.website_info_name")}>

@@ -1,21 +1,64 @@
-import { Button, Drawer, Form, Input, Modal, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Button, message, Modal, Form, Input } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { t } from "@/locales";
 import { usePromptFormDataStore } from "./store";
 import { ImageUpload } from "@/components/Upload";
 import { generateRandomId } from "@/utils";
-import { MarkdownEditorField } from "@/components/Markdown/editor-field";
 
 interface UseCase {
-  id?: string;
-  type?: "case" | "scene";
-  scene?: string;
-  image?: string;
-  desc?: string;
+  id: string;
+  type: 'case' | 'scene';
   input_text?: string;
   output_text?: string;
+  image?: string;
+  scene?: string;
+  desc?: string;
+}
+
+// 折叠面板组件（参考 CollapsibleSection）
+interface CollapsibleSectionProps {
+  title: string;
+  actions?: React.ReactNode;
+  defaultExpanded?: boolean;
+  children?: React.ReactNode;
+}
+
+function CollapsibleSection({
+  title,
+  actions,
+  defaultExpanded = false,
+  children,
+}: CollapsibleSectionProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  const handleToggle = () => {
+    setExpanded(!expanded);
+  };
+
+  return (
+    <div className="border-b">
+      <div
+        className="h-11 flex items-center gap-2 cursor-pointer hover:bg-[#F5F5F7]"
+        onClick={handleToggle}
+      >
+        <SvgIcon name={expanded ? 'down' : 'right'} color="#9CA3AF" />
+        <div className="flex-1 text-sm text-[#373A3D] font-medium">
+          {title}
+        </div>
+        {actions && (
+          <div onClick={(e) => e.stopPropagation()}>
+            {actions}
+          </div>
+        )}
+      </div>
+      {expanded && (
+        <div className="pt-1 pb-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function GuideView() {
@@ -25,369 +68,373 @@ export function GuideView() {
   const [sceneForm] = Form.useForm();
   const [useCaseList, setUseCaseList] = useState<UseCase[]>([]);
   const [useSceneList, setUseSceneList] = useState<UseCase[]>([]);
-  const [editingCase, setEditingCase] = useState<UseCase | null>(null);
-  const [editingScene, setEditingScene] = useState<UseCase | null>(null);
-  const [editingSceneIndex, setEditingSceneIndex] = useState<number>(-1);
+
+  const currentCaseRef = useRef<UseCase | null>(null);
+  const currentSceneRef = useRef<UseCase | null>(null);
 
   const formData = usePromptFormDataStore((state) => state.formData);
   const setFormData = usePromptFormDataStore((state) => state.set);
 
-  // Use refs to track current values for updateCustomConfig
-  const useCaseListRef = useRef<UseCase[]>([]);
-  const useSceneListRef = useRef<UseCase[]>([]);
-
-  // Keep refs in sync
   useEffect(() => {
-    useCaseListRef.current = useCaseList;
-  }, [useCaseList]);
+    const cases = formData.custom_config?.use_cases?.filter((item: UseCase) => item.type === 'case') || [];
+    setUseCaseList(cases);
 
-  useEffect(() => {
-    useSceneListRef.current = useSceneList;
-  }, [useSceneList]);
+    const sceneItems = formData.custom_config?.use_cases?.filter((item: UseCase) => item.type === 'scene') || [];
+    // Load all scenes from data, pad with placeholders to minimum 3 for display
+    const scenes: UseCase[] = [...sceneItems];
+    while (scenes.length < 3) {
+      scenes.push({
+        id: '',
+        type: 'scene',
+        image: '',
+        scene: '',
+        desc: '',
+      });
+    }
+    setUseSceneList(scenes);
+  }, [formData.custom_config?.use_cases]);
 
-  // Update custom_config when lists change
-  const updateCustomConfig = useCallback(() => {
-    const useCases = [
-      ...useCaseListRef.current,
-      ...useSceneListRef.current,
-    ].filter((item) => item.id);
+  const syncToStore = useCallback((cases: UseCase[], scenes: UseCase[]) => {
+    const allCases = [...cases, ...scenes].filter((item) => item.id);
     setFormData({
       custom_config: {
-        use_cases: useCases as any,
+        use_cases: allCases as any,
       },
     });
   }, [setFormData]);
 
-  // Initialize data from formData
   useEffect(() => {
-    const config = formData.custom_config || { use_cases: [] };
-    const cases = config.use_cases || [];
+    if (caseVisible) {
+      const data = currentCaseRef.current;
+      caseForm.setFieldsValue({
+        input_text: data?.input_text || '',
+        output_text: data?.output_text || '',
+      });
+    }
+  }, [caseVisible, caseForm]);
 
-    const caseList = cases.filter((item: UseCase) => item.type === "case");
-    setUseCaseList(caseList);
-    useCaseListRef.current = caseList;
+  useEffect(() => {
+    if (sceneVisible) {
+      const data = currentSceneRef.current;
+      sceneForm.setFieldsValue({
+        image: data?.image || '',
+        scene: data?.scene || '',
+        desc: data?.desc || '',
+      });
+    }
+  }, [sceneVisible, sceneForm]);
 
-    const scenes = cases.filter((item: UseCase) => item.type === "scene");
-    const newScenes: UseCase[] = [];
-
-    setUseSceneList(newScenes);
-    useSceneListRef.current = newScenes;
-  }, [formData.custom_config]);
-
-  // Case handlers
-  const onCaseOpen = (params: { data?: UseCase } = {}) => {
-    const data = params?.data || {};
-    setEditingCase(data.id ? data : null);
-    caseForm.setFieldsValue({
-      input_text: data.input_text || "",
-      output_text: data.output_text || "",
-    });
+  const onCaseOpen = (data?: UseCase) => {
+    currentCaseRef.current = data || null;
     setCaseVisible(true);
   };
 
   const onCaseDelete = (index: number) => {
-    const newList = [...useCaseList];
-    newList.splice(index, 1);
+    const newList = useCaseList.filter((_, i) => i !== index);
     setUseCaseList(newList);
-    setTimeout(updateCustomConfig, 0);
+    syncToStore(newList, useSceneList);
+  };
+
+  const onCaseCancel = () => {
+    setCaseVisible(false);
+    currentCaseRef.current = null;
   };
 
   const onCaseConfirm = async () => {
     try {
       const values = await caseForm.validateFields();
-      const id = editingCase?.id || generateRandomId(8);
+      const id = currentCaseRef.current?.id || generateRandomId(8);
       const existingData = useCaseList.find((item) => item.id === id);
 
+      let newCaseList: UseCase[];
       if (existingData) {
-        setUseCaseList((prev) =>
-          prev.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  input_text: values.input_text,
-                  output_text: values.output_text,
-                }
-              : item,
-          ),
+        newCaseList = useCaseList.map((item) =>
+          item.id === id
+            ? { ...item, input_text: values.input_text || '', output_text: values.output_text || '' }
+            : item
         );
       } else {
-        setUseCaseList((prev) => [
-          ...prev,
+        newCaseList = [
+          ...useCaseList,
           {
-            type: "case",
+            type: 'case',
             id,
-            input_text: values.input_text || "",
-            output_text: values.output_text || "",
+            input_text: values.input_text || '',
+            output_text: values.output_text || '',
           },
-        ]);
+        ];
       }
-      setCaseVisible(false);
-      setTimeout(updateCustomConfig, 0);
+      setUseCaseList(newCaseList);
+      syncToStore(newCaseList, useSceneList);
+      onCaseCancel();
     } catch (error) {
-      console.error("Validation error:", error);
+      // Validation failed
     }
   };
 
-  // Scene handlers
-  const onSceneOpen = (params: { data?: UseCase; index?: number } = {}) => {
-    const data = params?.data || {};
-    const index = params?.index ?? -1;
-    setEditingScene(data.id ? data : null);
-    setEditingSceneIndex(index);
-    sceneForm.setFieldsValue({
-      image: data.image || "",
-      scene: data.scene || "",
-      desc: data.desc || "",
-    });
+  const onSceneOpen = (data?: UseCase) => {
+    if (!data) {
+      const filledScenes = useSceneList.filter((item) => item.id);
+      if (filledScenes.length >= 3) {
+        message.warning(t('agent.scene_limit_reached'));
+        return;
+      }
+    }
+    currentSceneRef.current = data || null;
     setSceneVisible(true);
   };
 
   const onSceneDelete = (index: number) => {
     const newList = [...useSceneList];
     newList.splice(index, 1);
-    newList.push({
-      id: "",
-      image: "",
-      scene: "",
-      desc: "",
-    });
+    // Pad with placeholders to minimum 3 for display
+    while (newList.length < 3) {
+      newList.push({
+        id: '',
+        type: 'scene',
+        image: '',
+        scene: '',
+        desc: '',
+      });
+    }
     setUseSceneList(newList);
-    setTimeout(updateCustomConfig, 0);
+    syncToStore(useCaseList, newList);
+  };
+
+  const onSceneCancel = () => {
+    setSceneVisible(false);
+    currentSceneRef.current = null;
   };
 
   const onSceneConfirm = async () => {
     try {
       const values = await sceneForm.validateFields();
-      const id = editingScene?.id || generateRandomId(8);
+      const id = currentSceneRef.current?.id || generateRandomId(8);
+      const existingData = useSceneList.find((item) => item.id === id);
 
-      if (editingScene) {
-        setUseSceneList((prev) =>
-          prev.map((item, idx) =>
-            idx === editingSceneIndex
-              ? {
-                  ...item,
-                  image: values.image,
-                  scene: values.scene,
-                  desc: values.desc,
-                }
-              : item,
-          ),
+      let newSceneList: UseCase[];
+      if (existingData) {
+        newSceneList = useSceneList.map((item) =>
+          item.id === id
+            ? { ...item, image: values.image || '', scene: values.scene || '', desc: values.desc || '' }
+            : item
         );
       } else {
         const emptyIndex = useSceneList.findIndex((item) => !item.id);
         if (emptyIndex >= 0) {
-          const newList = [...useSceneList];
-          newList[emptyIndex] = {
-            type: "scene",
+          newSceneList = [...useSceneList];
+          newSceneList[emptyIndex] = {
+            type: 'scene',
             id,
-            image: values.image || "",
-            scene: values.scene || "",
-            desc: values.desc || "",
+            image: values.image || '',
+            scene: values.scene || '',
+            desc: values.desc || '',
           };
-          setUseSceneList(newList);
+        } else {
+          newSceneList = useSceneList;
         }
       }
-      setSceneVisible(false);
-      setTimeout(updateCustomConfig, 0);
+      setUseSceneList(newSceneList);
+      syncToStore(useCaseList, newSceneList);
+      onSceneCancel();
     } catch (error) {
-      console.error("Validation error:", error);
+      // Validation failed
     }
   };
 
   return (
     <div>
-      {/* Usage Scene */}
-      <div className="p-5 bg-[#F7F8FA] rounded">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm text-[#4F5052]">{t("usage_scene")}</h4>
-          <Button
-            type="link"
-            className="!px-0"
-            icon={<PlusOutlined />}
-            onClick={() => onSceneOpen()}
-          >
-            {t("action_add")}
+      <div className="text-sm font-medium text-[#9CA3AF] py-1.5 border-b">
+        {t('agent.usage_help')}
+      </div>
+      <CollapsibleSection
+        title={t('app.usage_scene')}
+        actions={
+          <Button color="default" variant="link" className="px-0" onClick={() => onSceneOpen()}>
+            <SvgIcon name="plus" size={16} />
           </Button>
-        </div>
-        <div className="flex flex-wrap justify-between">
-          {useSceneList.map((item, index) => (
-            <div
-              key={index}
-              className="w-full flex justify-between items-center py-[10px] px-3 mt-2 bg-white rounded"
-            >
-              {item.id ? (
-                <>
+        }
+      >
+        {!useSceneList.some((item) => item.id) ? (
+          <div className="text-sm text-[#9CA3AF]">
+            {t('prompt.usage_scene_desc')}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {useSceneList.map((item, index) => (
+              item.id && (
+                <div
+                  key={item.id || index}
+                  className="w-full flex justify-between items-center h-10 px-3 bg-white rounded-xl hover:bg-[#EBEEF3] cursor-pointer group"
+                >
                   <h6
                     className="text-sm text-[#1D1E1F] max-w-[10em] truncate"
-                    title={item.scene || ""}
+                    title={item.scene || ''}
                   >
-                    {item.scene || ""}
+                    {item.scene || ''}
                   </h6>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 invisible group-hover:visible">
                     <Button
-                      type="link"
-                      icon={<SvgIcon name="edit" />}
-                      onClick={() => onSceneOpen({ data: item, index })}
-                    />
+                      color="default"
+                      variant="link"
+                      className="px-0"
+                      onClick={(e) => { e.stopPropagation(); onSceneOpen(item); }}
+                    >
+                      <SvgIcon name="setting" />
+                    </Button>
                     <Button
-                      type="link"
-                      icon={<SvgIcon name="delete" />}
-                      onClick={() => onSceneDelete(index)}
-                    />
+                      color="default"
+                      variant="link"
+                      className="px-0"
+                      onClick={(e) => { e.stopPropagation(); onSceneDelete(index); }}
+                    >
+                      <SvgIcon name="reduce-one" />
+                    </Button>
                   </div>
-                </>
-              ) : (
-                <span className="text-[#999] text-sm">--</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+                </div>
+              )
+            ))}
+          </div>
+        )}
+      </CollapsibleSection>
 
-      {/* Usage Case */}
-      <div className="p-5 bg-[#F7F8FA] rounded mt-2">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm text-[#4F5052]">{t("usage_case")}</h4>
-          <Button
-            type="link"
-            icon={<PlusOutlined />}
-            className="!px-0"
-            onClick={() => onCaseOpen()}
-          >
-            {t("action_add")}
+      <CollapsibleSection
+        title={t('app.usage_case')}
+        actions={
+          <Button color="default" variant="link" className="px-0" onClick={() => onCaseOpen()}>
+            <SvgIcon name="plus" size={16} />
           </Button>
-        </div>
-        <div className="flex flex-wrap">
-          {useCaseList.map((item, index) => (
-            <div
-              key={index}
-              className="w-full flex justify-between items-center py-[10px] px-3 mt-2 bg-white rounded break-inside-avoid"
-            >
-              <div className="text-sm text-[#1D1E1F] break-words flex-1">
-                {item.input_text || "--"}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="link"
-                  icon={<SvgIcon name="edit" />}
-                  onClick={() => onCaseOpen({ data: item })}
-                />
-                <Button
-                  type="link"
-                  icon={<SvgIcon name="delete" />}
-                  onClick={() => onCaseDelete(index)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Case Drawer */}
-      <Drawer
-        open={caseVisible}
-        title={editingCase ? t("action_edit") : t("action_add")}
-        onClose={() => setCaseVisible(false)}
-        destroyOnHidden
-        styles={{ wrapper: { width: 600 } }}
+        }
       >
-        <Form form={caseForm} layout="vertical">
+        {useCaseList.length === 0 ? (
+          <div className="text-sm text-[#9CA3AF]">
+            {t('prompt.usage_case_desc')}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {useCaseList.map((item, index) => (
+              <div
+                key={item.id || index}
+                className="w-full flex justify-between items-center h-10 px-3 bg-white rounded-xl hover:bg-[#EBEEF3] cursor-pointer group"
+              >
+                <div className="text-sm text-[#1D1E1F] break-words">
+                  {item.input_text || '--'}
+                </div>
+                <div className="flex gap-2 invisible group-hover:visible">
+                  <Button
+                    color="default"
+                    variant="link"
+                    className="px-0"
+                    onClick={(e) => { e.stopPropagation(); onCaseOpen(item); }}
+                  >
+                    <SvgIcon name="setting" />
+                  </Button>
+                  <Button
+                    color="default"
+                    variant="link"
+                    className="px-0"
+                    onClick={(e) => { e.stopPropagation(); onCaseDelete(index); }}
+                  >
+                    <SvgIcon name="reduce-one" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CollapsibleSection>
+
+      {/* Case Modal */}
+      <Modal
+        open={caseVisible}
+        title={currentCaseRef.current?.id ? t('action.edit') : t('action.add')}
+        onCancel={onCaseCancel}
+        width={600}
+        centered
+        destroyOnHidden
+        footer={
+          <>
+            <Button className="text-[#1D1E1F]" onClick={onCaseCancel}>
+              {t('action.cancel')}
+            </Button>
+            <Button type="primary" onClick={onCaseConfirm}>
+              {t('action.confirm')}
+            </Button>
+          </>
+        }
+      >
+        <Form form={caseForm} labelCol={{ span: 4 }} wrapperCol={{ span: 20 }} labelAlign="left">
           <Form.Item
-            label={t("input")}
+            label={t('common.input')}
             name="input_text"
             rules={[
-              { required: true, message: t("form_input_placeholder") },
-              {
-                max: 200,
-                message: t("form_input_placeholder_max_length", { max: 200 }),
-              },
+              { required: true, message: t('form.input_placeholder') },
+              { max: 200, message: t('form_input_placeholder_max_length', { max: 200 }) },
             ]}
           >
-            <MarkdownEditorField
-              type="simple"
-              height="150px"
-              maxlength={200}
-              showWordLimit
-            />
+            <Input maxLength={200} showCount />
           </Form.Item>
           <Form.Item
-            label={t("output")}
+            label={t('common.output')}
             name="output_text"
             rules={[
-              { required: true, message: t("form_input_placeholder") },
-              {
-                max: 1000,
-                message: t("form_input_placeholder_max_length", { max: 1000 }),
-              },
+              { required: true, message: t('form.input_placeholder') },
+              { max: 1000, message: t('form_input_placeholder_max_length', { max: 1000 }) },
             ]}
           >
-            <MarkdownEditorField
-              type="simple"
-              height="300px"
-              maxlength={1000}
-              showWordLimit
-            />
+            <Input.TextArea rows={10} maxLength={1000} showCount style={{ resize: 'none' }} />
           </Form.Item>
         </Form>
-        <div className="flex justify-end gap-2">
-          <Button onClick={() => setCaseVisible(false)}>
-            {t("action_cancel")}
-          </Button>
-          <Button type="primary" onClick={onCaseConfirm}>
-            {t("action_confirm")}
-          </Button>
-        </div>
-      </Drawer>
+      </Modal>
 
       {/* Scene Modal */}
       <Modal
         open={sceneVisible}
-        title={editingScene ? t("action_edit") : t("action_add")}
-        onCancel={() => setSceneVisible(false)}
-        onOk={onSceneConfirm}
-        destroyOnHidden
+        title={currentSceneRef.current?.id ? t('action.edit') : t('action.add')}
+        onCancel={onSceneCancel}
         width={600}
+        centered
+        destroyOnHidden
+        footer={
+          <>
+            <Button className="text-[#1D1E1F]" onClick={onSceneCancel}>
+              {t('action.cancel')}
+            </Button>
+            <Button type="primary" onClick={onSceneConfirm}>
+              {t('action.confirm')}
+            </Button>
+          </>
+        }
       >
-        <Form form={sceneForm}>
+        <Form form={sceneForm} labelCol={{ span: 6 }} wrapperCol={{ span: 18 }} labelAlign="left">
           <Form.Item
-            label={t("pictorial_image")}
+            label={t('term.pictorial_image')}
             name="image"
-            rules={[{ required: true, message: t("form_upload_placeholder") }]}
+            rules={[{ required: true, message: t('form.upload_placeholder') }]}
+            getValueFromEvent={(url: string) => url}
+            getValueProps={(value) => ({ value })}
           >
-            <div style={{ width: 120, height: 112 }}>
-              <ImageUpload className="!w-[120px] !h-[112px]" />
-            </div>
+            <ImageUpload className="!w-[120px] !h-[112px]" />
           </Form.Item>
           <Form.Item
-            label={t("scene")}
+            label={t('common.scene')}
             name="scene"
             rules={[
-              { required: true, message: t("form_input_placeholder") },
-              {
-                max: 20,
-                message: t("form_input_placeholder_max_length", { max: 20 }),
-              },
+              { required: true, message: t('form.input_placeholder') },
+              { max: 20, message: t('form_input_placeholder_max_length', { max: 20 }) },
             ]}
           >
             <Input maxLength={20} showCount />
           </Form.Item>
           <Form.Item
-            label={t("description")}
+            label={t('common.description')}
             name="desc"
             rules={[
-              { required: true, message: t("form_input_placeholder") },
-              {
-                max: 50,
-                message: t("form_input_placeholder_max_length", { max: 50 }),
-              },
+              { required: true, message: t('form.input_placeholder') },
+              { max: 50, message: t('form_input_placeholder_max_length', { max: 50 }) },
             ]}
           >
-            <Input.TextArea
-              rows={5}
-              maxLength={50}
-              showCount
-              style={{ resize: "none" }}
-            />
+            <Input.TextArea rows={5} maxLength={50} showCount style={{ resize: 'none' }} />
           </Form.Item>
         </Form>
       </Modal>

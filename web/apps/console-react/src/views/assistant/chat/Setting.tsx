@@ -1,10 +1,10 @@
 import {
-  useState,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-  useRef,
-  useMemo,
+    useState,
+    useEffect,
+    useImperativeHandle,
+    forwardRef,
+    useRef,
+    useMemo,
 } from "react";
 import { Checkbox, Switch, Button, Slider, message, Spin } from "antd";
 import { t } from "@/locales";
@@ -370,8 +370,8 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
       slideDialogRef.current?.open(slideGroup, slideCommandList);
     };
 
-    const handleSave = async (noverify = false) => {
-      const data = deepCopy(form);
+    const handleSave = async (noverify = false, formData?: any) => {
+      const data = deepCopy(formData || form);
       if (!noverify) {
         const fastValue = getFastReasoningValue().split("_53aikm_");
         if (data.settings.fast_reasoning_config?.enable) {
@@ -457,7 +457,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
           loadQuickCommandList();
           loadSlideCommandList();
         } else {
-          await handleSave(true);
+          await handleSave(true, newForm);
         }
       } finally {
         setIsLoading(false);
@@ -482,7 +482,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
             {/* Model Setting */}
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("module.model_setting")}
                 </div>
               </div>
@@ -492,10 +492,10 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                     checked={form.settings?.fast_reasoning_config?.enable}
                     disabled
                   />
-                  <div className="text-sm text-[#1D1E1F]">
+                  <div className="text-sm text-primary">
                     {t("model.fast_reasoning")}
                   </div>
-                  <span className="text-xs text-[#999999]">
+                  <span className="text-xs text-placeholder">
                     {t("model.fast_reasoning_desc")}
                   </span>
                 </div>
@@ -539,10 +539,10 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                       }))
                     }
                   />
-                  <div className="text-sm text-[#1D1E1F]">
+                  <div className="text-sm text-primary">
                     {t("model.deep_thinking")}
                   </div>
-                  <span className="text-xs text-[#999999]">
+                  <span className="text-xs text-placeholder">
                     {t("model.deep_thinking_desc")}
                   </span>
                 </div>
@@ -577,7 +577,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
             {/* Web Search */}
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("module.web_search")}
                 </div>
               </div>
@@ -598,14 +598,14 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                       }))
                     }
                   />
-                  <span className="text-sm text-[#4F5052]">
+                  <span className="text-sm text-secondary">
                     {t("module.web_search_desc")}
                   </span>
                 </div>
                 {form.settings?.web_search_setting?.enable && (
                   <div className="border rounded p-5 space-y-4 mt-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex-none w-[106px] text-sm text-[#1D1E1F]">
+                      <div className="flex-none w-[106px] text-sm text-primary">
                         {t("module.online_search_source")}
                       </div>
                       <SelectPlus
@@ -616,7 +616,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-none w-[106px] text-sm text-[#1D1E1F]">
+                      <div className="flex-none w-[106px] text-sm text-primary">
                         {t("module.online_search_recall_count")}
                       </div>
                       <div className="flex-1 flex items-center">
@@ -639,7 +639,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                             }))
                           }
                         />
-                        <span className="flex-none w-9 text-right text-[#182B50] text-sm">
+                        <span className="flex-none w-9 text-right text-dark text-sm">
                           {form.settings?.web_search_setting?.top_k || 20}
                         </span>
                       </div>
@@ -652,7 +652,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
             {/* Question Rewrite */}
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("module.question_rewrite")}
                 </div>
               </div>
@@ -672,7 +672,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                     }))
                   }
                 />
-                <span className="text-sm text-[#4F5052]">
+                <span className="text-sm text-secondary">
                   {t("module.question_rewrite_desc")}
                 </span>
               </div>
@@ -681,7 +681,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
             {/* Generate Summary */}
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("module.generate_summary")}
                 </div>
               </div>
@@ -701,7 +701,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                     }))
                   }
                 />
-                <span className="text-sm text-[#4F5052]">
+                <span className="text-sm text-secondary">
                   {t("module.generate_summary_desc")}
                 </span>
               </div>
@@ -710,7 +710,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
             {/* Suggested Questions */}
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("module.generate_suggested_questions")}
                 </div>
               </div>
@@ -730,7 +730,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                     }))
                   }
                 />
-                <span className="text-sm text-[#4F5052]">
+                <span className="text-sm text-secondary">
                   {t("module.generate_suggested_questions_desc")}
                 </span>
               </div>
@@ -739,7 +739,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
             {/* Quick Command */}
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("module.quick_command")}
                 </div>
               </div>
@@ -747,7 +747,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                 {quickCommandList.map((item) => (
                   <div
                     key={item.prompt_id}
-                    className="h-8 px-3 border rounded flex items-center text-sm text-[#1D1E1F]"
+                    className="h-8 px-3 border rounded flex items-center text-sm text-primary"
                   >
                     {item.name}
                   </div>
@@ -761,7 +761,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
             {/* Slide Command */}
             <div className="flex mb-4">
               <div className="flex-none w-[100px] h-8 flex items-center justify-between gap-2">
-                <div className="text-sm text-[#1D1E1F]">
+                <div className="text-sm text-primary">
                   {t("module.slide_command")}
                 </div>
               </div>
@@ -769,7 +769,7 @@ export const ChatSetting = forwardRef<ChatSettingRef, ChatSettingProps>(
                 {slideCommandList.map((item) => (
                   <div
                     key={item.prompt_id}
-                    className="h-8 px-3 border rounded flex items-center text-sm text-[#1D1E1F]"
+                    className="h-8 px-3 border rounded flex items-center text-sm text-primary"
                   >
                     {item.name}
                   </div>

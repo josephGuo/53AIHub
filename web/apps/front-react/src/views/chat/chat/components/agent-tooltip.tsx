@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
-import { Tooltip, Input, Empty } from "antd";
+import { Tooltip, Empty } from "antd";
 import { SearchOutlined, CloseOutlined } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
 import { useAgentStore } from "@/stores/modules/agent";
 import { useBasicLayout } from "@/hooks/useBasicLayout";
 import { getPublicPath } from "@/utils/config";
@@ -74,12 +75,12 @@ export default function AgentTooltip({
           {t("action.find")}
         </h4>
       </div>
-      <Input
+      <Search
+        mode="expanded"
         value={keyword}
-        onChange={(e) => setKeyword(e.target.value)}
+        onDebouncedChange={setKeyword}
         size="large"
         placeholder={t("action.search") + t("module.agent")}
-        prefix={<SearchOutlined />}
         className="mt-4"
       />
       {/* 对齐 Vue 版本：使用 el-tabs，直接绑定 group_id，无"全部"分组 */}

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Table, Input, Button, Spin, Tooltip } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { useState, useEffect, useRef } from "react";
+import { Table, Button, Tooltip } from "antd";
 import { t } from "@/locales";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import FilterDateRange from "@/components/Filter/date-range";
 import { getLastTimeAsDay } from "@km/shared-utils";
 import recordApi from "@/api/modules/record/index";
@@ -176,7 +175,7 @@ export default function Statistic({ agentId }: StatisticProps) {
       render: (_: any, __: any, index: number) => (
         <Button
           type="text"
-          className="invisible group-hover:visible hover:text-[#2563EB]"
+          className="invisible group-hover:visible hover:text-brand"
           icon={<SvgIcon name="view" />}
           onClick={(e) => {
             e.stopPropagation();
@@ -214,7 +213,7 @@ export default function Statistic({ agentId }: StatisticProps) {
               >
                 <SvgIcon name={item.svg} />
               </div>
-              <span className="ml-2 mr-1 text-[#1D1E1F] text-sm">
+              <span className="ml-2 mr-1 text-primary text-sm">
                 {item.label}
               </span>
               <Tooltip title={item.tip}>
@@ -250,21 +249,13 @@ export default function Statistic({ agentId }: StatisticProps) {
               }}
             />
           </div>
-          <Input
+          <Search
+            mode="expanded"
             value={detailedForm.file_keyword}
             placeholder={t("search-record.search_document")}
-            style={{ width: 240 }}
-            allowClear
-            prefix={<SearchOutlined />}
-            onChange={(e) => {
-              setDetailedForm({
-                ...detailedForm,
-                file_keyword: e.target.value,
-              });
-            }}
-            onPressEnter={() => onRefresh(detailedForm)}
-            onClear={() => {
-              const newForm = { ...detailedForm, file_keyword: "" };
+            className="w-[240px]"
+            onDebouncedChange={(val) => {
+              const newForm = { ...detailedForm, file_keyword: val };
               setDetailedForm(newForm);
               onRefresh(newForm, detailedDate);
             }}

@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
-import { Form, Button, message, Spin } from "antd";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Form, Button, message, Spin, Modal, Input } from "antd";
+import { ExclamationCircleFilled } from "@ant-design/icons";
 import { t } from "@/locales";
 import { ModelSelect } from "@/components/Model/select";
 import {
@@ -76,13 +77,27 @@ const decodeModelValue = (
   };
 };
 
-export function KnowledgeModel() {
+interface KnowledgeModelProps {
+  /** 当前活跃的 Tab key，用于判断是否需要重置状态 */
+  activeTab?: string;
+}
+
+export function KnowledgeModel({ activeTab }: KnowledgeModelProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [setting, setSetting] = useState<ModelSetting>(() => ({
     ...defaultSetting,
     model_config: { ...defaultSetting.model_config },
   }));
+  // 初始加载的向量嵌入模型值，用于判断是否修改
+  const [initialVectorEmbedding, setInitialVectorEmbedding] = useState<{
+    channel_id: number;
+    model_name: string;
+  }>({ channel_id: 0, model_name: "" });
+
+  // 追踪是否是当前活跃的 Tab
+  const isActive = activeTab === "model";
+  const wasActiveRef = useRef(isActive);
 
   // Computed values for model selects
   const logicValue = encodeModelValue(
@@ -134,6 +149,23 @@ export function KnowledgeModel() {
     }));
   }, []);
 
+  // Check if vector embedding model has changed
+  // 第一次选择向量模型（从空变为有值）不需要弹出确认框
+  const isVectorEmbeddingChanged = () => {
+    const current = setting.model_config.vector_embedding;
+    if (
+      initialVectorEmbedding.channel_id === 0 &&
+      initialVectorEmbedding.model_name === ""
+    ) {
+      return false;
+    }
+    // 只有当初始值不为空，且当前值与初始值不同时，才算修改
+    return (
+      current.channel_id !== initialVectorEmbedding.channel_id ||
+      current.model_name !== initialVectorEmbedding.model_name
+    );
+  };
+
   // Load config
   const loadConfig = async () => {
     setLoading(true);
@@ -147,6 +179,11 @@ export function KnowledgeModel() {
       }
 
       setSetting(data);
+      // 保存初始向量嵌入模型值
+      setInitialVectorEmbedding({
+        channel_id: data.model_config.vector_embedding.channel_id,
+        model_name: data.model_config.vector_embedding.model_name,
+      });
     } catch (error) {
       console.error("Failed to load model config:", error);
     } finally {
@@ -170,12 +207,71 @@ export function KnowledgeModel() {
       return;
     }
 
+    // 如果向量嵌入模型修改了，弹出确认框
+    if (isVectorEmbeddingChanged()) {
+      Modal.confirm({
+        title: (
+          <div className="flex items-center gap-3">
+            <ExclamationCircleFilled className="text-[#fc4d56] text-2xl" />
+            <span>{t("model.vector_change_confirm_title")}</span>
+          </div>
+        ),
+        icon: null,
+        width: 480,
+        content: (
+          <div className="py-2 px-9">
+            <div className="text-secondary mb-3">{t("model.vector_change_confirm_warning")}</div>
+            <p className="text-secondary text-sm mb-2">
+              {t("model.vector_change_confirm_hint")}
+            </p>
+            <Input
+              placeholder={t("model.vector_change_confirm_keyword")}
+              id="vector-confirm-input"
+              className="rounded-md"
+            />
+          </div>
+        ),
+        okText: t("action_confirm"),
+        cancelText: t("action_cancel"),
+        centered: true,
+        okButtonProps: {
+          danger: true,
+        },
+        onOk: async () => {
+          const input = document.getElementById("vector-confirm-input") as HTMLInputElement;
+          const inputValue = input?.value || "";
+          if (!inputValue.trim()) {
+            message.error(t("model.vector_change_confirm_hint"));
+            return Promise.reject();
+          }
+          if (inputValue !== t("model.vector_change_confirm_keyword")) {
+            message.error(t("model.vector_change_confirm_error"));
+            return Promise.reject();
+          }
+          // 确认后执行保存
+          await doSave();
+        },
+      });
+      return;
+    }
+
+    // 向量嵌入模型未修改，直接保存
+    await doSave();
+  };
+
+  // 实际执行保存
+  const doSave = async () => {
     setSaving(true);
     try {
       await chunkSettingApi.modelConfig.update({
         model_config: setting.model_config,
       });
       message.success(t("message_status.save_success"));
+      // 保存成功后更新初始值
+      setInitialVectorEmbedding({
+        channel_id: setting.model_config.vector_embedding.channel_id,
+        model_name: setting.model_config.vector_embedding.model_name,
+      });
     } catch (error) {
       console.error("Failed to save model config:", error);
     } finally {
@@ -189,6 +285,15 @@ export function KnowledgeModel() {
   useEffect(() => {
     loadConfig();
   }, []);
+
+  // 当 Tab 从非活跃变为活跃时，重新加载配置（重置未保存的修改）
+  useEffect(() => {
+    if (isActive && !wasActiveRef.current) {
+      // Tab 重新进入，重新加载配置
+      loadConfig();
+    }
+    wasActiveRef.current = isActive;
+  }, [isActive]);
 
   return (
     <div className="h-full  bg-white py-5 px-2 overflow-auto">

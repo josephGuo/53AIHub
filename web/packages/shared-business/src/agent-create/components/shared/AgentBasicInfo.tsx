@@ -108,7 +108,7 @@ export function AgentBasicInfo({
       }) : defaultAvatarRender()}
 
       {/* 名称和描述 */}
-      <div className="flex-1 space-y-3">
+      <div className="flex-1 space-y-2">
         <div className="flex gap-3">
           <Input
             value={value.name}
@@ -133,7 +133,7 @@ export function AgentBasicInfo({
           value={value.description}
           onChange={handleDescChange}
           placeholder={_descPlaceholder}
-          rows={2}
+          rows={3}
           maxLength={descMaxLength}
           showCount={{ formatter: ({ count, maxLength }) => `${count}/${maxLength}` }}
           style={{ resize: 'none' }}

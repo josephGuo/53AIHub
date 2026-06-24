@@ -88,7 +88,7 @@ export const TipConfirm = forwardRef<TipConfirmRef, TipConfirmProps>(
           content: { borderRadius: 16 },
         }}
       >
-        <section className="text-base text-[#535456]">{content}</section>
+        <section className="text-base text-secondary">{content}</section>
       </Modal>
     )
   }

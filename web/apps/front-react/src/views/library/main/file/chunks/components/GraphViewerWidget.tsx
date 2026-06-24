@@ -7,10 +7,9 @@ import {
   useImperativeHandle,
   useMemo,
 } from "react";
-import { Input, Tooltip } from "antd";
-import { Dropdown } from "@km/shared-components-react";
+import { Tooltip } from "antd";
+import { Dropdown, Search } from "@km/shared-components-react";
 import type { MenuProps } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
 import { SvgIcon } from "@km/shared-components-react";
 import { getPublicPath } from "@/utils/config";
 import loadLib from "@/utils/loadLib";
@@ -420,13 +419,8 @@ export const GraphViewerWidget = forwardRef<GraphViewerWidgetRef, GraphViewerWid
     }, [onZoomChange]);
 
     // Handle search
-    const handleSearch = useCallback(() => {
-      onSearch?.(keywordValue);
-    }, [keywordValue, onSearch]);
-
     const handleKeywordChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
+      (value: string) => {
         setKeywordValue(value);
         onKeywordChange?.(value);
       },
@@ -491,16 +485,14 @@ export const GraphViewerWidget = forwardRef<GraphViewerWidgetRef, GraphViewerWid
           <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-white shadow">
             {isSupportSearch && (
               <>
-                <Input
+                <Search
+                  mode="expanded"
                   value={keywordValue}
                   disabled={loading}
                   placeholder="请输入实体名称"
-                  allowClear
                   className="search-input"
-                  onChange={handleKeywordChange}
-                  onClear={() => onSearch?.("")}
-                  onPressEnter={handleSearch}
-                  suffix={<SearchOutlined />}
+                  onInput={handleKeywordChange}
+                  onDebouncedChange={(val) => onSearch?.(val)}
                 />
                 <div className="w-px h-[14px] bg-[#E6E8EB]" />
               </>

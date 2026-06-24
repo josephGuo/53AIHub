@@ -14,14 +14,20 @@ import { BACKEND_AGENT_TYPE } from '../../constants'
 const INITIAL_BASIC_INFO = { name: '', description: '', logo: '' }
 const DEFAULT_AGENT_TYPE = BACKEND_AGENT_TYPE.ASSISTANT
 
+// Tab 类型
+type TabType = 'builtin' | 'thirdparty'
+
+const TABS = [
+  { value: 'builtin' as const, labelKey: 'dialog.tab_builtin' },
+  { value: 'thirdparty' as const, labelKey: 'dialog.tab_thirdparty' },
+]
+
 // 平台分组组件
 function PlatformSection({
-  title,
   platforms,
   selectedPlatform,
   onSelect,
 }: {
-  title: string
   platforms: AgentPlatformOption[]
   selectedPlatform: string
   onSelect: (platform: AgentPlatformOption) => void
@@ -29,7 +35,6 @@ function PlatformSection({
   if (platforms.length === 0) return null
   return (
     <div>
-      <div className="text-sm font-medium text-[#1D1E1F] mb-3">{title}</div>
       <div className="grid grid-cols-6 gap-3">
         {platforms.map((platform) => {
           const isActive = selectedPlatform === platform.value
@@ -74,12 +79,14 @@ export function CreateAgentDialog({
   const [selectedType, setSelectedType] = useState<number>(types[0]?.agent_type || DEFAULT_AGENT_TYPE)
   const [selectedPlatform, setSelectedPlatform] = useState<string>('')
   const [basicInfo, setBasicInfo] = useState(INITIAL_BASIC_INFO)
+  const [activeTab, setActiveTab] = useState<TabType>('builtin')
 
   // 重置状态
   const resetState = () => {
     setSelectedType(types[0]?.agent_type || DEFAULT_AGENT_TYPE)
     setSelectedPlatform('')
     setBasicInfo(INITIAL_BASIC_INFO)
+    setActiveTab('builtin')
   }
 
   // 表单验证
@@ -95,9 +102,7 @@ export function CreateAgentDialog({
     return platformsByType.filter(p => p.agent_type === selectedType)
   }, [selectedType, platformsByType])
 
-  // 将平台分为"平台内置"和"三方接入"两组
-  // 平台内置：channel_type === 0（如 Prompt）
-  // 三方接入：channel_type !== 0（如 OpenClaw、扣子、Dify 等）
+  // 将当前类型的平台分为"平台内置"和"三方接入"两组
   const builtInPlatforms = useMemo(() => {
     return currentPlatforms.filter((p) => p.channel_type === 0)
   }, [currentPlatforms])
@@ -106,19 +111,52 @@ export function CreateAgentDialog({
     return currentPlatforms.filter((p) => p.channel_type !== 0)
   }, [currentPlatforms])
 
+  // 对话型（系统内置唯一可用类型）的内置平台，用于判断系统内置 tab 是否有可用内容
+  const chatBuiltInPlatforms = useMemo(() => {
+    return platformsByType.filter(p => p.agent_type === BACKEND_AGENT_TYPE.AGENT && p.channel_type === 0)
+  }, [platformsByType])
+
+  // 所有三方平台（不限类型），用于判断是否有三方接入可用
+  const allThirdPartyPlatforms = useMemo(() => {
+    return platformsByType.filter(p => p.channel_type !== 0)
+  }, [platformsByType])
+
   // 初始化选中平台
   useEffect(() => {
     if (currentPlatforms.length > 0 && !selectedPlatform) {
-      const firstPlatform = builtInPlatforms[0] || thirdPartyPlatforms[0] || currentPlatforms[0]
+      const platforms = activeTab === 'builtin' ? builtInPlatforms : thirdPartyPlatforms
+      const firstPlatform = platforms[0] || currentPlatforms[0]
       setSelectedPlatform(firstPlatform.value)
       if (firstPlatform.icon) {
         setBasicInfo(prev => ({ ...prev, logo: firstPlatform.icon }))
       }
     }
-  }, [currentPlatforms, selectedPlatform, builtInPlatforms, thirdPartyPlatforms])
+  }, [currentPlatforms, selectedPlatform, builtInPlatforms, thirdPartyPlatforms, activeTab])
+
+  // 判断当前类型在系统内置下是否可用（只有对话型可用）
+  const isBuiltinTypeAvailable = selectedType === BACKEND_AGENT_TYPE.AGENT
+
+  // Tab 切换时，确保选中可用的类型和 tab
+  useEffect(() => {
+    if (activeTab === 'builtin') {
+      // 系统内置没有可用平台，但有三方平台可用时，切到三方接入
+      if (chatBuiltInPlatforms.length === 0 && allThirdPartyPlatforms.length > 0) {
+        setActiveTab('thirdparty')
+        return
+      }
+      // 系统内置 tab 下，只有对话型可选
+      if (!isBuiltinTypeAvailable) {
+        setSelectedType(BACKEND_AGENT_TYPE.AGENT)
+        setSelectedPlatform('')
+        setBasicInfo(INITIAL_BASIC_INFO)
+      }
+    }
+  }, [activeTab, isBuiltinTypeAvailable, chatBuiltInPlatforms, allThirdPartyPlatforms])
 
   // 类型选择
   const handleTypeSelect = (type: AgentTypeOption) => {
+    // 系统内置 tab 下，只有对话型可选
+    if (activeTab === 'builtin' && type.agent_type !== BACKEND_AGENT_TYPE.AGENT) return
     if (type.disabled) return
     setSelectedType(type.agent_type)
     setSelectedPlatform('')
@@ -175,21 +213,47 @@ export function CreateAgentDialog({
       className="add-agent-dialog"
       destroyOnClose
     >
-      <div className="space-y-6">
+      <div >
+        {/* Tab 切换：系统内容 / 三方接入 */}
+        <div className="inline-flex flex-none items-center gap-1 bg-[#F7F7F9] p-1 rounded-xl">
+          {TABS.map((item) => (
+            <div
+              key={item.value}
+              className={`h-9 px-4 flex items-center text-sm cursor-pointer transition-colors ${
+                activeTab === item.value
+                  ? "text-[#1D1E1F] font-medium bg-white rounded-md"
+                  : "text-[#9A9A9A] hover:text-[#666]"
+              }`}
+              onClick={() => {
+                setActiveTab(item.value)
+                setSelectedPlatform('')
+              }}
+            >
+              {t(item.labelKey)}
+            </div>
+          ))}
+        </div>
+
         {/* 类型选择 */}
-        <div>
+        <div className="mt-4">
           <div className="text-sm font-medium text-[#1D1E1F] mb-3">{t('common.type')}</div>
           <div className="flex gap-3">
             {types.map((type) => {
-              const isActive = selectedType === type.agent_type && !type.disabled
+              // 系统内置 tab 下，助理型和应用型不可选
+              const isBuiltinDisabled = activeTab === 'builtin' && type.agent_type !== BACKEND_AGENT_TYPE.AGENT
+              const isActive = selectedType === type.agent_type && !type.disabled && !isBuiltinDisabled
+              const isDisabled = type.disabled || isBuiltinDisabled
+              const tooltipText = isBuiltinDisabled
+                ? t('dialog.feature_developing')
+                : type.disabled ? t('dialog.feature_developing') : ''
               return (
                 <Tooltip
                   key={type.agent_type}
-                  title={type.disabled ? t('dialog.feature_developing') : ''}
+                  title={tooltipText}
                 >
                   <div
                     className={`flex-1 rounded-lg border p-4 transition-all ${
-                      type.disabled
+                      isDisabled
                         ? 'border-[#E5E5E5] cursor-not-allowed opacity-60'
                         : isActive
                           ? 'border-[#2563EB] bg-[#2563EB]/5 text-theme cursor-pointer'
@@ -219,26 +283,25 @@ export function CreateAgentDialog({
           </div>
         </div>
 
-        {/* 平台选择 - 分为平台内置和三方接入 */}
-        <div>
-          <div className="space-y-4">
+        {/* 平台选择 - 根据 Tab 显示 */}
+        <div className="mt-5">
+          {activeTab === 'builtin' ? (
             <PlatformSection
-              title={t('dialog.platform_builtin')}
               platforms={builtInPlatforms}
               selectedPlatform={selectedPlatform}
               onSelect={handlePlatformSelect}
             />
+          ) : (
             <PlatformSection
-              title={t('dialog.third_party')}
               platforms={thirdPartyPlatforms}
               selectedPlatform={selectedPlatform}
               onSelect={handlePlatformSelect}
             />
-          </div>
+          )}
         </div>
 
         {/* 基本信息 */}
-        <div>
+        <div className="mt-5">
           <div className="text-sm font-medium text-[#1D1E1F] mb-3">{t('dialog.basic_info')}</div>
           <AgentBasicInfo
             value={basicInfo}

@@ -7,6 +7,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
  */
 export function usePoll(fn: () => Promise<any> | void, interval: number = 5000) {
   const [isPolling, setIsPolling] = useState(false)
+  const isPollingRef = useRef(false)  // 用 ref 跟踪状态，避免闭包问题
   const isVisibleRef = useRef(true)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const visibilityHandlerRef = useRef<(() => void) | null>(null)
@@ -22,6 +23,7 @@ export function usePoll(fn: () => Promise<any> | void, interval: number = 5000) 
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
+    isPollingRef.current = false  // 同步更新 ref
     setIsPolling(false)
 
     if (visibilityHandlerRef.current && typeof document !== 'undefined') {
@@ -39,6 +41,7 @@ export function usePoll(fn: () => Promise<any> | void, interval: number = 5000) 
   const start = useCallback(() => {
     // 防止重复启动
     stop()
+    isPollingRef.current = true  // 同步更新 ref
     setIsPolling(true)
 
     // 初始化可见性状态
@@ -50,7 +53,7 @@ export function usePoll(fn: () => Promise<any> | void, interval: number = 5000) 
     executeFn()
 
     const run = () => {
-      if (!isPolling) return
+      if (!isPollingRef.current) return  // 使用 ref 检查
 
       // 如果页面隐藏，不执行轮询，但保持轮询状态
       if (!isVisibleRef.current) {
@@ -61,8 +64,8 @@ export function usePoll(fn: () => Promise<any> | void, interval: number = 5000) 
       }
 
       timerRef.current = setTimeout(async () => {
-        // 再次检查可见性
-        if (!isVisibleRef.current) {
+        // 再次检查轮询状态和可见性
+        if (!isPollingRef.current || !isVisibleRef.current) {
           run()
           return
         }
@@ -84,7 +87,7 @@ export function usePoll(fn: () => Promise<any> | void, interval: number = 5000) 
         isVisibleRef.current = !document.hidden
 
         // 页面从隐藏变为可见时，立即执行一次并继续轮询
-        if (!wasVisible && isVisibleRef.current && isPolling) {
+        if (!wasVisible && isVisibleRef.current && isPollingRef.current) {
           executeFn()
             .then(() => run())
             .catch((error) => {
@@ -98,7 +101,7 @@ export function usePoll(fn: () => Promise<any> | void, interval: number = 5000) 
     }
 
     run()
-  }, [interval, isPolling, stop, executeFn])
+  }, [interval, stop, executeFn])
 
   // 组件卸载时自动停止
   useEffect(() => {

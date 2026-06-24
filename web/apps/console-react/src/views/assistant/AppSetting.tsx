@@ -91,7 +91,7 @@ export function AppSettingPage() {
   const transformCurAgent = (agents: AgentData[]): DocumentAppAgent => {
     const id = searchParams.get("id");
     const agent =
-      agents?.find((item: any) => item.agent_id === Number(id || 0)) || {};
+      agents?.find((item: any) => String(item.agent_id) === id) || {};
     let input_fields = agent.settings?.input_fields || [];
     let output_fields = agent.settings?.output_fields || [];
     const is_workflow =
@@ -218,7 +218,7 @@ export function AppSettingPage() {
 
   const handleEditAgent = () => {
     window.open(
-      `${window.location.origin}/console/#/agent/create?type=${currentAgent.agent_type}&agent_id=${currentAgent.agent_id}&is_new=false`,
+      `${window.location.origin}/console/#/agent/create-v2?type=${currentAgent.agent_type}&agent_id=${currentAgent.agent_id}&is_new=false`,
       "_blank",
     );
   };
@@ -301,7 +301,7 @@ export function AppSettingPage() {
                     />
                   </Button>
                 </div>
-                <div className="text-sm text-[#999999] break-words whitespace-pre-wrap">
+                <div className="text-sm text-placeholder break-words whitespace-pre-wrap">
                   {currentAgent.description}
                 </div>
               </div>
@@ -309,7 +309,7 @@ export function AppSettingPage() {
 
             <div className="mt-5 mb-10 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-[#999999] mr-4">{t("usage_range")}</span>
+                <span className="text-placeholder mr-4">{t("usage_range")}</span>
                 {userScopeData.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {userScopeData.map((item) => (
@@ -317,7 +317,7 @@ export function AppSettingPage() {
                         key={item.id}
                         className="border border-[#E6E8EB] rounded p-2 flex items-center gap-1"
                       >
-                        <span className="text-[#999999]">
+                        <span className="text-placeholder">
                           <SvgIcon name="avatar" width="16" />
                         </span>
                         {item.nickname}
@@ -348,7 +348,7 @@ export function AppSettingPage() {
                               )}
                             </span>
                             <span
-                              className="text-[#2563EB] cursor-pointer"
+                              className="text-brand cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleSelectVariable(index);

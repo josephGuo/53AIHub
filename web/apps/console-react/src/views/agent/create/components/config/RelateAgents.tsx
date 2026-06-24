@@ -3,12 +3,12 @@ import { useRef } from "react";
 import { t } from "@/locales";
 import { useAgentForm } from "../../hooks";
 import {
-  RelateAgentsDialog,
-  RelateAgentsDialogRef,
+    RelateAgentsDialog,
+    RelateAgentsDialogRef,
 } from "./RelateAgentsDialog";
 import {
-  RelateAgentsSetting,
-  RelateAgentsSettingRef,
+    RelateAgentsSetting,
+    RelateAgentsSettingRef,
 } from "./RelateAgentsSetting";
 import { BACKEND_AGENT_TYPE } from "@/constants/platform/config";
 import { SvgIcon } from "@km/shared-components-react";
@@ -99,7 +99,7 @@ export function RelateAgents() {
   return (
     <>
       <div className="flex items-center mb-3">
-        <div className="flex-1 text-sm text-[#4F5052]">
+        <div className="flex-1 text-sm text-secondary">
           {t("agent.relate_app.title")}
         </div>
         <Button type="link" className="px-0" onClick={handleAdd}>
@@ -109,7 +109,7 @@ export function RelateAgents() {
       </div>
 
       {relateAgents.length === 0 && (
-        <p className="text-sm text-[#9A9A9A]">{t("agent.relate_app.desc")}</p>
+        <p className="text-sm text-disabled">{t("agent.relate_app.desc")}</p>
       )}
 
       <div className="flex flex-col">
@@ -126,8 +126,8 @@ export function RelateAgents() {
               preview={false}
             />
             <div className="flex-1 overflow-hidden">
-              <div className="text-sm text-[#1D1E1F] truncate">{item.name}</div>
-              <div className="text-xs text-[#9A9A9A] mt-1 truncate">
+              <div className="text-sm text-primary truncate">{item.name}</div>
+              <div className="text-xs text-disabled mt-1 truncate">
                 {item.description}
               </div>
             </div>

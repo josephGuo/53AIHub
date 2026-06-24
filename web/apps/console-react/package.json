@@ -6,6 +6,7 @@
   "author": "53aihub",
   "scripts": {
     "dev": "vite",
+    "dev:mock": "vite --mode mock",
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
@@ -43,7 +44,6 @@
     "@km/hub-ui-x-react": "workspace:*",
     "@km/shared-business": "workspace:*",
     "@km/shared-components-react": "workspace:*",
-    "@km/shared-types": "workspace:*",
     "@km/shared-utils": "workspace:*",
     "@tiptap/core": "^3.20.4",
     "@tiptap/extension-document": "^3.20.4",

@@ -6,7 +6,7 @@ export class WakeLockService {
   private onReleasedCallbacks: Set<() => void> = new Set()
 
   isSupported(): boolean {
-    return 'wakeLock' in navigator
+    return Boolean(navigator.wakeLock)
   }
 
   async request(): Promise<boolean> {
@@ -18,7 +18,9 @@ export class WakeLockService {
     try {
       // Release any existing sentinel first
       if (this.sentinel) {
-        await this.sentinel.release()
+        if (typeof this.sentinel.release === 'function') {
+          await this.sentinel.release()
+        }
         this.sentinel = null
       }
 
@@ -41,7 +43,9 @@ export class WakeLockService {
 
   async release(): Promise<void> {
     if (this.sentinel) {
-      await this.sentinel.release()
+      if (typeof this.sentinel.release === 'function') {
+        await this.sentinel.release()
+      }
       this.sentinel = null
     }
     this.status = 'released'

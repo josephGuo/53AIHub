@@ -24,7 +24,6 @@ import Mindmap from "./components/mindmap";
 import Echarts from "./components/echarts";
 import Chart from "./components/chart";
 import { copyToClip } from "../../utils/copy";
-import i18n from "../../locale";
 
 // 注册语言
 hljs.registerLanguage("javascript", javascript);
@@ -67,7 +66,6 @@ export interface MdRendererProps {
   imagePreview?: boolean;
   /** 图片点击回调 */
   onImageClick?: (src: string, alt: string) => void;
-  onSourceReferenceHover?: (data: any) => void;
   onSourceReferenceClick?: (data: any) => void;
   onMermaidClick?: (data: any) => void;
   onRendered?: () => void;
@@ -339,7 +337,6 @@ const MdRenderer: React.FC<MdRendererProps> = ({
   mermaidClickable = false,
   imagePreview = true,
   onImageClick,
-  onSourceReferenceHover,
   onSourceReferenceClick,
   onMermaidClick,
   onRendered,
@@ -498,16 +495,6 @@ const MdRenderer: React.FC<MdRendererProps> = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const handleMouseOver = (event: Event) => {
-      const target = event.target as HTMLElement | null;
-      if (!target || !target.classList.contains("source-reference")) return;
-      onSourceReferenceHover?.({
-        sourceType: target.dataset.sourceType,
-        sourceNumber: target.dataset.sourceNumber,
-        element: target,
-      });
-    };
-
     const handleClick = (event: Event) => {
       const target = event.target as HTMLElement | null;
       if (!target || !target.classList.contains("source-reference")) return;
@@ -518,14 +505,12 @@ const MdRenderer: React.FC<MdRendererProps> = ({
       });
     };
 
-    container.addEventListener("mouseover", handleMouseOver);
     container.addEventListener("click", handleClick);
 
     return () => {
-      container.removeEventListener("mouseover", handleMouseOver);
       container.removeEventListener("click", handleClick);
     };
-  }, [onSourceReferenceHover, onSourceReferenceClick]);
+  }, [onSourceReferenceClick]);
 
   const processedContent = useMemo(() => {
     // 流式输出时跳过表格修复（性能优化）

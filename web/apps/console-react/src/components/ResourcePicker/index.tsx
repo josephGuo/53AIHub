@@ -1,13 +1,13 @@
-import { Modal, Button, Input, Table, Tag, Tabs } from "antd";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { Modal, Button, Table, Tag } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
 import {
-  useRef,
-  useState,
-  useMemo,
-  useCallback,
-  forwardRef,
-  useImperativeHandle,
-  useEffect,
+    useRef,
+    useState,
+    useMemo,
+    useCallback,
+    forwardRef,
+    useImperativeHandle
 } from "react";
 import { agentApi } from "@/api/modules/agent";
 import { aiLinkApi } from "@/api/modules/ai-link";
@@ -128,9 +128,9 @@ function ResourcePickerInner(
                 }}
               />
               <div className="flex-1 min-w-0">
-                <div className="text-[#2563EB] truncate">{name || "--"}</div>
+                <div className="text-brand truncate">{name || "--"}</div>
                 {record.description && (
-                  <div className="text-xs text-[#808080] truncate">
+                  <div className="text-xs text-placeholder truncate">
                     {record.description}
                   </div>
                 )}
@@ -176,11 +176,11 @@ function ResourcePickerInner(
           render: (displayName: string, record) => (
             <div className="flex items-center gap-2 w-full">
               <div className="flex-1 w-0 text-sm flex flex-col">
-                <div className="text-[#2563EB] truncate">
+                <div className="text-brand truncate">
                   {displayName || "--"}
                 </div>
                 {record.skill_name && (
-                  <div className="text-xs text-[#808080] truncate">
+                  <div className="text-xs text-placeholder truncate">
                     {record.skill_name || "--"}
                   </div>
                 )}
@@ -210,7 +210,7 @@ function ResourcePickerInner(
               src={record.logo || ""}
               alt=""
             />
-            <div className="text-[#2563EB] truncate">{name || "--"}</div>
+            <div className="text-brand truncate">{name || "--"}</div>
           </div>
         ),
       },
@@ -368,8 +368,8 @@ function ResourcePickerInner(
 
   // Handle keyword change
   const handleKeywordChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      filterFormRef.current.keyword = e.target.value;
+    (val: string) => {
+      filterFormRef.current.keyword = val;
       refresh();
     },
     [refresh],
@@ -412,7 +412,7 @@ function ResourcePickerInner(
           <Button
             type="dashed"
             icon={<PlusOutlined />}
-            className="!bg-transparent !border-[#3664EF] !text-[#3664EF]"
+            className="!bg-transparent !border-[#3664EF] !text-brand"
             size="small"
             onClick={open}
           >
@@ -423,7 +423,7 @@ function ResourcePickerInner(
               key={`${item.value}-${index}`}
               closable
               onClose={() => handleRemove(item)}
-              className="!border-[#91B8FF] !bg-[#E6F4FF] !text-[#333]"
+              className="!border-[#91B8FF] !bg-[#E6F4FF] !text-primary"
             >
               {item.logo && (
                 <img
@@ -435,7 +435,7 @@ function ResourcePickerInner(
                   }}
                 />
               )}
-              <span className="text-[#333]">{item.label}</span>
+              <span className="text-primary">{item.label}</span>
             </Tag>
           ))}
         </div>
@@ -447,8 +447,8 @@ function ResourcePickerInner(
         onCancel={close}
         footer={
           <div className="py-4 flex items-center justify-between">
-            <div className="text-sm text-[#768097] text-left">
-              已选择 <span className="text-[#3664EF]">{checkedList.length}</span> 个
+            <div className="text-sm text-hint text-left">
+              已选择 <span className="text-brand">{checkedList.length}</span> 个
             </div>
             <div className="flex gap-2">
               <Button onClick={close}>{t("action_cancel")}</Button>
@@ -477,13 +477,12 @@ function ResourcePickerInner(
               groupType={groupType}
             />
           </div>
-          <Input
+          <Search
+            mode="expanded"
             value={filterFormRef.current.keyword}
-            onChange={handleKeywordChange}
-            style={{ width: 220 }}
+            onDebouncedChange={handleKeywordChange}
+            className="w-[220px]"
             placeholder={filterPlaceholder}
-            prefix={<SearchOutlined />}
-            allowClear
           />
         </div>
 

@@ -110,6 +110,13 @@ const agentsApi = {
       .then(res => res.data)
       .catch(handleError)
   },
+  /** 获取单个智能体详情 */
+  detail(agent_id: string) {
+    return service
+      .get(`/api/agents/${agent_id}`)
+      .then(res => res.data)
+      .catch(handleError)
+  },
   internalList() {
     return service.get(`/api/agents/internal_users`).catch(handleError)
   },

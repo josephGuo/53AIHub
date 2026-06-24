@@ -6,7 +6,6 @@ import { PlatformModel } from "./Model";
 import { PlatformAgent } from "./Agent";
 import { PlatformWebSearch } from "./WebSearch";
 import { PlatformFileParser } from "./FileParser";
-import { PlatformFileEditor } from "./FileEditor";
 import { PaymentPage } from "../payment";
 import { VERSION_MODULE } from "@/constants/enterprise";
 import { useVersion } from "@/hooks";
@@ -69,11 +68,7 @@ export function PlatformPage() {
           label: t("module.online_search"),
           children: <PlatformWebSearch />,
         },
-        {
-          key: "viewer",
-          label: t("module.document_view_and_edit"),
-          children: <PlatformFileEditor />,
-        },
+
         {
           key: "parse",
           label: t("module.document_parse"),

@@ -23,13 +23,15 @@ interface IndexConversationState {
   offset: number
   hasMore: boolean
   loadingMore: boolean
+  // Request ID for race condition prevention
+  loadConversationsRequestId: number
   // Computed
   currentConversation: () => any
   // Actions
   setBasePath: (path: string) => void
   setAgentId: (agent_id: string) => void
   setFileId: (file_id: string | null) => void
-  loadConversations: () => Promise<any[]>
+  loadConversations: (signal?: AbortSignal) => Promise<any[]>
   loadMoreConversations: () => Promise<void>
   createConversation: (agent_id: string, file_id: string | undefined, title?: string) => Promise<Conversation.Info>
   addConversation: (conversation: Conversation.Info) => void
@@ -52,6 +54,8 @@ export const useConversationStore = create<IndexConversationState>((set, get) =>
   offset: 0,
   hasMore: true,
   loadingMore: false,
+  // Request ID initialization
+  loadConversationsRequestId: 0,
 
   currentConversation: () => {
     const state = get()
@@ -80,12 +84,28 @@ export const useConversationStore = create<IndexConversationState>((set, get) =>
     set({ file_id })
   },
 
-  loadConversations: async () => {
+  loadConversations: async (signal?: AbortSignal) => {
     const { agent_id, file_id } = get()
     if (!agent_id) return []
 
+    // Generate unique request ID for this call
+    const requestId = Date.now()
+    set({ loadConversationsRequestId: requestId })
+
     const conversationApi = (await import('@/api/modules/conversation/index')).default
     const res = await conversationApi.agentList(agent_id, { file_id, offset: 0, limit: 30 })
+
+    // ✅ Race condition check: discard response if stale
+    const currentRequestId = get().loadConversationsRequestId
+    if (requestId !== currentRequestId) {
+      console.log('Discarding stale loadConversations response')
+      return []
+    }
+
+    // ✅ Check if aborted
+    if (signal?.aborted) {
+      return []
+    }
 
     const conversations = res.data.items.map((item: any) => ({
       ...item,
@@ -130,12 +150,17 @@ export const useConversationStore = create<IndexConversationState>((set, get) =>
         })
       }))
 
-      set(state => ({
-        conversations: [...state.conversations, ...newConversations],
-        offset: state.offset + newConversations.length,
-        hasMore: newConversations.length >= 30,
-        loadingMore: false
-      }))
+      set(state => {
+        // Deduplicate by ID to prevent React key warnings
+        const merged = [...state.conversations, ...newConversations]
+        const deduped = [...new Map(merged.map(c => [c.id, c])).values()]
+        return {
+          conversations: deduped,
+          offset: state.offset + newConversations.length,
+          hasMore: newConversations.length >= 30,
+          loadingMore: false
+        }
+      })
     } catch (error) {
       console.error('Failed to load more conversations:', error)
       set({ loadingMore: false })
@@ -164,9 +189,21 @@ export const useConversationStore = create<IndexConversationState>((set, get) =>
         format: 'YYYY.MM.DD hh:mm'
       })
     }
-    set((state) => ({
-      conversations: [newConversation, ...state.conversations]
-    }))
+    set((state) => {
+      // Check if conversation already exists to prevent duplicates
+      const exists = state.conversations.some(c => c.id === newConversation.id)
+      if (exists) {
+        // Update existing conversation instead of adding duplicate
+        return {
+          conversations: state.conversations.map(c =>
+            c.id === newConversation.id ? newConversation : c
+          )
+        }
+      }
+      return {
+        conversations: [newConversation, ...state.conversations]
+      }
+    })
   },
 
   updateConversation: (conversation) => {

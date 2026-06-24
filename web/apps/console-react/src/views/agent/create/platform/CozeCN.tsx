@@ -173,7 +173,7 @@ export const CozeCN = forwardRef<CozeCNRef, CozeCNProps>(
         >
           {showChannelConfig ? (
             <>
-              <div className="text-base text-[#1D1E1F] font-medium mb-3">
+              <div className="text-base text-primary font-medium mb-3">
                 {t('agent_app.coze_agent_cn')}
               </div>
               <Form.Item label={t('module.website_info_name')}>

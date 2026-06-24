@@ -179,10 +179,10 @@ export function PlatformFileParser() {
       {/* 文档解析模块 */}
       <div className="mb-8">
         <div className="flex items-center gap-2.5 mb-4">
-          <h3 className="text-base font-medium text-[#1D1E1F]">
+          <h3 className="text-base font-medium text-primary">
             {t("platform.document_parse")}
           </h3>
-          <p className="text-xs text-[#999999]">
+          <p className="text-xs text-placeholder">
             {t("platform.document_parse_desc")}
           </p>
         </div>
@@ -215,10 +215,10 @@ export function PlatformFileParser() {
                         key={field.key}
                         className="flex items-center gap-1"
                       >
-                        <span className="text-sm text-[#999]">
+                        <span className="text-sm text-placeholder">
                           {field.label}：
                         </span>
-                        <span className="flex-1 text-sm text-[#1D1E1F] truncate">
+                        <span className="flex-1 text-sm text-primary truncate">
                           {field.isSecret
                             ? formatSecret(
                                 settingsMap[config.key]?.setting[field.key],
@@ -270,8 +270,8 @@ export function PlatformFileParser() {
       {/* 语音解析模块 */}
       <div>
         <div className="flex items-center gap-2.5 mb-4">
-          <h3 className="text-base font-medium text-[#1D1E1F]">语音解析</h3>
-          <p className="text-xs text-[#999999]">
+          <h3 className="text-base font-medium text-primary">语音解析</h3>
+          <p className="text-xs text-placeholder">
             设置音视频文件的转写和解析方法
           </p>
         </div>
@@ -303,10 +303,10 @@ export function PlatformFileParser() {
                         key={field.key}
                         className="flex items-center gap-1"
                       >
-                        <span className="text-sm text-[#999]">
+                        <span className="text-sm text-placeholder">
                           {field.label}：
                         </span>
-                        <span className="flex-1 text-sm text-[#1D1E1F] truncate">
+                        <span className="flex-1 text-sm text-primary truncate">
                           {field.isSecret
                             ? formatSecret(
                                 settingsMap[config.key]?.setting[field.key],
@@ -374,7 +374,7 @@ export function PlatformFileParser() {
                       className="w-10 h-10"
                     />
                   </div>
-                  <span className="text-base font-medium text-[#1D1E1F]">
+                  <span className="text-base font-medium text-primary">
                     {config.name}
                   </span>
                 </div>
@@ -396,7 +396,7 @@ export function PlatformFileParser() {
       {/* 语音解析工具抽屉 */}
       <Drawer
         open={showAudioDrawer}
-        title="选择语音解析工具"
+        title={t("platform.select_access")}
         onClose={() => setShowAudioDrawer(false)}
         styles={{ wrapper: { width: 700 } }}
       >
@@ -415,15 +415,15 @@ export function PlatformFileParser() {
                       className="w-10 h-10"
                     />
                   </div>
-                  <span className="text-base font-medium text-[#1D1E1F]">
+                  <span className="text-base font-medium text-primary">
                     {config.name}
                   </span>
                 </div>
                 <Button
                   disabled={Boolean(settingsMap[config.key]?.id)}
-                  type="primary"
+                  color="primary"
                   className="!border-none"
-                  ghost
+                  variant="filled"
                   onClick={() => openConfigDialog(config.key)}
                 >
                   {t("action_add")}
@@ -449,7 +449,7 @@ export function PlatformFileParser() {
                 className="w-8 h-8"
               />
             )}
-            <span className="text-base font-medium text-[#1D1E1F]">
+            <span className="text-base font-medium text-primary">
               {currentConfig?.name}
             </span>
           </div>
@@ -467,7 +467,7 @@ export function PlatformFileParser() {
       >
         {/* 说明文字 */}
         {currentConfig?.description && (
-          <div className="p-4 text-sm text-[#1D1E1F] bg-[#F6F9FC] mb-4">
+          <div className="p-4 text-sm text-primary bg-[#F6F9FC] mb-4">
             <div
               dangerouslySetInnerHTML={{ __html: currentConfig.description }}
             />

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Table, Input, Button, Spin, Tooltip, Select, Tag } from "antd";
-import { SearchOutlined, SettingOutlined } from "@ant-design/icons";
+import { useState, useEffect, useRef } from "react";
+import { Table, Button, Tooltip, Select, Tag } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 import { t } from "@/locales";
 import FilterDateRange from "@/components/Filter/date-range";
 import { UserFilter } from "@/components/Filter/user";
@@ -10,7 +10,7 @@ import { SEARCH_TYPE } from "@/api/modules/feedback/types";
 import { useEnterpriseStore } from "@/stores/modules/enterprise";
 import FeedbackDetail from "@/views/search/components/detail";
 import FeedbackConfigDialog from "@/views/search/feedback/FeedbackConfigDialog";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 
 interface FeedbackProps {
   agentId?: string | number;
@@ -252,7 +252,7 @@ export default function Feedback({ agentId }: FeedbackProps) {
       render: (_: any, __: any, index: number) => (
         <Button
           type="text"
-          className="invisible group-hover:visible hover:text-[#2563EB]"
+          className="invisible group-hover:visible hover:text-brand"
           icon={<SvgIcon name="view" />}
           onClick={(e) => {
             e.stopPropagation();
@@ -301,7 +301,7 @@ export default function Feedback({ agentId }: FeedbackProps) {
               >
                 <SvgIcon name={item.svg} width="14" />
               </div>
-              <span className="ml-2 mr-1 text-[#1D1E1F] text-sm">
+              <span className="ml-2 mr-1 text-primary text-sm">
                 {item.label}
               </span>
               <Tooltip title={item.tip}>
@@ -337,18 +337,13 @@ export default function Feedback({ agentId }: FeedbackProps) {
               }}
             />
           </div>
-          <Input
-            value={detailedForm.question}
+          <Search
+            mode="expanded"
+            value={detailedForm.question || ""}
             placeholder={t("search-record.search_question")}
-            style={{ width: 240 }}
-            allowClear
-            prefix={<SearchOutlined />}
-            onChange={(e) =>
-              setDetailedForm({ ...detailedForm, question: e.target.value })
-            }
-            onPressEnter={() => onRefresh(detailedForm)}
-            onClear={() => {
-              const newForm = { ...detailedForm, question: "" };
+            className="w-[240px]"
+            onDebouncedChange={(val) => {
+              const newForm = { ...detailedForm, question: val || null };
               setDetailedForm(newForm);
               onRefresh(newForm, detailedDate);
             }}

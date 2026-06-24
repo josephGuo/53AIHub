@@ -5,7 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { Select, Switch, InputNumber, Input, Form, Spin } from "antd";
+import { Select, Switch, InputNumber, Input, Form } from "antd";
 import { CheckOutlined } from "@ant-design/icons";
 import { SvgIcon } from "@km/shared-components-react";
 import platformSettingsApi from "@/api/modules/platform-settings";
@@ -30,7 +30,7 @@ export function ParseConfig({ config, onChange }: ParseConfigProps) {
   const [settingsMap, setSettingsMap] = useState<
     Record<string, PlatformSetting | null>
   >({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -97,12 +97,15 @@ export function ParseConfig({ config, onChange }: ParseConfigProps) {
       }));
   }, [parserConfigs, settingsMap]);
 
-  // Auto-select first method if no engine is set (safeguard for missing engine in config)
+  // Auto-select default engine after settings loaded
+  // Only if current engine is not in the available parseMethods
   useEffect(() => {
-    if (!config.engine && parseMethods.length > 0) {
+    if (isLoading) return;
+    const engineExists = parseMethods.some((m) => m.key === config.engine);
+    if (!engineExists) {
       onChange?.({ ...config, engine: parseMethods[0].key });
     }
-  }, [config.engine, parseMethods.length]);
+  }, [parseMethods, config.engine, isLoading]);
 
   // Whether to show navigation buttons (show when more than 4)
   const showNavigation = useMemo(

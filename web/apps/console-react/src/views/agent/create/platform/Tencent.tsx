@@ -95,7 +95,7 @@ export const Tencent = forwardRef<TencentRef, TencentProps>(
         >
           {showChannelConfig ? (
             <>
-              <div className="text-base text-[#1D1E1F] font-medium mb-3">
+              <div className="text-base text-primary font-medium mb-3">
                 {t('agent_app.tencent')}
               </div>
               <Form.Item label={t('module.website_info_name')}>

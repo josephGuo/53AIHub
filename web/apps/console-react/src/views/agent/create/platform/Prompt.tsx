@@ -3,11 +3,11 @@ import { Form, Tooltip, message } from "antd";
 import { t } from "@/locales";
 import { useAgentForm } from "../hooks";
 import {
-  AgentInfo,
-  BaseConfig,
-  ExpandConfig,
-  UseScope,
-  RelateAgents,
+    AgentInfo,
+    BaseConfig,
+    ExpandConfig,
+    UseScope,
+    RelateAgents,
 } from "../components";
 import { ModelSelect } from "@/components/Model/select";
 import { copyToClip } from "@km/shared-utils";
@@ -107,10 +107,10 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
         >
           {showChannelConfig ? (
             <>
-              <h3 className="text-base text-[#1D1E1F] mb-3">
+              <h3 className="text-base text-primary mb-3">
                 {t("agent_app.prompt_v2")}
               </h3>
-              <div className="text-sm text-[#4F5052] mb-4">
+              <div className="text-sm text-secondary mb-4">
                 {t("access_model")}
               </div>
               <Form.Item
@@ -131,7 +131,7 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
           ) : (
             <>
               <UseScope />
-              <div className="text-sm text-[#4F5052] mb-4">
+              <div className="text-sm text-secondary mb-4">
                 {t("role_instruction")}
               </div>
               <Form.Item className="mb-6">
@@ -142,7 +142,7 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
                         className={`min-h-10 pl-3 pr-2 border-b flex items-center justify-between rounded-t bg-[#FBFBFC] ${isFullscreen ? "sticky top-0 left-0 right-0 z-10" : ""}`}
                       >
                         <div
-                          className="flex-1 text-sm text-[#4F5052] truncate"
+                          className="flex-1 text-sm text-secondary truncate"
                           title={t("role_instruction_desc")}
                         >
                           *{t("role_instruction_desc")}
@@ -150,7 +150,7 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
                         <div className="flex items-center gap-1">
                           <Tooltip placement="top" title={t("optimize_tip")}>
                             <span
-                              className="flex-center gap-1 text-[#2563EB] text-sm px-1 cursor-pointer opacity-60 pointer-events-none"
+                              className="flex-center gap-1 text-brand text-sm px-1 cursor-pointer opacity-60 pointer-events-none"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onOptimize();
@@ -163,7 +163,7 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
                           <div className="flex-none h-4 w-px border-r border-[#E1E2E6]" />
                           <Tooltip placement="top" title={t("generate_tip")}>
                             <span
-                              className="text-[#182B50] px-1 cursor-pointer opacity-60 pointer-events-none"
+                              className="text-dark px-1 cursor-pointer opacity-60 pointer-events-none"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onGenerate();
@@ -174,7 +174,7 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
                           </Tooltip>
                           <Tooltip placement="top" title={t("action_copy")}>
                             <span
-                              className="text-[#182B50] px-1 cursor-pointer"
+                              className="text-dark px-1 cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onCopy(prompt);
@@ -192,7 +192,7 @@ export const Prompt = forwardRef<PromptRef, PromptProps>(
                             }
                           >
                             <span
-                              className="text-[#182B50] px-1 cursor-pointer"
+                              className="text-dark px-1 cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleFullscreen();

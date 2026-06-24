@@ -18,17 +18,20 @@ import {
   useAgentFormStore,
   AgentDrawerRef,
   CreatePageLayout,
-  AgentBasicInfo,
-  OpenclawConfig,
-  AGENT_TYPES,
-  createPlatformsByType
+  getInitialFormData,
+  AgentBasicInfo, createPlatformsByType
 } from '@km/shared-business/agent-create'
 import { eventBus } from '@km/shared-utils'
-import { img_host } from '@/utils/config'
+import { GROUP_TYPE } from "@/constants/group"
+import { img_host, getPublicPath } from '@/utils/config'
 import { consoleAgentAdapter } from '@/adapters/agent-create-adapter'
 import { attachDefaultImg } from '@/directive/default-img'
 import { AgentDataTab } from './DataTab'
 import { AgentIntegrateTab } from './IntegrateTab'
+import { subscriptionApi } from "@/api/modules/subscription"
+import { groupApi, Group } from "@/api/modules/group"
+import { isEqual } from 'lodash-es'
+import { SvgIcon } from '@km/shared-components-react'
 
 /**
  * 头像上传 slot 组件
@@ -64,6 +67,16 @@ function AvatarSlot({
     </div>
   )
 }
+// 获取默认的注册用户和内部用户分组 ID
+const getDefaultGroupIds = async () => {
+  const subscriptionRes = await subscriptionApi.list({ params: { offset: 0, limit: 1000 } });
+  const subscriptionGroupIds = subscriptionRes.map((item: SubscriptionItem) => item.group_id);
+
+  const internalGroupRes = await groupApi.list({ params: { group_type: GROUP_TYPE.INTERNAL_USER } });
+  const internalGroupIds = internalGroupRes.map((item: Group) => item.group_id);
+
+  return { subscriptionGroupIds, internalGroupIds };
+}
 
 /**
  * 页面内容组件（Tab 三列布局，所有平台统一）
@@ -93,6 +106,9 @@ function AgentCreatePageContent() {
   const groupOptions = useAgentFormStore((state) => state.group_options)
   const setFormData = useAgentFormStore((state) => state.setFormData)
   const setAgentData = useAgentFormStore((state) => state.setAgentData)
+  const initialFormData = useAgentFormStore((state) => state.initial_form_data)
+  const setInitialFormData = useAgentFormStore((state) => state.setInitialFormData)
+  const isDirty = useAgentFormStore((state) => state.is_dirty)
 
   const infoDrawerRef = useRef<AgentDrawerRef>(null)
   const channelConfig = useRef<Record<string, any>>({})
@@ -128,9 +144,6 @@ function AgentCreatePageContent() {
   const backendAgentType = agentData?.backend_agent_type ?? getBackendAgentType(urlTypeParam || agentType)
   const typeName = getTypeName(backendAgentType)
 
-  // 判断是否为 Openclaw
-  const isOpenclaw = agentType === AGENT_TYPES.OPENCLAW
-
   // 格式化最近保存时间
   const lastSavedAt = agentId && agentData?.updated_time
     ? getSimpleDateFormatString({ date: agentData.updated_time, format: 'YYYY-MM-DD hh:mm:ss' })
@@ -143,6 +156,12 @@ function AgentCreatePageContent() {
       )
     : undefined
 
+  // 检查是否有未保存的修改
+  const hasUnsavedChanges = useCallback(() => {
+    if (!initialFormData) return false
+    return !isEqual(initialFormData, formData)
+  }, [initialFormData, formData])
+
   // 保存
   const onSave = async () => {
     const store = useAgentFormStore.getState()
@@ -151,18 +170,17 @@ function AgentCreatePageContent() {
     useAgentFormStore.setState({ saving: true })
 
     try {
-      if (isOpenclaw) {
-        // Openclaw 直接调用 store 的保存方法
-        await store.saveAgentData({ hideToast: true })
-      } else {
-        // 其他平台通过 drawer 保存
-        await infoDrawerRef.current?.handleSave()
-      }
+      // 所有平台统一通过 drawer 保存
+      await infoDrawerRef.current?.handleSave()
       message.success(t('action_save_success'))
       setAgentData({
         ...useAgentFormStore.getState().agent_data,
         updated_time: Date.now(),
       })
+
+      // 保存成功后更新初始数据，重置 dirty 状态
+      const currentFormData = useAgentFormStore.getState().form_data
+      useAgentFormStore.getState().setInitialFormData(currentFormData)
 
       const currentState = useAgentFormStore.getState()
       if (currentState.is_new) {
@@ -217,30 +235,27 @@ function AgentCreatePageContent() {
   // 初始化
   const agentIdParam = searchParams.get('agent_id')
   const typeParam = searchParams.get('type')
+  const isNewParam = searchParams.get('is_new')
 
   useEffect(() => {
-    const agentId = agentIdParam || '0'
+    const agentId = agentIdParam || ''
     const agentTypeFromUrl = (typeParam as string) || adapter.defaultPlatform
-    const isNew = searchParams.get('is_new') === 'true'
-
-    // 如果 URL 有 type，立即更新 store
-    if (typeParam) {
-      useAgentFormStore.setState({ agent_type: typeParam })
-    }
 
     const init = async () => {
-      if (!isNew && agentId) {
-        // 编辑模式：先重置状态，再加载数据，最后打开 drawer
-        useAgentFormStore.getState().reset()
+      // 编辑和创建模式都先重置状态，避免缓存污染
+      useAgentFormStore.getState().reset()
+
+      if (agentId) {
+        // 编辑模式：加载数据
         useAgentFormStore.setState({
-          is_new: false,
+          is_new: isNewParam === 'true',
           agent_id: agentId,
+          agent_type: agentTypeFromUrl,
           initializing: true,
         })
 
-        // 加载详情数据和分组选项
+        // 加载详情数据
         await useAgentFormStore.getState().loadDetailData()
-        await useAgentFormStore.getState().loadGroupOptions()
 
         // 获取加载后的 agent_type
         const loadedAgentType = useAgentFormStore.getState().agent_type
@@ -254,6 +269,10 @@ function AgentCreatePageContent() {
 
         useAgentFormStore.setState({ initializing: false })
 
+        // 保存初始表单数据用于修改追踪
+        const currentFormData = useAgentFormStore.getState().form_data
+        useAgentFormStore.getState().setInitialFormData(currentFormData)
+
         // 打开 drawer（cache 模式，不重置已加载的数据）
         infoDrawerRef.current?.open({
           agent_type: loadedAgentType,
@@ -263,21 +282,65 @@ function AgentCreatePageContent() {
             channel_config: channelConfig.current,
           },
         })
+
+        // 加载分组选项
+        await useAgentFormStore.getState().loadGroupOptions()
       } else {
-        // 创建模式：打开 drawer（cache 模式，保留添加弹框写入的数据）
-        const agentInfo = createPlatformsByType(img_host).find((item) => item.value === agentTypeFromUrl) || { label: '', icon: '' }
+        // 创建模式：从 URL 参数获取弹框数据，统一初始化
+        const nameParam = searchParams.get('name')
+        const descParam = searchParams.get('description')
+        const logoParam = searchParams.get('logo')
+        const groupIdParam = searchParams.get('group_id')
+        const agentModeParam = searchParams.get('agent_mode')
+        const backendAgentTypeParam = searchParams.get('backend_agent_type')
+
+        const { subscriptionGroupIds, internalGroupIds } = await getDefaultGroupIds();
+        const agentInfo = createPlatformsByType(img_host, getPublicPath).find((item) => item.value === agentTypeFromUrl) || { label: '', icon: '' }
+
+        // 加载分组选项
+        await useAgentFormStore.getState().loadGroupOptions()
+
+        // 获取分组列表，如果 group_id 为 0 则选择第一个分组
+        const groupOptions = useAgentFormStore.getState().group_options
+        let groupId = groupIdParam ? Number(groupIdParam) : 0
+        if (!groupId && groupOptions.length > 0) {
+          groupId = groupOptions[0].value
+        }
+
+        const initialFormData = {
+          ...getInitialFormData(),
+          name: nameParam || agentInfo.label || 'agent',
+          logo: logoParam || agentInfo.icon || '',
+          description: descParam || '',
+          group_id: groupId,
+          user_group_ids: internalGroupIds,
+          subscription_group_ids: subscriptionGroupIds,
+          custom_config: {
+            ...getInitialFormData().custom_config,
+            agent_mode: agentModeParam || 'chat',
+            agent_type: agentTypeFromUrl,
+          },
+        }
+
         useAgentFormStore.setState({
           is_new: true,
           agent_id: 0,
           agent_type: agentTypeFromUrl,
+          form_data: initialFormData,
         })
 
-        setFormData({
-          ...formData,
-          name: formData.name || agentInfo.label,
-          logo: formData.logo || agentInfo.icon,
-        })
+        // 设置 backend_agent_type
+        if (backendAgentTypeParam) {
+          useAgentFormStore.getState().setAgentData({
+            ...useAgentFormStore.getState().agent_data,
+            backend_agent_type: Number(backendAgentTypeParam),
+          })
+        }
 
+        // 保存初始表单数据用于修改追踪
+        useAgentFormStore.getState().setInitialFormData(initialFormData)
+
+        // 打开 drawer（cache 模式）
         infoDrawerRef.current?.open({
           agent_type: agentTypeFromUrl,
           agent_id: 0,
@@ -292,35 +355,52 @@ function AgentCreatePageContent() {
     init()
 
     return () => {
-      useAgentFormStore.getState().reset()
+      // 组件卸载时不重置，避免页面内跳转时丢失数据
     }
-  }, [agentIdParam, typeParam, adapter])
+  }, [agentIdParam, typeParam, isNewParam, adapter])
 
-  // 加载分组选项
+  // 处理浏览器关闭/刷新时的提醒
   useEffect(() => {
-    useAgentFormStore.getState().loadGroupOptions()
-  }, [])
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges()) {
+        const msg = t('skills.unsaved_confirm_message')
+        event.preventDefault()
+        event.returnValue = msg
+        return msg
+      }
+      return undefined
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
+
+  // 处理返回操作
+  const handleBack = useCallback(() => {
+    const doNavigate = () => {
+      // 判断是否有上一页
+      const state = window.history.state || {}
+      const hasHistory = state.idx !== undefined ? state.idx > 0 : false
+      navigate(hasHistory ? -1 : '/agent')
+    }
+
+    if (hasUnsavedChanges()) {
+      Modal.confirm({
+        content: t('skills.unsaved_confirm_message'),
+        okText: t('action.confirm'),
+        cancelText: t('action.cancel'),
+        onOk: doNavigate,
+      })
+    } else {
+      doNavigate()
+    }
+  }, [hasUnsavedChanges, navigate])
 
   // 渲染内容区
   const renderContent = () => {
     switch (activeTab) {
       case 'config':
-        // Openclaw 使用专用配置组件
-        if (isOpenclaw) {
-          return (
-            <div className="h-full flex-1 flex min-h-0">
-              {/* 左侧配置 */}
-              <div className="w-1/2 border-r overflow-y-auto p-4">
-                <OpenclawConfig avatarSlot={avatarSlot} />
-              </div>
-              {/* 右侧预览 */}
-              <div className="w-1/2 overflow-hidden bg-white">
-                <adapter.InlinePreviewComponent className="h-full" />
-              </div>
-            </div>
-          )
-        }
-        // 其他平台使用 CreatePageLayout
+        // 所有平台统一使用 CreatePageLayout
         return (
           <CreatePageLayout
             drawerRef={infoDrawerRef}
@@ -354,15 +434,20 @@ function AgentCreatePageContent() {
         title: (
           <div className="flex items-center gap-2">
             <span>{formData.name || t('agent_create_title')}</span>
+
+            <span className="px-2 h-6 flex items-center gap-1 bg-[#F4F4F7] rounded text-tertiary text-xs">
+              <SvgIcon size={14} name={backendAgentType === 1 ? 'app-one' : backendAgentType === 2 ? 'agent' : 'chat_v2'}></SvgIcon>
+              {t(`agent_app.${agentType}`) || '--'}
+            </span>
             <EditOutlined
-              className="cursor-pointer text-[#999] hover:text-[#666]"
+              className="cursor-pointer text-placeholder hover:text-tertiary"
               style={{ fontSize: 14 }}
               onClick={handleEditOpen}
             />
           </div>
         ),
         back: true,
-        onBack: () => navigate('/agent'),
+        onBack: handleBack,
         titlePrefix: formData.logo ? (
           <img
             src={formData.logo}
@@ -380,12 +465,7 @@ function AgentCreatePageContent() {
             <span className="text-xs text-gray-400 truncate max-w-[200px]">
               {formData.description || t('agent.no_desc')}
             </span>
-            <span className="px-2 py-0.5 bg-white rounded text-[#666] text-xs">
-              {typeName}
-            </span>
-            <span className="px-2 py-0.5 bg-white rounded text-[#666] text-xs">
-              {t(`agent_app.${agentType}`) || '--'}
-            </span>
+            
           </div>
         ),
         center: (
@@ -394,7 +474,7 @@ function AgentCreatePageContent() {
               <div
                 key={item.key}
                 className={`h-8 px-5 flex items-center cursor-pointer rounded-md ${
-                  activeTab === item.key ? 'bg-white text-[#2563EB] shadow' : 'text-[#2029459E] hover:bg-white hover:text-[#2563eb]'
+                  activeTab === item.key ? 'bg-white text-brand shadow' : 'text-[#2029459E] hover:bg-white hover:text-brand'
                 }`}
                 onClick={() => handleTabChange(item.key)}
               >
@@ -424,7 +504,7 @@ function AgentCreatePageContent() {
       {/* 编辑基本信息弹框 */}
       <Modal
         open={editVisible}
-        title={t('agent.edit_info')}
+        title={t('dialog.basic_info')}
         onCancel={() => setEditVisible(false)}
         onOk={handleEditSave}
         width="50%"

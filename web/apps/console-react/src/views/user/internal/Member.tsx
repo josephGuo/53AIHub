@@ -12,13 +12,11 @@ import {
   Table,
   Button,
   Select,
-  Input,
   Modal,
   message
 } from "antd";
-import { Dropdown } from "@km/shared-components-react";
+import { Dropdown, Search } from "@km/shared-components-react";
 import {
-  SearchOutlined,
   MoreOutlined,
   PlusOutlined,
   UserOutlined,
@@ -622,10 +620,10 @@ export const UserMember = forwardRef<MemberRef, MemberProps>(
           width={200}
         >
           <div className="mb-3">
-            <Input
-              prefix={<SearchOutlined className="text-gray-300" />}
+            <Search
+              mode="expanded"
               value={relateKeyword}
-              onChange={(e) => setRelateKeyword(e.target.value)}
+              onDebouncedChange={setRelateKeyword}
               placeholder={t("action_search")}
               className="w-full"
             />

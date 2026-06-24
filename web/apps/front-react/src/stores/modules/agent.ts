@@ -2,15 +2,18 @@ import { create } from 'zustand'
 import { useMemo } from 'react'
 import groupApi from '@/api/modules/group'
 import agentApi from '@/api/modules/agents/index'
-import { cacheManager as cache } from '@km/shared-utils'
+import agentShortcutsApi from '@/api/modules/agent-shortcuts'
+import { cacheManager as cache, eventBus } from '@km/shared-utils'
 import { GROUP_TYPE } from '@/constants/group'
 import { useConversationStore } from './conversation'
+import { EVENT_NAMES } from '@/constants/events'
 
 // 缓存key常量
 const CACHE_KEYS = {
   AGENT_LIST: 'agent_list',
   MY_AGENT_LIST: 'my_agent_list',
-  CATEGORY_LIST: 'category_list'
+  CATEGORY_LIST: 'category_list',
+  AGENT_SHORTCUT_IDS: 'agent_shortcut_ids'
 } as const
 
 export const DEFAULT_AGENT: Agent.State = {
@@ -30,11 +33,23 @@ interface AgentState {
   myAgentList: Agent.State[]
   myAgentLoading: boolean
   boxHeight: number
+  /** 已添加快捷方式的智能体 ID 集合 */
+  shortcutIds: Set<string>
+  /** 加载请求的 Promise（用于请求去重） */
+  shortcutIdsLoadingPromise: Promise<void> | null
   setBoxHeight: (height: number) => void
   loadAgentList: () => Promise<Agent.State[]>
   loadCategorys: () => Promise<void>
   loadMyAgentList: (isRefresh?: boolean) => Promise<Agent.State[]>
   findAgentByAgentId: (agent_id: string) => Agent.State | undefined
+  /** 检查智能体是否已添加快捷方式 */
+  isShortcutAdded: (agent_id: string) => boolean
+  /** 加载已添加的智能体快捷方式 ID 列表（同一时间段只请求一次） */
+  loadShortcutIds: () => Promise<void>
+  /** 标记智能体为已添加快捷方式 */
+  markShortcutAdded: (agent_id: string) => void
+  /** 添加智能体快捷方式（API + 状态更新） */
+  addShortcut: (agent_id: string) => Promise<void>
 }
 
 export const useAgentStore = create<AgentState>((set, get) => ({
@@ -43,6 +58,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   myAgentList: [],
   myAgentLoading: false,
   boxHeight: 0,
+  shortcutIds: new Set<string>(),
+  shortcutIdsLoadingPromise: null,
 
   setBoxHeight: (height: number) => {
     set({ boxHeight: height })
@@ -62,7 +79,6 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         return item
       })
     }
-
     const agentList = await cache.getOrFetch(CACHE_KEYS.AGENT_LIST, fetchAgents)
     set({ agentList })
     return agentList
@@ -109,8 +125,62 @@ export const useAgentStore = create<AgentState>((set, get) => ({
 
   findAgentByAgentId: (agent_id) => {
     const state = get()
-    return state.myAgentList.find((item) => item.agent_id === agent_id) ||
-      state.agentList.find((item) => item.agent_id === agent_id)
+    return state.myAgentList.find((item) => String(item.agent_id) === String(agent_id)) ||
+      state.agentList.find((item) => String(item.agent_id) === String(agent_id))
+  },
+
+  /**
+   * 检查智能体是否已添加快捷方式
+   */
+  isShortcutAdded: (agent_id) => {
+    return get().shortcutIds.has(String(agent_id))
+  },
+
+  /**
+   * 加载已添加的智能体快捷方式 ID 列表
+   * 同一时间段只会发起一次请求（请求去重）
+   */
+  loadShortcutIds: async () => {
+    const state = get()
+
+    // 如果正在加载，返回已有的 Promise（请求去重）
+    if (state.shortcutIdsLoadingPromise) {
+      return state.shortcutIdsLoadingPromise
+    }
+
+    // 发起新的加载请求
+    const promise = agentShortcutsApi.getIds()
+      .then((ids) => {
+        set({
+          shortcutIds: new Set(ids.map(id => String(id))),
+          shortcutIdsLoadingPromise: null
+        })
+      })
+      .catch((error) => {
+        console.error('加载智能体快捷方式ID列表失败:', error)
+        set({ shortcutIdsLoadingPromise: null })
+      })
+
+    set({ shortcutIdsLoadingPromise: promise })
+    return promise
+  },
+
+  /**
+   * 标记智能体为已添加快捷方式
+   */
+  markShortcutAdded: (agent_id) => {
+    const shortcutIds = new Set(get().shortcutIds)
+    shortcutIds.add(String(agent_id))
+    set({ shortcutIds })
+  },
+
+  /**
+   * 添加智能体快捷方式（API + 状态更新）
+   */
+  addShortcut: async (agent_id) => {
+    await agentShortcutsApi.create({ agent_id })
+    get().markShortcutAdded(agent_id)
+    eventBus.emit(EVENT_NAMES.SHORTCUT_ADDED, agent_id)
   }
 }))
 
@@ -120,8 +190,8 @@ export function useCurrentAgent() {
   const myAgentList = useAgentStore((state) => state.myAgentList)
   return useMemo(
     () =>
-      myAgentList.find((item) => item.agent_id === currentAgentId) ||
-      agentList.find((item) => item.agent_id === currentAgentId) ||
+      myAgentList.find((item) => String(item.agent_id) === String(currentAgentId)) ||
+      agentList.find((item) => String(item.agent_id) === String(currentAgentId)) ||
       DEFAULT_AGENT,
     [myAgentList, agentList, currentAgentId]
   )

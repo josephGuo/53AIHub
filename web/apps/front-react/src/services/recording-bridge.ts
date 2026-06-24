@@ -152,12 +152,21 @@ export class RecordingBridge {
     }
 
     // Create recording via API
-    const job = await recordingApi.create({
-      library_id: libraryId,
-      title,
-      target_format: 'm4a',
-      source_mime_type: this.mimeType,
-    })
+    let job
+    try {
+      job = await recordingApi.create({
+        library_id: libraryId,
+        title,
+        target_format: 'm4a',
+        source_mime_type: this.mimeType,
+      })
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.data?.message || error?.message || ''
+      if (errorMsg === 'forbidden: recording feature is disabled') {
+        throw new Error('功能已被停用，请刷新页面后重试')
+      }
+      throw error
+    }
 
     // Initialize recording info
     this.recordingInfo = {

@@ -51,3 +51,7 @@ export { setMarkdownEditorConfig, getMarkdownEditorConfig } from './Markdown/edi
 // OverflowTooltip
 export { default as OverflowTooltip } from './OverflowTooltip/index'
 export type { OverflowTooltipProps } from './OverflowTooltip/index'
+
+// CropperDialog
+export { default as CropperDialog } from './CropperDialog/index'
+export type { CropperDialogProps, CropperDialogRef } from './CropperDialog/index'

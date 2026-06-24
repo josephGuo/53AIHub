@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Tooltip } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
 
@@ -28,7 +28,7 @@ export const SpecifiedFiles: React.FC<SpecifiedFilesProps> = ({
     if (isExpanded) {
       return (
         <div className="mb-2">
-          <div className="max-w-[568px] p-2 rounded-lg cursor-pointer text-[#4F5052] bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-end gap-1">
+          <div className="max-w-[568px] p-2 rounded-lg cursor-pointer text-secondary bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-end gap-1">
             <SvgIcon className="flex-none" name="corner-down-right" />
             <p className="text-sm text-start">{content}</p>
           </div>
@@ -38,7 +38,7 @@ export const SpecifiedFiles: React.FC<SpecifiedFilesProps> = ({
     return (
       <div className="mb-2">
         <Tooltip title={content}>
-          <div className="max-w-40 h-7 px-2 rounded-lg cursor-pointer text-[#4F5052] bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-center gap-1">
+          <div className="max-w-40 h-7 px-2 rounded-lg cursor-pointer text-secondary bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-center gap-1">
             <SvgIcon className="flex-none" name="corner-down-right" />
             <p className="text-sm truncate">{content}</p>
           </div>
@@ -53,7 +53,7 @@ export const SpecifiedFiles: React.FC<SpecifiedFilesProps> = ({
         {files.map((file) => (
           <div
             key={file.id}
-            className="max-w-40 h-7 px-2 rounded-lg cursor-pointer text-[#4F5052] bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-center gap-1"
+            className="max-w-40 h-7 px-2 rounded-lg cursor-pointer text-secondary bg-[#F8F9FA] hover:bg-[#E1E2E3] inline-flex items-center gap-1"
             onClick={() => onFileClick?.(file)}
           >
             <SvgIcon className="flex-none" name="corner-down-right" />

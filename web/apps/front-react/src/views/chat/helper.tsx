@@ -5,7 +5,7 @@ import { SvgIcon } from "@km/shared-components-react";
 import { copyToClip } from "@km/shared-utils";
 import { getPublicPath } from "@/utils/config";
 import { t } from "@/locales";
-import { AGENT_TYPES } from "@/constants/platform/config";
+import { isOpenClawCompatibleChannelType } from "@km/shared-business/agent-create";
 
 const DEFAULT_IMG = "/images/default_agent.png";
 
@@ -126,7 +126,7 @@ export default function ChatHelper({ agent }: ChatHelperProps) {
           </div>
         )}
       </div>
-      {(searchParams.get("from") === "my" || agent.custom_config_obj?.agent_type === AGENT_TYPES.OPENCLAW) && (
+      {(searchParams.get("from") === "my" || isOpenClawCompatibleChannelType(agent.channel_type)) && (
         <div className="p-6 bg-white rounded">
           <h4 className="text-base text-primary">{t("chat.usage_channel")}</h4>
           <div className="flex gap-6 py-5 max-md:flex-col max-md:gap-2">

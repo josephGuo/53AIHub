@@ -59,7 +59,7 @@ export const useShortcutsStore = create<ShortcutsState>((set, get) => ({
     const { type, related_id, url, related_info } = shortcut
     switch (type) {
       case "agent":
-        return `/chat?agent_id=${related_id}`
+        return `/agent/${related_id}`
       case "library":
         return `/library/${related_id}`
       case "file":

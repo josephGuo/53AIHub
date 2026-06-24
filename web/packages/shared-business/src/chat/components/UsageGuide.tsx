@@ -20,9 +20,10 @@ export interface UsageGuideProps {
   useCases?: string | UseCase[];
   defaultImage?: string;
   showChannel?: boolean;
+  plain?: boolean;
 }
 
-function UsageGuide({ useCases, defaultImage = DEFAULT_IMG, showChannel = false }: UsageGuideProps) {
+function UsageGuide({ useCases, defaultImage = DEFAULT_IMG, showChannel = false, plain = false }: UsageGuideProps) {
   const { t } = useTranslation();
 
   const { cases, scenes, channels } = useMemo(() => {
@@ -57,20 +58,10 @@ function UsageGuide({ useCases, defaultImage = DEFAULT_IMG, showChannel = false 
     target.src = defaultImage;
   };
 
-  if (cases.length === 0 && scenes.length === 0 && channels.length === 0) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Empty
-          image="/images/chat/completion_empty.png"
-          description={t("common.no_data")}
-        />
-      </div>
-    );
-  }
 
   return (
-    <div className="h-[calc(100%-70px)] overflow-y-auto bg-white">
-      <div className="p-6 bg-white rounded">
+    <div className={`${ plain ? '' : 'h-[calc(100%-70px)] overflow-y-auto bg-white' }`}>
+      <div className={`${ plain ? 'bg-white' : 'p-6 bg-white rounded' }`}>
         <h4 className="text-base text-[#1F2123]">{t("chat.usage_case")}</h4>
         <div className="columns-2 gap-5 space-y-5 mt-5 max-md:columns-1">
           {cases.map((item, index) => (
@@ -115,7 +106,7 @@ function UsageGuide({ useCases, defaultImage = DEFAULT_IMG, showChannel = false 
           </div>
         )}
       </div>
-      <div className="p-6 bg-white rounded">
+      <div className={`${ plain ? 'bg-white mt-6' : 'p-6 bg-white rounded' }`}>
         <h4 className="text-base text-[#1F2123]">{t("chat.usage_scene")}</h4>
         <div className="flex gap-6 py-5 max-md:flex-col max-md:gap-2">
           {scenes.map((item, index) => (
@@ -148,7 +139,7 @@ function UsageGuide({ useCases, defaultImage = DEFAULT_IMG, showChannel = false 
         )}
       </div>
       {showChannel && (
-        <div className="p-6 bg-white rounded">
+        <div className={`${ plain ? 'bg-white mt-6' : 'p-6 bg-white rounded' }`}>
           <h4 className="text-base text-[#1F2123]">{t("chat.usage_channel")}</h4>
           <div className="flex gap-6 py-5 max-md:flex-col max-md:gap-2">
             {channels.map((item, index) => (

@@ -1,18 +1,18 @@
 import {
-  Drawer,
-  Form,
-  Input,
-  Radio,
-  Button,
-  Divider,
-  message,
-  Image,
+    Drawer,
+    Form,
+    Input,
+    Radio,
+    Button,
+    Divider,
+    message,
+    Image,
 } from "antd";
 import {
-  useState,
-  useMemo,
-  forwardRef,
-  useImperativeHandle
+    useState,
+    useMemo,
+    forwardRef,
+    useImperativeHandle
 } from "react";
 import { t } from "@/locales";
 import { useNavigate } from "react-router-dom";
@@ -22,16 +22,16 @@ import { useEnv } from "@/hooks/useEnv";
 import { img_host } from "@/utils/config";
 import IconPopover from "@/components/Icon/popover";
 import {
-  NAVIGATION_TYPE,
-  NAVIGATION_TARGET,
-  NAVIGATION_TYPE_LABEL_MAP,
-  NAVIGATION_TARGET_LABEL_MAP,
-  NAVIGATION_CUSTOM_PATH_BLACKLIST,
+    NAVIGATION_TYPE,
+    NAVIGATION_TARGET,
+    NAVIGATION_TYPE_LABEL_MAP,
+    NAVIGATION_TARGET_LABEL_MAP,
+    NAVIGATION_CUSTOM_PATH_BLACKLIST,
 } from "@/constants/navigation";
 import type {
-  NavigationItem,
-  CreateNavigationData,
-  UpdateNavigationData,
+    NavigationItem,
+    CreateNavigationData,
+    UpdateNavigationData,
 } from "@/api/modules/navigation/types";
 
 interface FormData {
@@ -205,7 +205,7 @@ const CreateDrawer = forwardRef<CreateDrawerRef, CreateDrawerProps>(
         }
       >
         <Form form={form} layout="vertical" className="px-4">
-          <h1 className="font-semibold text-[#1D1E1F] mb-6">
+          <h1 className="font-semibold text-primary mb-6">
             {t("basic_info")}
           </h1>
 
@@ -307,7 +307,7 @@ const CreateDrawer = forwardRef<CreateDrawerRef, CreateDrawerProps>(
                     ]}
                   >
                     <div className="flex items-center">
-                      <span className="flex items-center px-3 h-[32px] bg-[#f5f5f5] border border-r-0 border-[#d9d9d9] rounded-l text-sm text-[#666] whitespace-nowrap">
+                      <span className="flex items-center px-3 h-[32px] bg-[#f5f5f5] border border-r-0 border-[#d9d9d9] rounded-l text-sm text-tertiary whitespace-nowrap">
                         {domainUrl}
                       </span>
                       <Input
@@ -335,7 +335,7 @@ const CreateDrawer = forwardRef<CreateDrawerRef, CreateDrawerProps>(
 
           <Divider />
 
-          <h1 className="font-semibold text-[#1D1E1F] mb-6">
+          <h1 className="font-semibold text-primary mb-6">
             {t("module.nav_seo_setting")}
           </h1>
 
@@ -353,7 +353,7 @@ const CreateDrawer = forwardRef<CreateDrawerRef, CreateDrawerProps>(
           >
             <Input placeholder={t("form_input_placeholder")} />
           </Form.Item>
-          <div className="mt-2 text-xs text-[#999] -mt-4 mb-4">
+          <div className="mt-2 text-xs text-placeholder -mt-4 mb-4">
             {t("module.nav_seo_setting_keywords_tip")}
           </div>
 

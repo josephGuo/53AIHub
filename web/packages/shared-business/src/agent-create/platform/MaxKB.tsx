@@ -51,7 +51,7 @@ export const MaxKB = forwardRef<MaxKBRef, MaxKBProps>(
             <div className="text-sm font-medium text-primary mb-3">{t("provider_platform.platform_auth")}</div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <h3 className="text-base text-[#1D1E1F]">
+                <h3 className="text-sm text-[#1D1E1F]">
                   {t("provider_platform.maxkb")}
                 </h3>
                 <Popover
@@ -75,42 +75,45 @@ export const MaxKB = forwardRef<MaxKBRef, MaxKBProps>(
                 </Popover>
               </div>
             </div>
-            <Form form={channelForm} layout="vertical" className="mt-3">
-              <Form.Item
-                label={t("module.platform_model_base_url_maxkb")}
-                name="base_url"
-                rules={generateInputRules({
-                  message: "form_input_placeholder",
-                  validator: ["link"],
-                })}
-              >
-                <Input placeholder={t("form.input_placeholder")} />
-              </Form.Item>
-              <Form.Item
-                label="API Key"
-                name="key"
-                rules={generateInputRules({
-                  message: "form_input_placeholder",
-                  validator: ["text"],
-                })}
-              >
-                <Input placeholder={t("form.input_placeholder")} />
-              </Form.Item>
-              <Form.Item
-                label={t("term.agent_type")}
-                name={["config", "agent_type"]}
-                rules={generateInputRules({
-                  message: "form_input_placeholder",
-                })}
-              >
-                <Select
-                  className="max-w-[360px]"
-                  placeholder={t("form.select_placeholder")}
-                  disabled={channelEditable}
-                  options={[{ value: "chat", label: t("term.agent_type_chat") }]}
-                />
-              </Form.Item>
-            </Form>
+            <div className="p-4 border rounded-xl bg-white mt-3">
+              <Form form={channelForm} layout="vertical">
+                <Form.Item
+                  label={t("module.platform_model_base_url_maxkb")}
+                  name="base_url"
+                  rules={generateInputRules({
+                    message: "form_input_placeholder",
+                    validator: ["link"],
+                  })}
+                >
+                  <Input placeholder={t("form.input_placeholder")} />
+                </Form.Item>
+                <Form.Item
+                  label="API Key"
+                  name="key"
+                  rules={generateInputRules({
+                    message: "form_input_placeholder",
+                    validator: ["text"],
+                  })}
+                >
+                  <Input placeholder={t("form.input_placeholder")} />
+                </Form.Item>
+                <Form.Item
+                  label={t("term.agent_type")}
+                  name={["config", "agent_type"]}
+                  rules={generateInputRules({
+                    message: "form_input_placeholder",
+                  })}
+                  className="mb-0"
+                >
+                  <Select
+                    className="w-full"
+                    placeholder={t("form.select_placeholder")}
+                    disabled={channelEditable}
+                    options={[{ value: "chat", label: t("term.agent_type_chat") }]}
+                  />
+                </Form.Item>
+              </Form>
+            </div>
           </>
         )}
 
@@ -121,9 +124,11 @@ export const MaxKB = forwardRef<MaxKBRef, MaxKBProps>(
         >
           {showChannelConfig ? null : (
             <>
+              <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
               <BaseConfig />
               <RelateAgents />
               <ExpandConfig />
+              <div className="h-3"></div>
             </>
           )}
         </Form>

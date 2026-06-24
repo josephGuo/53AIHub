@@ -24,9 +24,19 @@ import type {
   RenameFolderResponse,
   ImportAudioRequest,
   ImportAudioResponse,
+  RecordingConfig,
 } from './types'
 
 // ============= FFmpeg 健康检查 =============
+
+/**
+ * 获取录音配置（前台）
+ * GET /api/recordings/config
+ */
+export async function getConfig(): Promise<RecordingConfig> {
+  const res = await request.get<ApiResponse<RecordingConfig>>('/api/recordings/config')
+  return res.data
+}
 
 /**
  * FFmpeg 健康检查
@@ -202,6 +212,9 @@ export async function importAudio(data: ImportAudioRequest): Promise<ImportAudio
 // ============= 默认导出 =============
 
 export const recordingApi = {
+  // 配置
+  getConfig,
+
   // FFmpeg
   getFfmpegHealth,
   getSystemStatus,

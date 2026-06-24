@@ -15,7 +15,7 @@ import { useEnterpriseStore } from "@/stores/modules/enterprise";
 import groupApi from "@/api/modules/group";
 
 import { toolboxApi } from "../api/toolboxApi";
-import type { SharedAccountItem, AiLinkDetail } from "../types";
+import type { SharedAccountItem } from "../types";
 
 // 使用 refactored 目录的组件
 import UseGroup from "./components/UseGroup";
@@ -369,7 +369,7 @@ export function ToolboxCreatePage() {
               onChange={handleGroupChange}
             />
             <div className="mt-4 mb-2 flex items-center justify-between gap-2">
-              <div className="text-sm text-[#4F5052]">
+              <div className="text-sm text-secondary">
                 {t("shared_account")}
               </div>
               <Button

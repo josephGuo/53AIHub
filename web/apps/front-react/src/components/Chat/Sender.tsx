@@ -15,8 +15,10 @@ import {
   PaperClipOutlined,
   FileOutlined
 } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, OverflowTooltip, Search } from "@km/shared-components-react";
 import { useSkillsStore } from "@/stores/modules/skills";
+import { type LibraryItem } from "@/api/modules/libraries";
+import { type SpaceItem } from "@/api/modules/spaces";
 
 import filesApi from "@/api/modules/files";
 import { formatFile } from "@/api/modules/files/transform";
@@ -26,6 +28,7 @@ import { MyFilesDialog } from "@/components/MyFilesDialog/dialog";
 import type { MyFilesDialogRef } from "@/components/MyFilesDialog/types";
 import { VERSION_MODULE } from "@/constants/enterprise";
 import { checkVersion } from "@/utils/version";
+
 
 // Debounce function to match Vue's useDebounceFn
 function useDebounceFn<T extends (...args: any[]) => any>(
@@ -79,6 +82,8 @@ interface LinkItem {
   path?: string;
   rawData?: any;
   source?: string; // 文件来源：'knowledge' | 'uploads' | 'ai-generated' | 'recordings'
+  islibrary?: boolean; // 标识是否为知识库
+  isspace?: boolean; // 标识是否为空间
 }
 
 interface UploadFile {
@@ -120,12 +125,14 @@ interface SenderProps {
   placeholderStyle?: string | object;
   atPlaceholderStyle?: string;
   device?: object;
-  simpleMode?: boolean;
   needFixPositonWhenFocus?: boolean;
   customActionsClass?: string;
   enhancedMention?: boolean;
   actionPosition?: "actions" | "extras";
   hasKnowledgeBase?: boolean;
+  /** 是否允许选择知识库（禁用后知识库列表项旁边不显示 checkbox） */
+  allowSelectLibrary?: boolean;
+  allowSelectSpace?: boolean;
   onInput?: (data: any) => void;
   onPost?: (data: any) => void;
   onMFocus?: () => void;
@@ -149,12 +156,13 @@ interface SenderProps {
   selectedSkills?: string[];
   onSelectSkill?: (skill: SkillItem) => void;
   onRemoveSkill?: () => void;
-  onExpand?: (expanded: boolean) => void;
   onOpenSkillLibrary?: () => void;
   // 删除链接回调
   onRemoveLink?: (link: LinkItem) => void;
   // inputBefore slot
   inputBefore?: React.ReactNode;
+  // 选择文件回调（从 Sender 内部的 SpaceDialog 选择时触发）
+  onSelectFiles?: (files: DocItem[], libraries?: LibraryItem[], spaces?: SpaceItem[]) => void;
 }
 
 export interface SenderRef {
@@ -210,12 +218,13 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
       placeholderStyle = "",
       atPlaceholderStyle = "",
       device = {},
-      simpleMode = false,
       needFixPositonWhenFocus = true,
       customActionsClass = "",
       enhancedMention = false,
       actionPosition = "actions",
       hasKnowledgeBase = true,
+      allowSelectLibrary = true,
+      allowSelectSpace = true,
       onInput,
       onPost,
       onMFocus,
@@ -230,10 +239,10 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
       selectedSkills = [],
       onSelectSkill,
       onRemoveSkill,
-      onExpand,
       onOpenSkillLibrary,
       onRemoveLink,
       inputBefore,
+      onSelectFiles,
     },
     ref,
   ) => {
@@ -274,7 +283,6 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
     });
     const [knowledgeList, setKnowledgeList] = useState<DocItem[]>([]);
     const [uploadFileList, setUploadFileList] = useState<UploadFile[]>([]);
-    const [isSimpleExpanded, setIsSimpleExpanded] = useState(false);
 
     // 搜索相关状态
     const [searchKeyword, setSearchKeyword] = useState("");
@@ -292,11 +300,6 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
     const links = useMemo(
       () => mentionLinkModel.links,
       [mentionLinkModel.links],
-    );
-
-    const showSimpleMode = useMemo(
-      () => simpleMode && !isSimpleExpanded,
-      [simpleMode, isSimpleExpanded],
     );
 
     const textareaStyle = useMemo(
@@ -377,17 +380,6 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
       }
     }, 300);
 
-    // 搜索技能
-    const searchSkills = useDebounceFn((keyword: string) => {
-      if (!keyword.trim()) {
-        setSkillSearchResults([]);
-        return;
-      }
-      const filtered = SKILL_LIST.filter((item) =>
-        item.label.toLowerCase().includes(keyword.toLowerCase()),
-      );
-      setSkillSearchResults(filtered);
-    }, 300);
 
     // Load recently accessed files
     const loadRecentlyFiles = useCallback(() => {
@@ -396,11 +388,22 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
       });
     }, []);
 
-    useEffect(() => {
-      if (showAt) {
-        loadRecentlyFiles();
-      }
-    }, [showAt, loadRecentlyFiles]);
+    // 标记是否已加载过最近文件
+    const hasLoadedRecentlyFiles = useRef(false);
+
+    // 延迟加载：只在用户第一次触发 @ 功能时加载
+    const loadRecentlyFilesIfNeeded = useCallback(() => {
+      if (hasLoadedRecentlyFiles.current) return;
+      hasLoadedRecentlyFiles.current = true;
+      loadRecentlyFiles();
+    }, [loadRecentlyFiles]);
+
+    // 组件挂载时不再自动加载，改为懒加载
+    // useEffect(() => {
+    //   if (showAt) {
+    //     loadRecentlyFiles();
+    //   }
+    // }, [showAt, loadRecentlyFiles]);
 
     // Calculate popup position
     const popupStyle = useMemo(() => {
@@ -750,6 +753,8 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
           setAtRect(input.getBoundingClientRect());
         }, 0);
         setCanShowSelect(true);
+        // ✅ 懒加载：触发 @ 功能时才加载最近文件
+        loadRecentlyFilesIfNeeded();
       },
       [
         atPlaceholder,
@@ -758,6 +763,7 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
         insertNode,
         moveCursorToElementEnd,
         getCurrentMentionInput,
+        loadRecentlyFilesIfNeeded,
       ],
     );
 
@@ -866,6 +872,8 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
               file_mime: l.file_mime,
               library_id: l.library_id,
               isfolder: l.isfolder,
+              islibrary: l.islibrary,
+              isspace: l.isspace,
             })),
         skillList: skillListData,
         pureTextContent: pureText,
@@ -1685,15 +1693,10 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
     const setLinks = useCallback(
       (newLinks: LinkItem[]) => {
         setMentionLinkModel({ links: newLinks, collapsed: false });
-        // 在简单模式下设置链接时，确保 Sender 展开
-        if (simpleMode && !isSimpleExpanded) {
-          setIsSimpleExpanded(true);
-          onExpand?.(true);
-        }
         togglePlaceHolder();
         emitInputImmediately();
       },
-      [simpleMode, isSimpleExpanded, onExpand, togglePlaceHolder, emitInputImmediately]
+      [togglePlaceHolder, emitInputImmediately]
     );
 
     const clearEditorOnly = useCallback(() => {
@@ -1863,14 +1866,24 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
     const handleOpenLibrary = useCallback(() => {
       cleanupInputElements();
       // 只传入知识库来源的文件作为默认选中
-      const knowledgeLinks = links.filter((l) => l.source === 'knowledge').map((l) => ({
+      const knowledgeLinks = links.filter((l) => l.source === 'knowledge' && !l.islibrary && !l.isspace).map((l) => ({
         id: l.id,
         name: l.name,
         icon: l.icon || "",
         iconText: "",
       }));
-      spaceDialogRef.current?.open(knowledgeLinks, library);
-    }, [links, library, cleanupInputElements]);
+      const selectedLibraries = links.filter((l) => l.source === 'knowledge' && l.islibrary).map((l) => ({
+        id: l.id,
+        name: l.name,
+        icon: l.icon || "",
+      }));
+      const selectedSpaces = links.filter((l) => l.source === 'knowledge' && l.isspace).map((l) => ({
+        id: l.id,
+        name: l.name,
+        icon: l.icon || "",
+      }));
+      spaceDialogRef.current?.open(knowledgeLinks, selectedLibraries, undefined, selectedSpaces);
+    }, [links, cleanupInputElements]);
 
     // 切换技能下拉框显示
     const skillButtonRef = useRef<any>(null);
@@ -1918,7 +1931,7 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
     }, [closeSkillSelect, onOpenSkillLibrary]);
 
     const handleSelectFiles = useCallback(
-      (files: DocItem[]) => {
+      (files: DocItem[], libraries: LibraryItem[], spaces?: SpaceItem[]) => {
         // 构建新的 links 数组，添加 source 标识
         const newLinks = files.map((file) => ({
           id: file.id,
@@ -1932,27 +1945,32 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
           isfolder: file.isfolder,
           source: 'knowledge', // 知识库来源
         }));
+        const newLibraries = libraries.map((lib) => ({
+          id: lib.id,
+          name: lib.name,
+          icon: lib.icon,
+          islibrary: true,
+          source: 'knowledge', // 知识库来源
+        }));
+        const newSpaces = (spaces || []).map((space) => ({
+          id: space.id,
+          name: space.name,
+          icon: space.icon,
+          isspace: true,
+          source: 'knowledge', // 知识库来源
+        }));
         // 替换同 source 类型的文件，保留其他 source 的文件
         setMentionLinkModel((prev) => {
           const otherLinks = prev.links.filter((l) => l.source !== 'knowledge');
-          return { ...prev, links: [...otherLinks, ...newLinks], collapsed: false };
+          return { ...prev, links: [...otherLinks, ...newLinks, ...newLibraries, ...newSpaces], collapsed: false };
         });
         setHasSelectAfterOpen(true);
-      },
-      [],
-    );
 
-    // 将 links 转换为弹窗需要的文件格式
-    const convertLinksToSelectedFiles = useCallback(() => {
-      return links.map((l) => ({
-        id: l.id,
-        name: l.name,
-        icon: l.icon || '',
-        path: l.path || '',
-        isfolder: l.isfolder || false,
-        rawData: l.rawData,
-      }));
-    }, [links]);
+        // 通知父组件选择变化
+        onSelectFiles?.(files, libraries, spaces);
+      },
+      [onSelectFiles],
+    );
 
     // 将选中的文件转换为 links 格式（添加 source 标识）
     const convertFilesToLinks = useCallback((files: any[], source: string) => {
@@ -2023,7 +2041,12 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
     const handleRemoveLink = useCallback((link: LinkItem) => {
       setMentionLinkModel((prev) => ({
         ...prev,
-        links: prev.links.filter((l) => l.id !== link.id),
+        links: prev.links.filter((l) => {
+          if (l.id !== link.id) return true;
+          const lType = l.isspace ? 'space' : (l.islibrary ? 'library' : 'file');
+          const linkType = (link as any).isspace ? 'space' : (link.islibrary ? 'library' : 'file');
+          return lType !== linkType;
+        }),
       }));
       onRemoveLink?.(link);
     }, [onRemoveLink]);
@@ -2118,40 +2141,6 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
       [onFileChange, uploadFileList],
     );
 
-    // 点击展开完整版 - 原生事件版本（用于 window click）
-    const handleExpandSimpleNative = useCallback(
-      (evt: MouseEvent) => {
-        const target = evt.target as HTMLElement | null;
-        const isInsideComponent = target && senderRef.current?.contains(target);
-        // 检查是否点击在 Ant Design Dropdown/Popover/Modal 内部（这些组件通过 portal 渲染到 body 下）
-        const isInDropdown = target && target.closest('.ant-dropdown, .ant-select-dropdown, .ant-popover, .ant-modal-wrap');
-
-        if (!simpleMode) return;
-        if (isInsideComponent) {
-          if (!isSimpleExpanded) {
-            setIsSimpleExpanded(true);
-            onExpand?.(true);
-          }
-        } else if (!isInDropdown) {
-          // 只有当不在 Dropdown/Modal 内部时才收起
-          // 如果有 links（已选择文件）或有输入内容，则保持展开状态
-          if (isSimpleExpanded && mentionLinkModel.links.length === 0 && isEmptyInput) {
-            setIsSimpleExpanded(false);
-            onExpand?.(false);
-          }
-        }
-      },
-      [simpleMode, isSimpleExpanded, onExpand, mentionLinkModel.links, isEmptyInput],
-    );
-
-    // React 事件版本
-    const handleExpandSimple = useCallback(
-      (evt: React.MouseEvent<HTMLDivElement>) => {
-        handleExpandSimpleNative(evt.nativeEvent);
-      },
-      [handleExpandSimpleNative],
-    );
-
     // editMutationObserver
     const editMutationObserver = useCallback(
       (el: HTMLElement | null) => {
@@ -2194,12 +2183,13 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
       return cleanup;
     }, [editMutationObserver, togglePlaceHolder]);
 
+    // ✅ 注释掉：改为懒加载，在用户触发 @ 功能时才加载
     // Load recently files on mount
-    useEffect(() => {
-      if (showAt) {
-        loadRecentlyFiles();
-      }
-    }, [showAt, loadRecentlyFiles]);
+    // useEffect(() => {
+    //   if (showAt) {
+    //     loadRecentlyFiles();
+    //   }
+    // }, [showAt, loadRecentlyFiles]);
 
     // Click outside handler
     useEffect(() => {
@@ -2246,13 +2236,6 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
       return () => clearTimeout(timeoutId);
     }, [links, emitInputImmediately]);
 
-    // simpleMode click handler
-    useEffect(() => {
-      window.addEventListener("click", handleExpandSimpleNative);
-      return () =>
-        window.removeEventListener("click", handleExpandSimpleNative);
-    }, [handleExpandSimpleNative]);
-
     // Check knowledge base version
     useEffect(() => {
       if (!checkVersion(VERSION_MODULE.KNOWLEDGE_BASE)) {
@@ -2261,7 +2244,7 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
     }, []);
 
     return (
-      <div className={className} ref={senderRef} onClick={handleExpandSimple}>
+      <div className={className} ref={senderRef}>
         {/* 已上传文件列表 */}
         {uploadFileList.length > 0 && enableUpload && (
           <div className="flex flex-wrap gap-2 mb-2">
@@ -2286,7 +2269,7 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
           </div>
         )}
         <div
-          className={`relative rounded-lg border border-[#E3E8FF] bg-white px-3 py-3 shadow-lg ${showSimpleMode ? "cursor-pointer hover:border-[#2563EB] transition-colors" : ""}`}
+          className="relative rounded-lg border border-[#E3E8FF] bg-white px-3 py-3 shadow-lg"
         >
           {/* 隐藏的文件输入框 */}
           <input
@@ -2304,12 +2287,14 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
               {links.map((link) => (
                 <div
                   key={link.id}
-                  className="h-6 px-1.5 rounded bg-[#F3F3F5] flex items-center text-sm text-[#6B6C70] group cursor-pointer relative whitespace-nowrap"
+                  className="h-6 max-w-[200px] overflow-hidden px-1.5 rounded bg-[#F3F3F5] flex items-center text-sm text-[#6B6C70] group cursor-pointer relative"
                 >
-                  <div className="size-4 rounded mr-1">
+                  <div className="flex-none size-4 rounded mr-1">
                     <img src={link.icon} className="size-4" alt="" />
                   </div>
-                  <span className="truncate">{link.name}</span>
+                  <OverflowTooltip>
+                    <span className="truncate">{link.name}</span>
+                  </OverflowTooltip>
                   <div
                     className="group-hover:flex hidden absolute top-1/2 right-0 -translate-y-1/2 size-4 border rounded-full bg-white items-center justify-center"
                     onClick={(e) => {
@@ -2338,7 +2323,7 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
                 role="textbox"
                 aria-disabled={disabled || loading}
                 contentEditable={!disabled && !loading}
-                className={`overflow-y-auto text-sm leading-relaxed text-[#1F1E25] outline-none transition-all ${showSimpleMode ? "h-[52px]" : "h-20"}`}
+                className="overflow-y-auto text-sm leading-relaxed text-[#1F1E25] outline-none transition-all h-20"
                 style={textareaStyle}
                 spellCheck={false}
                 onInput={handleEditorInput}
@@ -2353,7 +2338,7 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
 
               {isShowPlaceholder && (
                 <span
-                  className={`pointer-events-none absolute inset-0 px-0 py-0 leading-relaxed text-[#999999] ${showSimpleMode ? "flex items-center text-base" : "text-sm"}`}
+                  className="pointer-events-none absolute inset-0 px-0 py-0 leading-relaxed text-[#999999] text-sm"
                   style={
                     typeof placeholderStyle === "object" ? placeholderStyle : {}
                   }
@@ -2522,12 +2507,11 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
                 >
                   {/* 搜索框 */}
                   <div className="pb-3">
-                    <Input
+                    <Search
+                      mode="expanded"
                       value={skillSearchKeyword}
-                      onChange={(e) => setSkillSearchKeyword(e.target.value)}
+                      onDebouncedChange={setSkillSearchKeyword}
                       placeholder="搜索技能"
-                      prefix={<SearchOutlined />}
-                      allowClear
                     />
                   </div>
 
@@ -2576,8 +2560,7 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
           </div>
 
           {/* Toolbar */}
-          {!showSimpleMode && (
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
               {/* Extras slot */}
               {extras || (
                 <div className="flex items-center gap-3">
@@ -2723,9 +2706,8 @@ export const Sender = forwardRef<SenderRef, SenderProps>(
                 </div>
               )}
             </div>
-          )}
         </div>
-        <SpaceDialog ref={spaceDialogRef} onConfirm={handleSelectFiles} />
+        <SpaceDialog ref={spaceDialogRef} onConfirm={handleSelectFiles} allowSelectLibrary={allowSelectLibrary} allowSelectSpace={allowSelectSpace} />
         <MyFilesDialog
           ref={uploadedDialogRef}
           source="uploads"

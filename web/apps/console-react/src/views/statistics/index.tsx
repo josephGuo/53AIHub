@@ -101,15 +101,15 @@ export function StatisticsPage() {
       <Spin spinning={loading}>
         <div className="flex-1 max-h-[calc(100vh-240px)] overflow-auto">
           {/* Page title and description */}
-          <h1 className="font-semibold text-[#1D1E1F]">
+          <h1 className="font-semibold text-primary">
             {t("module.statistics_header_title")}
           </h1>
-          <div className="text-[#9A9A9A] text-sm mt-4">
+          <div className="text-disabled text-sm mt-4">
             {t("module.statistics_header_desc")}
           </div>
 
           {/* Head statistics code input */}
-          <div className="text-[#9A9A9A] text-sm mt-6">
+          <div className="text-disabled text-sm mt-6">
             {t("module.statistics_textarea_label_1")}
           </div>
           <Input.TextArea
@@ -124,7 +124,7 @@ export function StatisticsPage() {
           />
 
           {/* CSS style code input */}
-          <div className="text-[#9A9A9A] text-sm mt-6">
+          <div className="text-disabled text-sm mt-6">
             {t("module.statistics_textarea_label_2")}
           </div>
           <Input.TextArea

@@ -2,16 +2,14 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Table,
   Button,
-  Input,
   Select,
   message,
-  Modal,
-  Tabs,
+  Modal
 } from "antd";
-import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
-import { SvgIcon, Dropdown } from "@km/shared-components-react";
+import { MoreOutlined } from "@ant-design/icons";
+import { SvgIcon, Dropdown, Search } from "@km/shared-components-react";
 import { t } from "@/locales";
-import { userApi, groupApi } from "@/api";
+import { groupApi } from "@/api";
 import { useUserStore, useEnterpriseStore } from "@/stores";
 import { useEnv } from "@/hooks/useEnv";
 import { GROUP_TYPE } from "@/constants/group";
@@ -42,6 +40,8 @@ export function UserRegisterList() {
   const [tableData, setTableData] = useState<RegisterUser[]>([]);
   const [tableTotal, setTableTotal] = useState(0);
   const [keyword, setKeyword] = useState("");
+  const keywordRef = useRef(keyword);
+  keywordRef.current = keyword;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -100,7 +100,7 @@ export function UserRegisterList() {
     try {
       const res = await userStore.loadListData({
         data: {
-          keyword,
+          keyword: keywordRef.current,
           group_id: groupId,
           offset: (currentPage - 1) * pageSize,
           start_time: dateRange[0] || undefined,
@@ -319,10 +319,10 @@ export function UserRegisterList() {
     if (subscriptionOptions.length > 0) {
       loadUserList();
     }
-  }, [page, pageSize, groupId, rangeBy, dateRange]);
+  }, [page, pageSize, groupId, rangeBy, dateRange, subscriptionOptions]);
 
   return (
-    <div className="py-6 px-2 flex-1 flex flex-col bg-white box-border max-h-[calc(100vh-100px)] overflow-auto">
+    <div className="px-2 flex-1 flex flex-col bg-white">
       {/* Filters */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -358,14 +358,16 @@ export function UserRegisterList() {
         </div>
 
         <div className="flex gap-3">
-          <Input
+          <Search
+            mode="expanded"
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onPressEnter={refresh}
+            onDebouncedChange={(val) => {
+              keywordRef.current = val;
+              setKeyword(val);
+              refresh();
+            }}
             placeholder={t("module.operation_user_search_placeholder")}
-            prefix={<SearchOutlined className="text-gray-300" />}
-            allowClear
-            style={{ width: 268 }}
+            className="w-[268px]"
           />
         </div>
       </div>

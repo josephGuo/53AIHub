@@ -16,7 +16,7 @@
         const params = {};
         search.match(reg)?.forEach((item) => {
           const [key, value] = item.split("=");
-          params[key] = value;
+          params[decodeURIComponent(key)] = decodeURIComponent(value || "");
         });
         return params;
       }

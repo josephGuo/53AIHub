@@ -88,7 +88,7 @@ export function ApplyForm({ onLogin }: ApplyFormProps) {
       layout="vertical"
       className="relative max-w-[440px] w-full"
     >
-      <h4 className="text-3xl text-[#1D1E1F] font-bold text-center mb-10">
+      <h4 className="text-3xl text-primary font-bold text-center mb-10">
         {t('apply.create_site')}
       </h4>
 
@@ -104,8 +104,8 @@ export function ApplyForm({ onLogin }: ApplyFormProps) {
                   index < activeStep
                     ? 'text-[#B3C7FA]'
                     : index === activeStep
-                      ? 'text-[#3664EF]'
-                      : 'text-[#9A9A9A]'
+                      ? 'text-brand'
+                      : 'text-disabled'
                 }
               >
                 {label}
@@ -134,7 +134,7 @@ export function ApplyForm({ onLogin }: ApplyFormProps) {
         <>
           {/* Website Name */}
           <Form.Item
-            label={<span className="text-[#1D1E1F]">{t('login.website_name')}</span>}
+            label={<span className="text-primary">{t('login.website_name')}</span>}
             name="website_name"
             rules={[{ required: true, message: t('login.website_name_placeholder') }]}
           >
@@ -148,7 +148,7 @@ export function ApplyForm({ onLogin }: ApplyFormProps) {
 
           {/* Contact Name */}
           <Form.Item
-            label={<span className="text-[#1D1E1F]">{t('login.contact_name')}</span>}
+            label={<span className="text-primary">{t('login.contact_name')}</span>}
             name="contact_name"
             rules={[{ required: true, message: t('login.contact_name_placeholder') }]}
           >
@@ -183,9 +183,9 @@ export function ApplyForm({ onLogin }: ApplyFormProps) {
         <div className="h-[424px] p-10 box-border bg-[#EFF9FF] rounded-lg flex flex-col items-center justify-center text-center">
           <div className="flex items-center justify-center gap-2">
             <CheckCircleFilled style={{ color: '#4CBF65', fontSize: 28 }} />
-            <span className="text-[#1D1E1F] text-2xl font-bold">{t('apply.waiting_audit')}</span>
+            <span className="text-primary text-2xl font-bold">{t('apply.waiting_audit')}</span>
           </div>
-          <div className="text-[#666] text-sm mt-4">
+          <div className="text-tertiary text-sm mt-4">
             {t('apply_success_desc')}
           </div>
           <img

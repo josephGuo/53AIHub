@@ -239,7 +239,7 @@ export const WechatSettingDialog = forwardRef<
     <div className="flex items-center">
       <span>{label}</span>
       <span
-        className="flex items-center gap-0.5 text-[#9A9A9A] ml-2 text-sm hover:opacity-80 cursor-pointer"
+        className="flex items-center gap-0.5 text-disabled ml-2 text-sm hover:opacity-80 cursor-pointer"
         onClick={() => onGuideOpen(mode)}
       >
         <SvgIcon className="inline" name="help" width="14" color="#999" />
@@ -369,7 +369,7 @@ export const WechatSettingDialog = forwardRef<
           {guideList?.map((item, index) => (
             <li
               key={index}
-              className="flex flex-col gap-2 text-[#1D1E1F] text-sm"
+              className="flex flex-col gap-2 text-primary text-sm"
             >
               <div
                 className="text-wrap break-words whitespace-pre-wrap"

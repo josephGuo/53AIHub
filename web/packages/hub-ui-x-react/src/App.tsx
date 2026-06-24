@@ -443,7 +443,6 @@ graph TD
                     renderSource={renderSource}
                     sourceEnabled
                     onSuggestion={handleSuggestion}
-                    onSourceReferenceHover={handleSourceReferenceHover}
                     onSourceReferenceClick={handleSourceReferenceClick}
                     showError={message.error}
                     error={

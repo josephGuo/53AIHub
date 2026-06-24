@@ -1,6 +1,0 @@
-/* Space View Styles - Only CSS that cannot be done with TailwindCSS */
-
-/* Diagonal cut effect for library cards - clip-path not supported by TailwindCSS */
-.diagonal-cut {
-  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 100%, 0 100%);
-}

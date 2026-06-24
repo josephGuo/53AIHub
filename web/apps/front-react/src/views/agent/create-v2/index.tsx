@@ -17,9 +17,7 @@ import {
   useAgentFormStore,
   AgentDrawerRef,
   CreatePageLayout,
-  AgentBasicInfo,
-  OpenclawConfig,
-  AGENT_TYPES,
+  AgentBasicInfo
 } from '@km/shared-business/agent-create'
 import { eventBus } from '@km/shared-utils'
 import { frontAgentAdapter } from '@/adapters/agent-create-adapter'
@@ -88,9 +86,6 @@ function AgentCreatePageContent() {
   const agentConfig = adapter.getAgentConfig?.(agentType) || {}
   const platformName = agentConfig.name || 'Prompt'
 
-  // 判断是否为 Openclaw
-  const isOpenclaw = agentType === AGENT_TYPES.OPENCLAW
-
   // 编辑弹窗的 avatarSlot
   const avatarSlot = adapter.ImageUploadComponent
     ? ({ value, onChange }: { value: string; onChange: (logo: string) => void }) => (
@@ -106,13 +101,8 @@ function AgentCreatePageContent() {
     useAgentFormStore.setState({ saving: true })
 
     try {
-      if (isOpenclaw) {
-        // Openclaw 直接调用 store 的保存方法
-        await store.saveAgentData({ hideToast: true })
-      } else {
-        // 其他平台通过 drawer 保存
-        await infoDrawerRef.current?.handleSave()
-      }
+      // 所有平台统一通过 drawer 保存
+      await infoDrawerRef.current?.handleSave()
       message.success(t('action.save_success'))
 
       const currentState = useAgentFormStore.getState()
@@ -161,6 +151,12 @@ function AgentCreatePageContent() {
     const agentTypeFromUrl = (searchParams.get('type') as string) || adapter.defaultPlatform
     const isNew = searchParams.get('is_new') === 'true'
 
+    // 确保 adapter 已设置到 store
+    const store = useAgentFormStore.getState()
+    if (!store.adapter) {
+      useAgentFormStore.setState({ adapter })
+    }
+
     // 如果 URL 有 type，立即更新 store
     if (searchParams.get('type')) {
       useAgentFormStore.setState({ agent_type: searchParams.get('type') })
@@ -174,6 +170,7 @@ function AgentCreatePageContent() {
           is_new: false,
           agent_id: agentIdParam,
           initializing: true,
+          adapter, // 确保 adapter 在 reset 后重新设置
         })
 
         await useAgentFormStore.getState().loadDetailData()
@@ -186,6 +183,7 @@ function AgentCreatePageContent() {
           is_new: true,
           agent_id: 0,
           agent_type: agentTypeFromUrl,
+          adapter,
           form_data: {
             ...useAgentFormStore.getState().form_data,
             channel_type: agentConfig.channelType || 0,
@@ -201,6 +199,7 @@ function AgentCreatePageContent() {
       infoDrawerRef.current?.open({
         agent_type: agentTypeFromUrl,
         agent_id: agentIdParam,
+        cache: true,
         data: {
           channel_config: {},
         },
@@ -219,22 +218,7 @@ function AgentCreatePageContent() {
 
   // 渲染内容区
   const renderContent = () => {
-    // Openclaw 使用专用配置组件
-    if (isOpenclaw) {
-      return (
-        <div className="flex-1 flex min-h-0">
-          {/* 左侧配置 */}
-          <div className="w-1/2 border-r overflow-y-auto">
-            <OpenclawConfig avatarSlot={avatarSlot} />
-          </div>
-          {/* 右侧预览 */}
-          <div className="w-1/2 overflow-hidden bg-white">
-            <adapter.InlinePreviewComponent className="h-full" />
-          </div>
-        </div>
-      )
-    }
-    // 其他平台使用 CreatePageLayout
+    // 所有平台统一使用 CreatePageLayout
     return (
       <CreatePageLayout
         drawerRef={infoDrawerRef}
@@ -294,17 +278,10 @@ function AgentCreatePageContent() {
 
   return (
     <>
-      {/* Openclaw 需要单独包装布局 */}
-      {isOpenclaw ? (
-        <div className="h-full flex flex-col overflow-hidden bg-[#F7F7FA]">
-          {header}
-          <div className="flex-1 flex overflow-hidden">
-            {renderContent()}
-          </div>
-        </div>
-      ) : (
-        renderContent()
-      )}
+      <div className="h-full flex flex-col overflow-hidden bg-[#F7F7FA]">
+        {header}
+        {renderContent()}
+      </div>
       {/* 编辑基本信息弹框（无分组） */}
       <Modal
         open={editVisible}

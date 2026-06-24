@@ -119,7 +119,7 @@ export function PermissionSelector({
             >
               {opt.title}
             </div>
-            {opt.desc && <div className="text-xs text-[#939499]">{opt.desc}</div>}
+            {opt.desc && <div className="text-xs text-hint">{opt.desc}</div>}
           </div>
         ),
         onClick: () => handleSelect(opt),

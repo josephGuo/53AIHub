@@ -46,7 +46,7 @@ export function PaymentCard({ settingInfo, type, onCommand }: Props) {
     <div className="border rounded-lg p-5 pb-8 group">
       <div className="relative w-full flex items-center gap-3">
         <SvgIcon name={iconName} width="24" />
-        <label className="font-semibold text-[#1D1E1F]">{paymentLabel}</label>
+        <label className="font-semibold text-primary">{paymentLabel}</label>
         {settingInfo.pay_status && (
           <Tag
             className="!border-none !bg-[#E3F6E0] !text-[#09BB07]"
@@ -66,7 +66,7 @@ export function PaymentCard({ settingInfo, type, onCommand }: Props) {
           </div>
         </Dropdown>
       </div>
-      <div className="mt-3 text-sm text-[#4F5052]">
+      <div className="mt-3 text-sm text-secondary">
         {settingInfo.pay_setting_id ? (
           <>
             {t('setting')} · {t('updated_at')} {formatUpdateTime}

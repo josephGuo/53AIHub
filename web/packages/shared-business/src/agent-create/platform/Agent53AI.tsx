@@ -166,49 +166,49 @@ export const Agent53AI = forwardRef<Agent53AIRef, Agent53AIProps>(
           {showChannelConfig ? (
             <>
               <div className="text-sm font-medium text-primary mb-3">{t("provider_platform.platform_auth")}</div>
-              <Form.Item label={t('platform.53ai')}>
-                <Select
-                  value={customConfig.provider_id}
-                  className="w-full"
-                  onChange={(value) => {
-                    updateCustomConfig({ provider_id: value })
-                    onProviderChange()
+              <div className="p-4 border rounded-xl bg-white flex gap-4">
+                <Form.Item label={t('platform.53ai')} className="flex-1 mb-0">
+                  <Select
+                    value={customConfig.provider_id}
+                    className="w-full"
+                    onChange={(value) => {
+                      updateCustomConfig({ provider_id: value })
+                      onProviderChange()
+                    }}
+                    options={providers.map((item) => ({
+                      label: item.name,
+                      value: item.provider_id,
+                    }))}
+                  />
+                </Form.Item>
+                <Form.Item
+                  label={t('term.select_agent')}
+                  name="chat53ai_agent_id"
+                  rules={[{ required: true, message: t('form.select_placeholder') }]}
+                  getValueProps={() => ({ value: customConfig.chat53ai_agent_id })}
+                  getValueFromEvent={(value) => {
+                    onBotChange({ value, option: bots.find(b => b.value === value) })
+                    return value
                   }}
-                  options={providers.map((item) => ({
-                    label: item.name,
-                    value: item.provider_id,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item
-                label={t('term.select_agent')}
-                name="chat53ai_agent_id"
-                rules={[{ required: true, message: t('form.select_placeholder') }]}
-                getValueProps={() => ({ value: customConfig.chat53ai_agent_id })}
-                getValueFromEvent={(value) => {
-                  onBotChange({ value, option: bots.find(b => b.value === value) })
-                  return value
-                }}
-              >
-                <SelectPlus
-                  t={t}
-                  className="w-full"
-                  useI18n={false}
-                  options={bots.map((item) => ({
-                    value: item.value,
-                    label: item.label,
-                    logo: item.logo,
-                    name: item.name,
-                    description: item.description,
-                    opening_statement: item.opening_statement,
-                    suggested_questions: item.suggested_questions,
-                  }))}
-                />
-              </Form.Item>
-            </>
-          ) : (
-            <>
-              {agentType === AGENT_TYPES['53AI_WORKFLOW'] ? (
+                   className="flex-1 mb-0"
+                >
+                  <SelectPlus
+                    t={t}
+                    className="w-full"
+                    useI18n={false}
+                    options={bots.map((item) => ({
+                      value: item.value,
+                      label: item.label,
+                      logo: item.logo,
+                      name: item.name,
+                      description: item.description,
+                      opening_statement: item.opening_statement,
+                      suggested_questions: item.suggested_questions,
+                    }))}
+                  />
+                </Form.Item>
+              </div>
+              { agentType === AGENT_TYPES['53AI_WORKFLOW'] && (
                 <>
                   <FieldInput
                     list={inputFields}
@@ -218,6 +218,7 @@ export const Agent53AI = forwardRef<Agent53AIRef, Agent53AIProps>(
                     updateRequest={inputUpdateRequest}
                     type="input"
                     agentType={agentType}
+                    className="mt-2"
                   />
                   <FieldInput
                     list={outputFields}
@@ -226,14 +227,26 @@ export const Agent53AI = forwardRef<Agent53AIRef, Agent53AIProps>(
                     type="output"
                     allowAdd
                     agentType={agentType}
+                    className="mt-2"
                   />
+                </>
+              ) }
+            </>
+          ) : (
+            <>
+              {agentType === AGENT_TYPES['53AI_WORKFLOW'] ? (
+                <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <RelateAgents />
+                  <div className="h-3"></div>
                 </>
               ) : (
                 <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <BaseConfig />
                   <RelateAgents />
                   <ExpandConfig />
+                  <div className="h-3"></div>
                 </>
               )}
             </>

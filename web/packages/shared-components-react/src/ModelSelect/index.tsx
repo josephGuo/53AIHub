@@ -102,6 +102,12 @@ export function ModelSelect({
     onChange?.(selectedValue, selectedOption);
   };
 
+  // 自定义搜索逻辑：搜索 label 字符串
+  const filterOption = (input: string, option: any) => {
+    const modelLabel = option?.data?.label || "";
+    return modelLabel.toLowerCase().includes(input.toLowerCase());
+  };
+
   return (
     <Select
       className={className}
@@ -112,7 +118,7 @@ export function ModelSelect({
       disabled={disabled}
       allowClear={clearable}
       showSearch
-      optionFilterProp="label"
+      filterOption={filterOption}
       loading={loading}
       style={{ width: "100%" }}
       listHeight={360}

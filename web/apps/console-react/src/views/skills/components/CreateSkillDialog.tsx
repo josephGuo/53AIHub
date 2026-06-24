@@ -9,6 +9,7 @@ import {
   type ProgressController,
 } from "@/utils/progress";
 import { skillApi } from "@/api/modules/skill/index";
+import { t } from "@/locales";
 
 interface CreateSkillDialogRef {
   open: () => void;
@@ -38,32 +39,32 @@ interface TypeOption {
   tooltip?: string;
 }
 
-const typeOptions: TypeOption[] = [
+const getTypeOptions = (): TypeOption[] => [
   {
     value: "repo",
-    label: "仓库URL",
-    description: "输入包含 Skill 的 GitHub 链接，自动拉取并加载技能代码与配置",
+    label: t("skills.create.type_repo"),
+    description: t("skills.create.type_repo_desc"),
     icon: "github",
     iconType: "svg",
     iconColor: "bg-blue-500",
   },
   {
     value: "upload",
-    label: "上传技能",
-    description: "选择包含Skill的zip压缩包，系统将解压并解析技能配置",
+    label: t("skills.create.type_upload"),
+    description: t("skills.create.type_upload_desc"),
     icon: "upload",
     iconType: "svg",
     iconColor: "bg-purple-500",
   },
   {
     value: "chat",
-    label: "对话创建",
-    description: "与 AI 助手进行交互式对话，描述你的技能需求与功能逻辑",
-    icon: "chat",
+    label: t("skills.create.type_chat"),
+    description: t("skills.create.type_chat_desc"),
+    icon: "chat_v2",
     iconType: "svg",
     iconColor: "bg-blue-400",
     disabled: true,
-    tooltip: "功能即将上线，敬请期待",
+    tooltip: t("skills.create.type_chat_tooltip"),
   },
 ];
 
@@ -75,10 +76,13 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
   const [loadingPercentage, setLoadingPercentage] = useState(0);
   const [addType, setAddType] = useState<"repo" | "upload" | "chat">("repo");
   const [scanStatusText, setScanStatusText] = useState("");
+  const [scanJobId, setScanJobId] = useState<string | null>(null);
   const [repoForm] = Form.useForm<RepoFormData>();
   const uploadRef = useRef<any>(null);
   const [uploadForm, setUploadForm] = useState<UploadFormData>({ file: [] });
   const [uploadedFile, setUploadedFile] = useState<UploadedFile>({ name: "" });
+
+  const typeOptions = getTypeOptions();
 
   useImperativeHandle(ref, () => ({
     open: () => {
@@ -102,12 +106,12 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
   const handleFileBefore = (file: File) => {
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      message.error("文件大小不能超过10M");
+      message.error(t("skills.create.file_size_limit"));
       uploadRef.current?.clearFiles?.();
       return false;
     }
     if (!file.name.endsWith(".zip")) {
-      message.error("仅支持.zip文件");
+      message.error(t("skills.create.only_zip"));
       uploadRef.current?.clearFiles?.();
       return false;
     }
@@ -120,12 +124,12 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
         name: data.name,
         id: data.id,
       });
-      message.success("文件上传成功");
+      message.success(t("skills.create.upload_success"));
     }
   };
 
   const handleFileError = () => {
-    message.error("文件上传失败，请重试");
+    message.error(t("skills.create.upload_failed"));
     setUploadedFile({ name: "", id: undefined });
   };
 
@@ -142,7 +146,7 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
       let pollingTimer: ReturnType<typeof setTimeout> | null = null;
 
       setScanStatusText(
-        addType === "repo" ? "正在连接远程仓库..." : "正在解压Skill文件...",
+        addType === "repo" ? t("skills.create.connecting_repo") : t("skills.create.extracting_file"),
       );
       fetchController = startVirtualProgress({
         startPercent: 0,
@@ -167,8 +171,10 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
         .then((result: any) => {
           const jobId = result?.scan_job_id;
           if (!jobId) {
-            throw new Error("未获取到扫描任务ID");
+            throw new Error(t("skills.create.no_scan_job_id"));
           }
+          // 保存 scan_job_id 以便后续强制导入使用
+          setScanJobId(jobId);
 
           fetchController?.stop();
           scanController = startVirtualProgress({
@@ -187,24 +193,21 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
                 const skillId = detailResult?.skill?.id;
 
                 if (status === "pending") {
-                  setScanStatusText("正在等待扫描...");
                   pollingTimer = setTimeout(pollScanStatus, 5000);
                 } else if (status === "running") {
-                  setScanStatusText("正在扫描技能文件...");
                   pollingTimer = setTimeout(pollScanStatus, 5000);
                 } else if (status === "success") {
                   const riskLevel = scanJob?.risk_level;
                   if (riskLevel === "high") {
                     scanController?.stop();
                     if (pollingTimer) clearTimeout(pollingTimer);
-                    reject({ code: "SECURITY_RISK", message: "安全风险过高" });
+                    reject({ code: "SECURITY_RISK", message: t("skills.create.security_risk_high") });
                     return;
                   }
 
                   scanController?.stop();
                   if (pollingTimer) clearTimeout(pollingTimer);
 
-                  setScanStatusText("扫描完成");
                   const completeTimer = setInterval(() => {
                     setLoadingPercentage((prev) => {
                       if (prev >= 100) {
@@ -224,14 +227,14 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
                   ) {
                     scanController?.stop();
                     if (pollingTimer) clearTimeout(pollingTimer);
-                    reject({ code: "SECURITY_RISK", message: "安全风险过高" });
+                    reject({ code: "SECURITY_RISK", message: t("skills.create.security_risk_high") });
                     return;
                   }
 
                   scanController?.stop();
                   if (pollingTimer) clearTimeout(pollingTimer);
 
-                  const errorMsg = scanJob?.message || "扫描失败";
+                  const errorMsg = scanJob?.message || t("skills.create.scan_failed");
                   reject({ code: "SCAN_FAILED", message: errorMsg });
                 } else {
                   pollingTimer = setTimeout(pollScanStatus, 5000);
@@ -240,7 +243,7 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
               .catch(() => {
                 scanController?.stop();
                 if (pollingTimer) clearTimeout(pollingTimer);
-                reject({ code: "POLL_ERROR", message: "查询扫描状态失败" });
+                reject({ code: "POLL_ERROR", message: t("skills.create.poll_status_failed") });
               });
           };
 
@@ -252,7 +255,7 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
           if (pollingTimer) clearTimeout(pollingTimer);
 
           const errorCode = error?.response?.data?.code;
-          reject({ code: errorCode, message: "导入失败" });
+          reject({ code: errorCode, message: t("skills.create.import_failed") });
         });
     });
   };
@@ -266,7 +269,7 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
       }
     } else if (addType === "upload") {
       if (!uploadedFile.name) {
-        message.warning("请选择要上传的文件");
+        message.warning(t("skills.create.select_file"));
         return;
       }
     }
@@ -288,19 +291,47 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
       } else if (
         error?.message === "db error: work ai model is not configured"
       ) {
-        message.error("工作台未设置模型");
+        message.error(t("skills.create.model_not_configured"));
       } else if (error?.message?.includes("skill package missing SKILL.md")) {
-        message.error("导入失败：技能包缺少SKILL.MD文件");
+        message.error(t("skills.create.missing_skill_md"));
       } else if (error?.message?.includes("skill name already exists")) {
-        message.error("导入失败：该技能已存在");
+        message.error(t("skills.create.skill_exists"));
       } else {
         message.error(error?.message);
       }
     }
   };
 
-  const handleSecurityConfirm = () => {
+  const handleSecurityCancel = () => {
     setSecurityDialogVisible(false);
+    setScanJobId(null);
+  };
+
+  // 强制导入
+  const handleSecurityForceImport = async () => {
+    if (!scanJobId) {
+      message.error(t("skills.create.no_scan_job_id"));
+      return;
+    }
+
+    try {
+      const result: any = await skillApi.forceImport({ scan_job_id: scanJobId });
+      const scanStatus = result?.scan_status;
+      const skillId = result?.skill_id;
+      if (scanStatus !== "success") {
+        throw new Error(result?.message || t("skills.create.force_import_failed"));
+      }
+      setDialogVisible(false);
+      setScanJobId(null);
+      navigate({
+        pathname: "/skill-detail",
+        search: `?skill_id=${skillId}&isNew=true`,
+      });
+    } catch (error: any) {
+      message.error(error?.message || t("skills.create.force_import_failed"));
+    } finally {
+      setSecurityDialogVisible(false);
+    }
   };
 
   const renderTypeIcon = (option: TypeOption) => {
@@ -316,15 +347,15 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
       {/* 添加技能对话框 */}
       <Modal
         open={dialogVisible}
-        title="添加"
+        title={t("skills.action_add")}
         width="60%"
         mask={{ closable: false }}
         onCancel={handleClose}
         footer={
           <div className="flex justify-end gap-3">
-            <Button onClick={handleClose}>取消</Button>
+            <Button onClick={handleClose}>{t("action_cancel")}</Button>
             <Button type="primary" onClick={handleConfirm}>
-              确定
+              {t("action_confirm")}
             </Button>
           </div>
         }
@@ -332,7 +363,7 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
         {/* 类型选择 */}
         <div className="mb-8">
           <label className="block text-sm font-medium text-gray-700 mb-4">
-            类型
+            {t("skills.create.type")}
           </label>
           <div className="flex gap-4">
             {typeOptions.map((option) => (
@@ -382,17 +413,17 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
           <div className="space-y-6 mb-4">
             <Form form={repoForm} layout="vertical">
               <Form.Item
-                label="GitHub 仓库 URL"
+                label={t("skills.create.github_repo_url")}
                 name="url"
                 rules={[
                   {
                     validator: (_, value) => {
                       if (!value) {
-                        return Promise.reject(new Error("请输入GitHub仓库URL"));
+                        return Promise.reject(new Error(t("skills.create.github_url_required")));
                       }
                       if (!value.includes("github.com")) {
                         return Promise.reject(
-                          new Error("请输入有效的GitHub仓库URL"),
+                          new Error(t("skills.create.github_url_invalid")),
                         );
                       }
                       return Promise.resolve();
@@ -401,7 +432,7 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
                 ]}
               >
                 <Input
-                  placeholder="请输入GitHub仓库的URL，例如：https://github.com/user/skill-repo"
+                  placeholder={t("skills.create.github_url_placeholder")}
                   maxLength={200}
                   showCount
                 />
@@ -446,10 +477,10 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
                     style={{ fontSize: 48 }}
                   />
                   <div className="text-base font-medium text-gray-900">
-                    拖拽文件至此，或点击选择文件
+                    {t("skills.create.drag_or_click")}
                   </div>
                   <div className="text-sm text-gray-400 mt-2">
-                    仅支持拓展名为.zip的文件，大小不超过10M
+                    {t("skills.create.zip_file_limit")}
                   </div>
                 </div>
               </FileUpload>
@@ -476,7 +507,7 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
             className="mb-6"
           />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {addType === "repo" ? "正在拉取并扫描" : "正在解压并扫描"}
+            {addType === "repo" ? t("skills.create.pulling_and_scanning") : t("skills.create.extracting_and_scanning")}
           </h3>
           <p className="text-sm text-blue-300">{scanStatusText}</p>
         </div>
@@ -490,27 +521,26 @@ const CreateSkillDialog = forwardRef<CreateSkillDialogRef>((props, ref) => {
         mask={{ closable: false }}
         footer={null}
       >
-        <div className="flex flex-col items-center py-4">
+        <div className="flex flex-col items-center pt-4 pb-1">
           <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
             <SvgIcon name="warning" size="32px" color="#EF4444" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-600 mb-4">
-            安全风险拦截
+          <h3 className="text-lg font-medium text-primary mb-4">
+            {t("skills.create.security_risk_blocked")}
           </h3>
-          <div className="w-full bg-red-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-red-500 font-semibold text-center mb-2">
-              此技能安全性风险过高，禁止添加！
+          <div className="w-full bg-red-50 rounded-lg p-4 mb-9">
+            <p className="text-sm text-[#E3050C] text-center mb-2">
+              {t("skills.create.security_risk_high")}
             </p>
-            <p className="text-red-400 text-xs text-center leading-relaxed">
-              系统检测到该技能包含高危系统调用及危险操作的网络访问，为了您的数据安全，已自动拦截。
+            <p className="text-tag-red text-xs text-center leading-relaxed">
+              {t("skills.create.security_risk_detail")}
             </p>
           </div>
-          <Button
-            type="primary"
-            className="w-full"
-            onClick={handleSecurityConfirm}
-          >
-            我知道了
+          <Button type="primary" className="w-full mb-3" onClick={handleSecurityCancel}>
+            {t("skills.create.dont_install")}
+          </Button>
+          <Button className="w-full" onClick={handleSecurityForceImport}>
+            {t("skills.create.install_anyway")}
           </Button>
         </div>
       </Modal>

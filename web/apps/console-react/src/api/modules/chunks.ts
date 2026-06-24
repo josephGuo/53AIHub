@@ -4,7 +4,7 @@ import { handleError } from '../error-handler'
 import type { ChunkType, EmbeddingStatus, ChunkingStatus } from '@/constants/chunk'
 
 export interface KnowledgeChunk {
-  id: number
+  id: string
   eid: number
   file_id: string
   library_id: string

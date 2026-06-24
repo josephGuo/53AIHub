@@ -96,8 +96,8 @@ export function SearchPage() {
             <CommentOutlined style={{ color: "white", fontSize: 32 }} />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl text-[#1D1E1F]">{t("module.search")}</h2>
-            <p className="text-sm text-[#999999]">{t("module.search_desc")}</p>
+            <h2 className="text-2xl text-primary">{t("module.search")}</h2>
+            <p className="text-sm text-placeholder">{t("module.search_desc")}</p>
           </div>
         </div>
         <PageLayoutTabs

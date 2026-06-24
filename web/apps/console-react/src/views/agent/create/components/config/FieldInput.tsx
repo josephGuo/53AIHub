@@ -129,7 +129,7 @@ export function FieldInput({
   return (
     <>
       <div className="flex items-center gap-1">
-        <div className="flex-1 text-base text-[#1D1E1F] font-medium mb-3">
+        <div className="flex-1 text-base text-primary font-medium mb-3">
           {title}
         </div>
         {allowAdd && (

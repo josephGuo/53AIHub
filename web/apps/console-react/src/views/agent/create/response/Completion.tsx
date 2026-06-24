@@ -358,7 +358,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               showCount={item.show_word_limit}
             />
             {item.desc && (
-              <div className="text-xs text-[#182b50] opacity-30 mt-1">{item.desc}</div>
+              <div className="text-xs text-dark opacity-30 mt-1">{item.desc}</div>
             )}
           </div>
         )
@@ -380,7 +380,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               showCount={item.show_word_limit}
             />
             {item.desc && (
-              <div className="text-xs text-[#182b50] opacity-30 mt-1">{item.desc}</div>
+              <div className="text-xs text-dark opacity-30 mt-1">{item.desc}</div>
             )}
           </div>
         )
@@ -400,7 +400,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               placeholder={t('form.input_placeholder')}
             />
             {item.desc && (
-              <div className="text-xs text-[#182b50] opacity-30 mt-1">{item.desc}</div>
+              <div className="text-xs text-dark opacity-30 mt-1">{item.desc}</div>
             )}
           </div>
         )
@@ -421,7 +421,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               className="w-full"
             />
             {item.desc && (
-              <div className="text-xs text-[#182b50] opacity-30 mt-1">{item.desc}</div>
+              <div className="text-xs text-dark opacity-30 mt-1">{item.desc}</div>
             )}
           </div>
         )
@@ -517,7 +517,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               />
             )}
             {item.desc && (
-              <div className="text-xs text-[#182b50] opacity-30 mt-1">{item.desc}</div>
+              <div className="text-xs text-dark opacity-30 mt-1">{item.desc}</div>
             )}
           </div>
         )
@@ -529,11 +529,11 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               {item.value.map((tag: string, tagIndex: number) => (
                 <div
                   key={tagIndex}
-                  className="border border-[#B0B7C3] rounded-sm min-h-[32px] inline-flex items-center px-3 py-1 text-xs text-[#182B50] opacity-80 break-all"
+                  className="border border-[#B0B7C3] rounded-sm min-h-[32px] inline-flex items-center px-3 py-1 text-xs text-dark opacity-80 break-all"
                 >
                   {tag}
                   <CloseOutlined
-                    className="cursor-pointer ml-1 text-[#d2d5dc] hover:text-[#182B50]"
+                    className="cursor-pointer ml-1 text-[#d2d5dc] hover:text-dark"
                     onClick={() => handleDelTag(index, tagIndex)}
                   />
                 </div>
@@ -558,12 +558,12 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
                   className="border border-[#B0B7C3] border-dashed rounded-sm h-8 inline-flex items-center px-3 cursor-pointer"
                   onClick={() => handleFocusTag(item, index)}
                 >
-                  <span className="text-xs text-[#182B50] opacity-80">+ {t('action_add')}</span>
+                  <span className="text-xs text-dark opacity-80">+ {t('action_add')}</span>
                 </div>
               )}
             </div>
             {item.desc && (
-              <div className="text-xs text-[#182b50] opacity-30 mt-1">{item.desc}</div>
+              <div className="text-xs text-dark opacity-30 mt-1">{item.desc}</div>
             )}
           </div>
         )
@@ -585,13 +585,13 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
                 showUploadList={false}
               >
                 <div className="w-20 h-20 border border-dashed rounded-sm flex items-center justify-center flex-col">
-                  <div className="text-xs text-[#182B50]/40 mt-2">点击上传</div>
+                  <div className="text-xs text-dark/40 mt-2">点击上传</div>
                 </div>
               </Upload>
             </div>
             {item.value.map((file: UploadFile) => (
               <div key={file.uid} className="h-9 px-2 border rounded mt-3 flex items-center gap-2">
-                <div className="flex-1 text-sm text-[#182B50] truncate">
+                <div className="flex-1 text-sm text-dark truncate">
                   {file.name}
                 </div>
                 {file.status === 'done' ? (
@@ -609,10 +609,10 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
             ))}
             <div className="flex items-center gap-1 mt-2">
               <WarningOutlined style={{ color: '#182B50', fontSize: 14 }} />
-              <span className="text-xs text-[#182B50]/80">单个文件大小不超过{item.file_size}MB</span>
+              <span className="text-xs text-dark/80">单个文件大小不超过{item.file_size}MB</span>
             </div>
             <div>
-              <span className="text-xs text-[#182B50]/80">支持格式：{item.file_accept?.join('、')}</span>
+              <span className="text-xs text-dark/80">支持格式：{item.file_accept?.join('、')}</span>
             </div>
           </div>
         )
@@ -660,7 +660,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               </div>
             ))}
             {item.desc && (
-              <div className="text-xs text-[#182b50] opacity-30 mt-1">{item.desc}</div>
+              <div className="text-xs text-dark opacity-30 mt-1">{item.desc}</div>
             )}
           </div>
         )
@@ -740,7 +740,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
         {showError && (
           <div className="flex flex-col items-center gap-4">
             <img src={getRealPath('/images/chat/test_error.png')} className="w-10" alt="error" />
-            <p className="text-sm text-[#1D1E1F] mx-10 text-center">
+            <p className="text-sm text-primary mx-10 text-center">
               {errorMessage}
             </p>
           </div>
@@ -754,7 +754,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
               <div className="flex flex-col items-center">
                 <div className="border rounded w-full h-full flex flex-col !bg-[#F8F9FA] relative overflow-y-auto prompt-input-wrapper">
                   <div className="min-h-10 pl-3 pr-2 border-b flex items-center justify-between rounded-t bg-[#F8F9FA]">
-                    <div className="flex-1 text-sm text-[#4F5052] truncate">JSON</div>
+                    <div className="flex-1 text-sm text-secondary truncate">JSON</div>
                   </div>
                   <PromptInput
                     value={resultString}
@@ -772,7 +772,7 @@ export const Completion = forwardRef<CompletionRef, CompletionProps>(({ classNam
             ) : (
               <div className="space-y-2">
                 {result.map(item => (
-                  <div key={item.id} className="text-sm text-[#1D1E1F] mt-2">
+                  <div key={item.id} className="text-sm text-primary mt-2">
                     {item.type === 'markdown' ? (
                       <XBubbleAssistant content={item.value} streaming={loading} />
                     ) : (

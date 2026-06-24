@@ -1,5 +1,5 @@
-import { Table, Input, Drawer, Button, Spin, message } from "antd";
-import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
+import { Table, Drawer, Button, Spin, message } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
 import { useState, useEffect, useMemo } from "react";
 import { t } from "@/locales";
 import { FilterDateRange } from "@/components/Filter";
@@ -8,7 +8,7 @@ import { conversationApi } from "@/api/modules/conversation";
 import { messageApi } from "@/api/modules/message";
 import { getSimpleDateFormatString, getDateTimestamp, copyToClip } from "@km/shared-utils";
 import { XBubbleList, XBubbleUser, XBubbleAssistant } from "@km/hub-ui-x-react";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 
 interface DialogueRecord {
   id: string;
@@ -329,19 +329,18 @@ export function DialogueRecord({
           />
         </div>
         <div className="flex-1 w-0" />
-        <Input
+        <Search
+          mode="expanded"
           value={filterForm.keyword}
-          onChange={(e) =>
+          onDebouncedChange={(val) => {
             setFilterForm((prev) => ({
               ...prev,
-              keyword: e.target.value,
-            }))
-          }
-          onPressEnter={() => fetchData()}
+              keyword: val,
+            }));
+            fetchData();
+          }}
           className="max-w-[268px]"
-          allowClear
           placeholder={t(type === "agent" ? "user/mobile" : "keyword")}
-          prefix={<SearchOutlined />}
         />
       </div>
 

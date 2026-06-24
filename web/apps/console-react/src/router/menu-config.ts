@@ -95,7 +95,7 @@ export const menuTree: MenuItemConfig[] = [
         icon: 'toolkit_v2',
         visible: (ctx: VisibilityContext) =>
           !['aibtNv'].includes(ctx.eid) && checkVersion(VERSION_MODULE.AILINK),
-      },
+      }
     ],
   },
   {

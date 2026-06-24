@@ -241,8 +241,8 @@ export const FieldInputSetting = forwardRef<FieldInputSettingRef, FieldInputSett
                     key={item.type}
                     className={`w-[100px] h-10 border rounded flex-center gap-1 cursor-pointer ${
                       widgetForm.type === item.type
-                        ? 'border-[#2563EB] text-[#2563EB] bg-[#2563EB] bg-opacity-[8%]'
-                        : 'text-[#182B50] bg-[#F9FAFC]'
+                        ? 'border-[#2563EB] text-brand bg-[#2563EB] bg-opacity-[8%]'
+                        : 'text-dark bg-[#F9FAFC]'
                     }`}
                     onClick={() => handleType(item.type)}
                   >
@@ -339,7 +339,7 @@ export const FieldInputSetting = forwardRef<FieldInputSettingRef, FieldInputSett
                 ))}
               </div>
               <div
-                className="w-full h-10 leading-10 rounded text-center border border-dashed border-[#DCDFE6] cursor-pointer text-sm text-[#182B50] text-opacity-80 mt-3"
+                className="w-full h-10 leading-10 rounded text-center border border-dashed border-[#DCDFE6] cursor-pointer text-sm text-dark text-opacity-80 mt-3"
                 onClick={handleAddOption}
               >
                 + {t('action.add')}
@@ -408,7 +408,7 @@ export const FieldInputSetting = forwardRef<FieldInputSettingRef, FieldInputSett
                         onChange={(v) => setWidgetForm({ ...widgetForm, file_size: v })}
                       />
                     </div>
-                    <span className="text-sm text-[#182B50]">{widgetForm.file_size}M</span>
+                    <span className="text-sm text-dark">{widgetForm.file_size}M</span>
                   </div>
                 </Form.Item>
 
@@ -423,7 +423,7 @@ export const FieldInputSetting = forwardRef<FieldInputSettingRef, FieldInputSett
                         placeholder="请输入"
                         onChange={(v) => setWidgetForm({ ...widgetForm, file_limit: v || 1 })}
                       />
-                      <span className="text-sm text-[#182B50]">个</span>
+                      <span className="text-sm text-dark">个</span>
                     </div>
                   </Form.Item>
                 )}

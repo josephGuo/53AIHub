@@ -135,8 +135,11 @@ const AppSettingPage = lazy(() =>
 const ChatPage = lazy(() =>
   import("@/views/assistant/chat/index").then((m) => ({ default: m.ChatPage })),
 );
+const RecordingPage = lazy(() =>
+  import("@/views/recording/index").then((m) => ({ default: m.RecordingPage })),
+);
 const SkillsPage = lazy(() => import("@/views/skills/index"));
-const SkillDetailPage = lazy(() => import("@/views/skills/components/Detail"));
+const SkillDetailPage = lazy(() => import("@/views/skills/Detail"));
 const TemplateStylePage = lazy(() =>
   import("@/views/template-style/index").then((m) => ({
     default: m.TemplateStylePage,
@@ -280,10 +283,13 @@ export function AppRouter() {
             <Route path="assistant/chat" element={<ChatPage />} />
             <Route path="assistant/map" element={<AssistantMapPage />} />
             <Route path="assistant/app-setting" element={<AppSettingPage />} />
+
+            {/* Recording */}
+            <Route path="recording" element={<RecordingPage />} />
           </Route>
 
           {/* SvgPage */}
-          <Route path="/svg" element={<SvgPage />} />
+          <Route path="/svglist" element={<SvgPage />} />
 
           {/* Exception pages */}
           <Route path="/404" element={<NotFound />} />

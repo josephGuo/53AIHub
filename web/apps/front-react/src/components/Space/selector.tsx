@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle, ReactNode, useCallback } from 'react'
-import { Popover, Input, Spin } from 'antd'
-import { SearchOutlined, CheckOutlined } from '@ant-design/icons'
-import { SvgIcon } from '@km/shared-components-react'
+import { Popover, Spin } from 'antd'
+import { CheckOutlined } from '@ant-design/icons'
+import { Search, SvgIcon } from '@km/shared-components-react'
 import { useSpaceStore } from '@/stores/modules/space'
 import librariesApi, { type LibraryItem } from '@/api/modules/libraries'
 import permissionsApi from '@/api/modules/permissions'
@@ -255,13 +255,12 @@ export const SpaceSelector = forwardRef<SpaceSelectorRef, SpaceSelectorProps>(
       <div className="space-selector-content">
         {/* 搜索栏 */}
         <div className="space-selector-search">
-          <Input
+          <Search
+            mode="expanded"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onDebouncedChange={setSearchQuery}
             placeholder="搜索团队空间或知识库"
-            prefix={<SearchOutlined />}
-            allowClear
-            variant="borderless"
+            className="space-selector-search-input"
             style={{ backgroundColor: '#EDEFF2' }}
           />
         </div>

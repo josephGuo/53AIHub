@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Input, Button, Skeleton, Image } from "antd";
+import { Input, Button, Image } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useNavigationStore } from "@/stores/modules/navigation";
 import { useAgentStore } from "@/stores/modules/agent";
@@ -9,9 +9,9 @@ import { useLinksStore } from "@/stores/modules/links";
 import { useShortcutsStore } from "@/stores/modules/shortcuts";
 import { useUserStore } from "@/stores/modules/user";
 import { getPublicPath } from "@/utils/config";
-import AgentList from "@/views/agent/components/list";
-import ToolkitList from "@/views/toolkit/components/list";
-import PromptList from "@/views/prompt/components/List";
+import AgentList from "@/views/agent/components/AgentList";
+import ToolkitList from "@/views/toolkit/components/List";
+import { PromptList } from "@/views/prompt/components/List";
 import { Footer } from "@/components/Layout";
 import { ExpandSidebarButton } from "@/components/Layout/ExpandSidebarButton";
 import "./index.css";
@@ -200,7 +200,7 @@ export function IndexView() {
 
         {/* 快捷方式 */}
         {(searchValue ? showShortcutsList.length > 0 : true) && (
-          <div className="w-11/12 lg:w-4/5 py-6 md:py-8 lg:py-10 mx-auto box-border">
+          <div className="w-11/12 lg:w-4/5 max-w-[1200px] mx-auto py-6 md:py-8 lg:py-10 box-border">
             {searchValue ? (
               <p className="text-sm md:text-base mt-3 line-clamp-2 text-regular">
                 {t("shortcut.title")}
@@ -270,7 +270,7 @@ export function IndexView() {
 
         {/* 智能体 */}
         {(searchValue ? showAgentList.length > 0 : true) && (
-          <div className="w-11/12 lg:w-4/5 py-6 md:py-8 lg:py-10 mx-auto box-border">
+          <div className="w-11/12 lg:w-4/5 max-w-[1200px] mx-auto py-6 md:py-8 lg:py-10 box-border">
             {searchValue ? (
               <p className="text-sm md:text-base mt-3 line-clamp-2 text-regular">
                 {t("module.agent")}
@@ -321,7 +321,7 @@ export function IndexView() {
         >
           {/* 提示词 */}
           {(searchValue ? showPromptList.length > 0 : true) && (
-            <div className="w-11/12 lg:w-4/5 mx-auto">
+            <div className="w-11/12 lg:w-4/5 max-w-[1200px] mx-auto">
               {searchValue ? (
                 <p className="text-sm md:text-base mt-3 line-clamp-2 text-regular">
                   {t("module.prompt")}
@@ -344,6 +344,7 @@ export function IndexView() {
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 mt-7"
                 keyword={searchValue}
                 list={showPromptList}
+                loading={loadMap.promptLoading}
               />
 
               {!searchValue && showPromptList.length > 0 && (
@@ -360,7 +361,7 @@ export function IndexView() {
 
         {/* 工具箱 */}
         {(searchValue ? showToolkitList.length > 0 : true) && (
-          <div className="w-11/12 lg:w-4/5 py-6 md:py-8 lg:py-10 mx-auto box-border">
+          <div className="w-11/12 lg:w-4/5 max-w-[1200px] mx-auto py-6 md:py-8 lg:py-10 box-border">
             {searchValue ? (
               <p className="text-sm md:text-base mt-3 line-clamp-2 text-regular">
                 {t("module.toolbox")}
@@ -383,6 +384,7 @@ export function IndexView() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 mt-7"
               list={showToolkitList}
               onlyAll
+              loading={loadMap.toolkitLoading}
             />
 
             {!searchValue && showToolkitList.length > 0 && (

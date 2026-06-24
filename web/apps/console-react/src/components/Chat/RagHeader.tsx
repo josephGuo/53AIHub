@@ -31,10 +31,10 @@ export const RagHeader: React.FC<RagHeaderProps> = ({
           className="h-8 px-2 rounded-lg cursor-pointer bg-[#F4F5F7] hover:bg-[#E1E2E3] inline-flex items-center mb-3"
           onClick={handleOpenKnow}
         >
-          <p className="text-sm text-[#1D1E1F]">
+          <p className="text-sm text-primary">
             搜索到{ragStats.files_search?.length || 0}篇网络资料
           </p>
-          <SvgIcon name="arrow-right" className="text-[#939499]" />
+          <SvgIcon name="arrow-right" className="text-hint" />
         </div>
       );
     }
@@ -43,7 +43,7 @@ export const RagHeader: React.FC<RagHeaderProps> = ({
         className="h-8 px-2 rounded-lg cursor-pointer bg-[#F4F5F7] hover:bg-[#E1E2E3] inline-flex items-center mb-3"
         onClick={handleOpenKnow}
       >
-        <p className="text-sm text-[#1D1E1F]">
+        <p className="text-sm text-primary">
           {showLibraryCount ? (
             <>
               搜索到{ragStats.library_search?.length || 0}个知识库
@@ -54,7 +54,7 @@ export const RagHeader: React.FC<RagHeaderProps> = ({
           )}
         </p>
         {showLibraryCount && (
-          <SvgIcon name="arrow-right" className="text-[#939499]" />
+          <SvgIcon name="arrow-right" className="text-hint" />
         )}
       </div>
     );
@@ -64,7 +64,7 @@ export const RagHeader: React.FC<RagHeaderProps> = ({
   if (loading && ragSearchText) {
     return (
       <div className="h-8 px-2 rounded-lg cursor-pointer bg-[#F4F5F7] hover:bg-[#E1E2E3] inline-flex items-center mb-3">
-        <p className="flex-1 text-sm text-[#1D1E1F] truncate">
+        <p className="flex-1 text-sm text-primary truncate">
           {ragSearchText}
         </p>
       </div>
@@ -75,7 +75,7 @@ export const RagHeader: React.FC<RagHeaderProps> = ({
   if (specifiedContent) {
     return (
       <div className="h-8 px-2 rounded-lg cursor-pointer bg-[#F4F5F7] hover:bg-[#E1E2E3] inline-flex items-center mb-3">
-        <p className="flex-1 text-sm text-[#1D1E1F] truncate">已分析指定知识</p>
+        <p className="flex-1 text-sm text-primary truncate">已分析指定知识</p>
       </div>
     );
   }

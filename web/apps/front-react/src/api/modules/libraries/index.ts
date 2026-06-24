@@ -28,6 +28,7 @@ export type LibraryListRequest = {
   limit?: number
   keyword?: string
   get_recently?: number
+  with_file_count?: number
 }
 
 export type LibraryCreateRequest = {

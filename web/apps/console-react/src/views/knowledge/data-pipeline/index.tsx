@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import { Spin, Button } from "antd";
+import { Button, Spin } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import { t } from "@/locales";
 import { SvgIcon } from "@km/shared-components-react";
 import { PipelineDetail } from "./components/PipelineDetail";
 import { usePipeline } from "./hooks/usePipeline";
 import { NODE_ICONS_MAP, LIST_DISPLAY_NODE_TYPES } from "./constants";
-import type { Pipeline, PipelineStep } from "./types";
+import type { PipelineStep } from "./types";
 
 // 获取节点图标
 const getNodeIcon = (stepKey: string) => NODE_ICONS_MAP[stepKey] || "document";
@@ -75,11 +75,11 @@ export function KnowledgeDataPipeline() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-base font-semibold text-[#1D1E1F]">
+                          <span className="text-base font-semibold text-primary">
                             {pipeline.name}
                           </span>
                         </div>
-                        <div className="text-sm text-[#999999] mt-0.5">
+                        <div className="text-sm text-placeholder mt-0.5">
                           {t("data_pipeline.created_at_label")}:{" "}
                           {pipeline.created_at}
                         </div>

@@ -18,36 +18,23 @@ import {
   forwardRef,
   useImperativeHandle,
   useState,
-  useCallback,
 } from "react";
-import { useSearchParams, useNavigate, Outlet } from "react-router-dom";
-import { Breadcrumb, Button, Tooltip } from "antd";
-import { ArrowRightOutlined, LeftOutlined } from "@ant-design/icons";
+import { useSearchParams, useNavigate, Outlet, useLocation } from "react-router-dom";
+import { Button } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
 import { useAgentStore, useCurrentAgent } from "@/stores/modules/agent";
 import { useConversationStore } from "@/stores/modules/conversation";
-import { useShortcutsStore } from "@/stores/modules/shortcuts";
 import {
-  useEnterpriseStore,
   useIsSoftStyle,
 } from "@/stores/modules/enterprise";
-import { useNavigationStore } from "@/stores/modules/navigation";
 import { useUserStore } from "@/stores/modules/user";
-import { AGENT_TYPES } from "@/constants/platform/config";
 import agentsApi from "@/api/modules/agents";
 import { eventBus } from "@km/shared-utils";
 import { EVENT_NAMES } from "@/constants/events";
 import { t } from "@/locales";
+import DetailBreadcrumb, { MODULE_CONFIGS } from "@/components/DetailBreadcrumb";
 import ChatContainer, { ChatContainerRef } from "./ChatContainer";
-import { ExpandSidebarButton } from "@/components/Layout/ExpandSidebarButton";
-import MoreDropdown from "@/components/MoreDropdown";
-import {
-  CompletionView,
-  ChatProvider,
-  ChatI18nProvider,
-} from "@km/shared-business";
-import { conversationApiAdapter, agentApiAdapter } from "@/adapters/chat";
-import chatApi from "@/api/modules/chat";
+import { isOpenClawCompatibleChannelType } from "@km/shared-business/agent-create";
 import "./index.css";
 
 export interface ChatViewRef {
@@ -59,6 +46,7 @@ export interface ChatViewRef {
 const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const chatRef = useRef<ChatContainerRef>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -66,15 +54,15 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
 
   const agentStore = useAgentStore();
   const convStore = useConversationStore();
-  const enterpriseStore = useEnterpriseStore();
-  const navigationStore = useNavigationStore();
   const userStore = useUserStore();
-  const shortcutsStore = useShortcutsStore();
 
   const currentAgent = useCurrentAgent();
 
   const isSoftStyle = useIsSoftStyle();
   const isWebsite = !isSoftStyle;
+
+  // 工作台入口路径判断
+  const isIndexRoute = location.pathname.startsWith('/index');
 
   // 当前智能体 ID（支持 string 类型如 "U5KLWZ"）
   const agentId = useMemo(() => {
@@ -93,121 +81,6 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
   const isCompletion = useMemo(() => {
     return currentAgent?.custom_config_obj?.agent_mode === "completion";
   }, [currentAgent]);
-
-  // 是否为快捷方式
-  const isShortcut = useMemo(() => {
-    if (!currentAgent?.agent_id) return false;
-    return shortcutsStore.isShortcut("agent", currentAgent.agent_id);
-  }, [currentAgent?.agent_id, shortcutsStore]);
-
-  // 更多操作
-  const handleMore = useCallback(
-    async (command: string) => {
-      if (command === "add-shortcut") {
-        await shortcutsStore.addShortcut("agent", String(currentAgent?.agent_id));
-      } else if (command === "remove-shortcut") {
-        await shortcutsStore.removeShortcut("agent", String(currentAgent?.agent_id));
-      }
-    },
-    [shortcutsStore, currentAgent]
-  );
-
-  // Completion 模式需要的 adapters
-  const completionAdapters = useMemo(
-    () => ({
-      conversationApi: conversationApiAdapter,
-      agentApi: agentApiAdapter,
-      uploadApi: {
-        upload: async (file: File) => {
-          // TODO: 实现 upload API
-          throw new Error("Not implemented");
-        },
-      },
-      workflowApi: {
-        run: async (data: any, options?: { signal?: AbortSignal }) => {
-          return chatApi.workflow.run(data, {
-            signal: options?.signal,
-          });
-        },
-      },
-    }),
-    []
-  );
-
-  // Completion 模式的 Header 渲染
-  const renderCompletionHeader = useCallback(
-    ({
-      agentInfo,
-      showGuide,
-      onGuideChange,
-    }: {
-      agentInfo: any;
-      lang: string;
-      setLang: (lang: string) => void;
-      showGuide: boolean;
-      onGuideChange: (show: boolean) => void;
-    }) => {
-      if (isWebsite) return null;
-
-      return (
-        <header className="flex-none h-[70px] border-b sticky top-0 z-10 bg-white">
-          <div className="mx-auto px-4 flex items-center justify-between h-full">
-            <div className="flex-1 flex items-center gap-2 overflow-hidden">
-              <ExpandSidebarButton />
-              <Tooltip title={t("action.back")}>
-                <div
-                  className="flex-none size-7 rounded-md flex-center cursor-pointer max-md:hidden hover:bg-[#ECEDEE]"
-                  onClick={() => navigate("/agent")}
-                >
-                  <LeftOutlined className="text-regular cursor-pointer" />
-                </div>
-              </Tooltip>
-              <div
-                className="text-base text-primary line-clamp-1 max-md:flex-1 max-md:text-center"
-                title={agentInfo?.name || ""}
-              >
-                {agentInfo?.name || ""}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Mobile back button */}
-              <span
-                className="flex items-center gap-1 text-sm cursor-pointer md:hidden"
-                onClick={() => navigate(-1)}
-              >
-                <SvgIcon name="return" size={18} stroke />
-              </span>
-              <Tooltip title={t("chat.usage_guide")}>
-                <div
-                  className="h-6 px-2 rounded-full flex-center gap-1 text-sm text-primary cursor-pointer hover:bg-[#E1E2E3]"
-                  onClick={() => onGuideChange(true)}
-                >
-                  <SvgIcon name="layout-split" size={18} />
-                </div>
-              </Tooltip>
-              <MoreDropdown
-                items={[
-                  !isShortcut
-                    ? {
-                        key: "add-shortcut",
-                        icon: "add-mode",
-                        label: t("shortcut.add"),
-                      }
-                    : {
-                        key: "remove-shortcut",
-                        icon: "delete-mode",
-                        label: t("shortcut.remove"),
-                      },
-                ].filter(Boolean)}
-                onCommand={handleMore}
-              />
-            </div>
-          </div>
-        </header>
-      );
-    },
-    [isWebsite, navigate, isShortcut, handleMore]
-  );
 
   // 监听路由参数变化 - 加载智能体和会话
   useEffect(() => {
@@ -232,6 +105,14 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
                 ? JSON.parse(res.data.settings)
                 : {},
             } as Agent.State;
+            useAgentStore.setState((state) => ({
+              myAgentList: [
+                agent!,
+                ...state.myAgentList.filter(
+                  (item) => String(item.agent_id) !== String(agent!.agent_id)
+                ),
+              ],
+            }));
             isMyAgent = true;
           }
         } catch (err) {
@@ -251,21 +132,19 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
         }
 
         // 先在我的列表查找，再在探索列表查找
-        agent = myList.find((item) => item.agent_id === agent_id);
+        agent = myList.find((item) => String(item.agent_id) === String(agent_id));
         if (agent) {
           isMyAgent = true;
         } else {
-          agent = exploreList.find((item) => item.agent_id === agent_id);
+          agent = exploreList.find((item) => String(item.agent_id) === String(agent_id));
           if (!agent) {
             agent = exploreList?.[0];
           }
         }
       }
 
-      // 检查智能体是否为 Openclaw 类型（URL 参数或智能体属性）
-      const isOpenclaw =
-        searchParams.get("type") === "openclaw" ||
-        agent?.custom_config_obj?.agent_type === AGENT_TYPES.OPENCLAW;
+      // 检查智能体是否为 Openclaw 渠道类型
+      const isOpenclaw = isOpenClawCompatibleChannelType(agent?.channel_type);
 
       // 更新 store - Openclaw 智能体和"我的智能体"一样隐藏底部操作
       if (isMyAgent || isOpenclaw) {
@@ -276,9 +155,15 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
 
       // 设置 front-react 的 conversation store，让 useCurrentAgent 能找到 agent
       const actualAgentId = agent?.agent_id || agent_id;
-      convStore.setCurrentState(actualAgentId, conversation_id);
+      // isReplace=false 阻止 setRouter 触发页面跳转，避免 /index/agent 路径下的无限刷新循环
+      convStore.setCurrentState(actualAgentId, conversation_id, false);
+      // 加载会话列表以获取会话标题
+      if (actualAgentId) {
+        convStore.loadConversations(actualAgentId);
+      }
     };
 
+    convStore.setBasePath(location.pathname);
     loadRouteData();
   }, [searchParams]);
 
@@ -331,65 +216,25 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
       className={`h-full flex flex-col ${isWebsite ? "overflow-hidden pt-6" : ""}`}
     >
       {isWebsite && (
-        <div className="relative flex-none flex items-center gap-4 px-4 w-11/12 mx-auto lg:w-4/5 mb-5">
-          <Breadcrumb
-            separator={<ArrowRightOutlined />}
-            className="flex-1 w-0"
-            items={[
-              ...(navigationStore.homeNavigation?.menu_path
-                ? [
-                    {
-                      title: (
-                        <span
-                          className="text-regular leading-6 font-normal hover-text-theme cursor-pointer"
-                          onClick={() =>
-                            navigate(navigationStore.homeNavigation.menu_path)
-                          }
-                        >
-                          {t("module.index")}
-                        </span>
-                      ),
-                    },
-                  ]
-                : []),
-              ...(navigationStore.agentNavigation?.menu_path
-                ? [
-                    {
-                      title: (
-                        <span
-                          className="text-regular leading-6 font-normal hover-text-theme cursor-pointer"
-                          onClick={() =>
-                            navigate(navigationStore.agentNavigation.menu_path)
-                          }
-                        >
-                          {t("module.agent")}
-                        </span>
-                      ),
-                    },
-                  ]
-                : []),
-              {
-                title: (
-                  <span
-                    className="text-primary leading-6 inline-block truncate max-w-[10em] md:max-w-[30rem]"
-                    title={detailData.name}
-                  >
-                    {detailData.name}
-                  </span>
-                ),
-              },
-            ]}
+        <div className="relative flex-none w-11/12 lg:w-4/5 max-w-[1200px] mx-auto">
+          <DetailBreadcrumb
+            module={MODULE_CONFIGS.agent}
+            name={detailData.name}
+            extra={
+              <div className="flex items-center gap-2">
+                {!isCompletion && (
+                  <Button className="px-0" type="text" onClick={showShare}>
+                    <SvgIcon name="share-two" size={18} color="#4F5052" />
+                    {t("action.share")}
+                  </Button>
+                )}
+                <Button className="px-0" type="text" onClick={showUseCase}>
+                  <SvgIcon name="layout-split" size={18} />
+                  {t("chat.usage_guide")}
+                </Button>
+              </div>
+            }
           />
-          {!isCompletion && (
-            <Button type="link" onClick={showShare}>
-              <SvgIcon name="share-two" size={18} color="#4F5052" stroke />
-              {t("action.share")}
-            </Button>
-          )}
-          <Button type="link" onClick={showUseCase}>
-            <SvgIcon name="layout-split" size={18} />
-            {t("chat.usage_guide")}
-          </Button>
         </div>
       )}
       <div
@@ -400,62 +245,20 @@ const ChatView = forwardRef<ChatViewRef, {}>((props, ref) => {
       >
         <div
           className={
-            isWebsite ? "w-11/12 lg:w-4/5 mx-auto flex-1 h-full" : "h-full"
+            isWebsite ? "w-11/12 lg:w-4/5 max-w-[1200px] mx-auto flex-1 h-full" : "h-full"
           }
         >
-          {!isCompletion && (
-            <ChatContainer
-              ref={chatRef}
-              agentId={agentId}
-              conversationId={conversationId}
-              hideBottomActions={hideBottomActions}
-              useCaseFixed={isWebsite}
-              showRecommend={isWebsite}
-              hideMenuHeader={isWebsite}
-              className="flex-1"
-            />
-          )}
-          {/* Completion 模式 */}
-          {isCompletion && (
-            <ChatI18nProvider lang="zh-cn">
-              <ChatProvider
-                config={{
-                  type: "agent",
-                  title: currentAgent?.name || "Completion",
-                  logo: currentAgent?.logo || "/images/default_agent.png",
-                  features: { showRagStats: false },
-                }}
-                adapters={completionAdapters}
-              >
-                <CompletionView
-                  agentId={agentId}
-                  agentInfo={currentAgent}
-                  features={{ languageSwitcher: isWebsite, guide: true, showRelatedScene: true }}
-                  renderHeader={renderCompletionHeader}
-                  onNextAgent={(item, parameters) => {
-                    // 设置下一个智能体的准备参数
-                    convStore.setNextAgentPrepare({
-                      agent_id: item.agent_id,
-                      execution_rule: item.execution_rule,
-                      is_workflow: typeof item.is_workflow === 'boolean' ? item.is_workflow : true,
-                      parameters,
-                    });
-                    // 切换到新智能体
-                    convStore.setCurrentState(item.agent_id, '');
-                    // 导航到新智能体
-                    navigate({
-                      pathname: "/chat",
-                      search: `?agent_id=${item.agent_id}`,
-                    });
-                  }}
-                  onInitAgent={() => {
-                    // 同一个 agent 重新初始化，刷新页面
-                    window.location.reload();
-                  }}
-                />
-              </ChatProvider>
-            </ChatI18nProvider>
-          )}
+          <ChatContainer
+            ref={chatRef}
+            agentId={agentId}
+            conversationId={conversationId}
+            hideBottomActions={hideBottomActions}
+            useCaseFixed={isWebsite}
+            showRecommend={false}
+            hideMenuHeader={isWebsite}
+            isIndexRoute={isIndexRoute}
+            className="flex-1"
+          />
         </div>
       </div>
     </section>

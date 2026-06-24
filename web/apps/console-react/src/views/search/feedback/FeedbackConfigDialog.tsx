@@ -203,7 +203,7 @@ export const FeedbackConfigDialog = forwardRef<
       footer={[
         <Button
           key="cancel"
-          className="text-[#1D1E1F]"
+          className="text-primary"
           onClick={() => setVisible(false)}
         >
           {t("action_cancel")}
@@ -213,7 +213,7 @@ export const FeedbackConfigDialog = forwardRef<
         </Button>,
       ]}
     >
-      <div className="text-[#182B50] text-opacity-60 text-sm pb-4">
+      <div className="text-dark text-opacity-60 text-sm pb-4">
         {t("search-feedback.statisfied_type")}
       </div>
       <Sortable
@@ -234,7 +234,7 @@ export const FeedbackConfigDialog = forwardRef<
         +{t("action_add")}
       </Button>
 
-      <div className="text-[#182B50] text-opacity-60 text-sm pb-4 mt-7">
+      <div className="text-dark text-opacity-60 text-sm pb-4 mt-7">
         {t("search-feedback.unstatisfied_type")}
       </div>
       <Sortable

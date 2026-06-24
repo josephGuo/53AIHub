@@ -1,35 +1,34 @@
-import { Button, Form, message } from "antd";
-import { CloseOutlined } from "@ant-design/icons";
-import { useEffect, useRef, useState } from "react";
+import { Button, Form, message, Modal } from "antd";
+import { EditOutlined } from "@ant-design/icons";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { t } from "@/locales";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayoutContent } from "@/components/PageLayout";
-import { useEnterpriseStore } from "@/stores";
-import { GROUP_TYPE } from "@/constants/group";
-import { GroupSelect } from "@/components/GroupSelect";
-import CreateDrawer, { CreateDrawerRef } from "../components/CreateDrawer";
-import LinksDialog, { LinksDialogRef } from "../components/LinksDialog";
+import { usePromptFormDataStore } from "./store";
+import { eventBus } from "@km/shared-utils";
+import { PromptBasicInfo, PromptBasicInfoRef } from "./components/PromptBasicInfo";
+import { PromptConfigTab } from "./components/PromptConfigTab";
 import StoreDialog, {
   StoreDialogRef,
 } from "@/views/toolbox-refactored/components/StoreDialog";
-import GuideView from "./Guide";
-import { SvgIcon } from "@km/shared-components-react";
-import { usePromptFormDataStore } from "./store";
-import { PromptInputField } from "@/components/Prompt/input-field";
-import { eventBus } from "@km/shared-utils";
-
+import { getSimpleDateFormatString } from '@km/shared-utils';
+import LinksDialog, { LinksDialogRef } from "../components/LinksDialog";
 export function PromptCreatePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const enterpriseStore = useEnterpriseStore();
   const [form] = Form.useForm();
 
-  const createRef = useRef<CreateDrawerRef>(null);
   const linksDialogRef = useRef<LinksDialogRef>(null);
   const storeDialogRef = useRef<StoreDialogRef>(null);
+  const basicInfoRef = useRef<PromptBasicInfoRef>(null);
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [title, setTitle] = useState("");
+  const [editVisible, setEditVisible] = useState(false);
+  const [editBasicInfo, setEditBasicInfo] = useState({
+    name: "",
+    description: "",
+    logo: "",
+    group_ids: [] as number[],
+  });
 
   const formData = usePromptFormDataStore((state) => state.formData);
   const detailData = usePromptFormDataStore((state) => state.detailData);
@@ -46,6 +45,14 @@ export function PromptCreatePage() {
 
   const promptId = searchParams.get("prompt_id");
   const isEdit = !!promptId;
+
+  // 格式化保存时间（接受时间戳，默认当前时间）
+  const formatSavedTime = (timestamp?: number) => {
+    const now = timestamp ? new Date(timestamp) : new Date();
+    return getSimpleDateFormatString({
+            date: now,
+            format: 'YYYY-MM-DD hh:mm:ss'})
+  };
 
   // Handle open dialogs
   const handleOpenLinksDialog = () => {
@@ -75,22 +82,27 @@ export function PromptCreatePage() {
     setFormData({ ai_links: [...formData.ai_links] });
   };
 
-  // Handle edit/create
-  const handleEdit = async () => {
-    await fetchDetail({ prompt_id: promptId! });
-    setDrawerOpen(true);
-  };
-
-  const handleCreate = () => {
-    setDrawerOpen(true);
-  };
-
   // Handle save
   const handleSave = async () => {
     try {
-      const infoValid = await createRef.current?.validate();
+      // Validate basic info fields (name, group_ids)
+      if (!formData.name?.trim()) {
+        message.warning(t("form_input_placeholder"));
+        return;
+      }
+      if (!formData.group_ids?.length) {
+        message.warning(t("form_select_placeholder"));
+        return;
+      }
+
+      // Validate prompt content
+      if (!formData.content?.trim()) {
+        message.warning(t("prompt.content_required"));
+        return;
+      }
+
       const valid = await form.validateFields();
-      if (!infoValid || !valid) return;
+      if (!valid) return;
 
       // Get form values to include in save
       const formValues = form.getFieldsValue();
@@ -113,7 +125,6 @@ export function PromptCreatePage() {
           },
           { replace: true },
         );
-        setTitle(data.name);
       } else {
         await save({ formValues });
         message.success(t("action_save_success"));
@@ -127,33 +138,62 @@ export function PromptCreatePage() {
     }
   };
 
-  // Handle back
-  const handleBack = () => {
-    navigate("/prompt");
-  };
+  // 打开编辑弹框
+  const handleEditOpen = useCallback(() => {
+    setEditBasicInfo({
+      name: formData.name || "",
+      description: formData.description || "",
+      logo: formData.logo || "",
+      group_ids: formData.group_ids || [],
+    });
+    setEditVisible(true);
+  }, [formData.name, formData.description, formData.logo, formData.group_ids]);
+
+  // 保存编辑
+  const handleEditSave = useCallback(async () => {
+    const valid = await basicInfoRef.current?.validate();
+    if (!valid) return;
+
+    setFormData({
+      name: editBasicInfo.name,
+      description: editBasicInfo.description,
+      logo: editBasicInfo.logo,
+      group_ids: editBasicInfo.group_ids,
+    });
+    setEditVisible(false);
+  }, [setFormData, editBasicInfo]);
 
   // Track if form values have been synced from formData
   const syncedRef = useRef(false);
 
   useEffect(() => {
-    // Reset form and synced state when promptId changes
     syncedRef.current = false;
     form.resetFields();
 
     if (promptId) {
-      fetchDetail({ prompt_id: promptId }).then(() => {
-        setDrawerOpen(true);
-      });
+      fetchDetail({ prompt_id: promptId });
     } else {
-      setTitle(t("action_add"));
       reset().then(() => {
         loadDefaultLinks();
-        setDrawerOpen(true);
+
+        // Read URL parameters and fill form data
+        const nameParam = searchParams.get("name");
+        const descriptionParam = searchParams.get("description");
+        const logoParam = searchParams.get("logo");
+        const groupIdsParam = searchParams.get("group_ids");
+
+        if (nameParam || descriptionParam || logoParam || groupIdsParam) {
+          setFormData({
+            name: nameParam || "",
+            description: descriptionParam || "",
+            ...(logoParam ? { logo: logoParam } : {}),
+            ...(groupIdsParam ? { group_ids: groupIdsParam.split(",").map(Number) } : {}),
+          });
+        }
       });
     }
 
     return () => {
-      // Synchronously clear store data on unmount
       clear();
     };
   }, [promptId]);
@@ -162,14 +202,15 @@ export function PromptCreatePage() {
   useEffect(() => {
     // Only sync once when data is ready
     // - Edit mode: formData.prompt_id matches current promptId
-    // - New mode: formData.prompt_id is 0 and drawerOpen is true
+    // - New mode: formData.prompt_id is 0
     const isEditModeReady = promptId && String(formData.prompt_id) === promptId;
-    const isNewModeReady = !promptId && formData.prompt_id === 0 && drawerOpen;
+    const isNewModeReady = !promptId && formData.prompt_id === 0;
 
     if (!syncedRef.current && (isEditModeReady || isNewModeReady)) {
       syncedRef.current = true;
       form.setFieldsValue({
         content: formData.content || "",
+        sort: formData.sort ?? 0,
         subscription_group_ids: formData.subscription_group_ids || [],
         user_group_ids: formData.user_group_ids || [],
       });
@@ -178,139 +219,89 @@ export function PromptCreatePage() {
     promptId,
     formData.prompt_id,
     formData.content,
+    formData.sort,
     formData.subscription_group_ids,
     formData.user_group_ids,
-    drawerOpen,
     form,
   ]);
 
+  // 渲染配置内容
+  const renderConfigContent = () => {
+    return (
+      <PromptConfigTab
+        form={form}
+        onOpenLinksDialog={handleOpenLinksDialog}
+        onOpenStoreDialog={handleOpenStoreDialog}
+        onDeleteLink={handleDeleteLink}
+      />
+    );
+  };
+
   return (
     <PageLayoutContent
+      className="fixed inset-0 !px-0 !py-0 bg-[#F7F9FC]"
       header={{
-        title: detailData.name || title,
-        back: true,
-        onBack: handleBack,
-      }}
-      contentClassName="flex-1 flex overflow-hidden"
-      scrollable={false}
-      footer={
-        <Button
-          type="primary"
-          loading={loading || submitting}
-          onClick={handleSave}
-        >
-          {t("action_save")}
-        </Button>
-      }
-    >
-      <div className="h-full flex overflow-hidden">
-        {/* Left panel - Basic info */}
-        <div className="w-1/2 h-full p-6 border-r overflow-y-auto">
-          <div className="font-bold mb-3">{t("basic_info")}</div>
-          <div className="p-5 bg-[#F7F8FA] rounded">
-            <CreateDrawer ref={createRef} />
-
-            {/* AI Links */}
-            <div className="flex-none py-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm text-[#1D1E1F]">{t("usage_scene")}</h3>
-                <Button
-                  type="link"
-                  className="!px-0"
-                  onClick={handleOpenLinksDialog}
-                >
-                  <SvgIcon name="cate-manage" width="14px" />
-                  {t("default_links.default_setting")}
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.ai_links
-                  ?.filter((item: any) => !item.delete)
-                  .map((item: any, index: number) => (
-                    <div
-                      key={index}
-                      className="h-8 flex items-center gap-2 px-2 border rounded hover:shadow-md bg-white"
-                    >
-                      <img
-                        className="w-5 h-5 rounded-full"
-                        src={item.ai_link?.logo}
-                        alt=""
-                      />
-                      <p className="text-sm text-[#1D1E1F]">
-                        {item.ai_link?.name}
-                      </p>
-                      <CloseOutlined
-                        className="cursor-pointer hover:opacity-50 text-xs"
-                        onClick={() => handleDeleteLink(item)}
-                      />
-                    </div>
-                  ))}
-                <Button
-                  variant="dashed"
-                  color="primary"
-                  onClick={handleOpenStoreDialog}
-                >
-                  +{t("action_add")}
-                </Button>
-              </div>
-            </div>
+        title: (
+          <div className="flex items-center gap-2">
+            <span>{formData.name || detailData.name || t("action_add")}</span>
+            <EditOutlined
+              className="cursor-pointer text-placeholder hover:text-tertiary"
+              style={{ fontSize: 14 }}
+              onClick={handleEditOpen}
+            />
           </div>
-
-          <div className="font-bold mt-6 mb-3">{t("usage_guide_desc")}</div>
-          <GuideView />
-        </div>
-
-        {/* Right panel - Config */}
-        <div className="w-1/2 p-6 overflow-y-auto">
-          <div className="font-bold mb-3">{t("prompt_config")}</div>
-          <Form form={form} layout="vertical" className="p-5 bg-[#F7F8FA]">
-            {/* Subscription groups */}
-            <Form.Item
-              label={t("register_user.title")}
-              name="subscription_group_ids"
-              hidden={
-                !(
-                  enterpriseStore.info.is_independent ||
-                  enterpriseStore.info.is_industry
-                )
-              }
-            >
-              <GroupSelect
-                groupType={GROUP_TYPE.USER}
-                type="checkbox"
-                defaultAll={formData.prompt_id === 0}
-              />
-            </Form.Item>
-
-            {/* User groups */}
-            <Form.Item
-              label={t("internal_user.title")}
-              name="user_group_ids"
-              hidden={
-                !(
-                  enterpriseStore.info.is_enterprise ||
-                  enterpriseStore.info.is_industry
-                )
-              }
-            >
-              <GroupSelect groupType={GROUP_TYPE.INTERNAL_USER} type="picker" />
-            </Form.Item>
-
-            {/* Content */}
-            <Form.Item
-              label={t("prompt.content")}
-              name="content"
-              rules={[{ required: true, message: t("form_input_placeholder") }]}
-            >
-              <PromptInputField
-                showLine
-                showToken
-                style={{ minHeight: "60vh", height: "max-content" }}
-              />
-            </Form.Item>
-          </Form>
-        </div>
-      </div>
+        ),
+        back: true,
+        fallbackPath: "/prompt",
+        titlePrefix: (formData.logo || detailData.logo) ? (
+          <img
+            src={formData.logo || detailData.logo}
+            className="w-8 rounded"
+            alt=""
+          />
+        ) : (
+          <div className="size-8 rounded bg-[#F5F5F7]" />
+        ),
+        description: (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 truncate max-w-[200px]">
+              {formData.description || detailData.description || t("prompt.no_desc")}
+            </span>
+          </div>
+        ),
+        right: (
+          <div className="flex items-center gap-3">
+            {detailData.updated_time && (
+              <span className="text-xs text-placeholder">
+                {t('agent.last_saved')}：{formatSavedTime(detailData.updated_time)}
+              </span>
+            )}
+            <Button type="primary" loading={loading || submitting} onClick={handleSave}>
+              {t('action_publish')}
+            </Button>
+          </div>
+        ),
+      }}
+      headerClassName="h-16 px-4 border-b border-[#E9EEF7]"
+      contentClassName="flex-1 flex overflow-hidden !bg-[#F7F7FA]"
+      scrollable={false}
+    >
+      {renderConfigContent()}
+      {/* 编辑基本信息弹框 */}
+      <Modal
+        open={editVisible}
+        title={t("dialog.basic_info")}
+        onCancel={() => setEditVisible(false)}
+        onOk={handleEditSave}
+        width="50%"
+      >
+        <PromptBasicInfo
+          ref={basicInfoRef}
+          value={editBasicInfo}
+          onChange={setEditBasicInfo}
+          t={t}
+        />
+      </Modal>
       {/* Dialogs */}
       <StoreDialog
         ref={storeDialogRef}

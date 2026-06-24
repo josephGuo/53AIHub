@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Chat 模块语言包
  */
 import { buildMessages, type KeyRow } from '../../locales'
@@ -13,6 +13,11 @@ const CHAT_KEYS: readonly KeyRow[] = [
   ['chat.conversation_title_placeholder', '请输入会话标题', '請輸入會話標題', 'Enter conversation title', '会話タイトルを入力'],
   ['chat.no_title', '无标题', '無標題', 'No title', 'タイトルなし'],
   ['chat.no_description', '暂无描述', '暫無描述', 'No description', '説明なし'],
+  ['chat.error_tip', '智能体报错，请检查智能体相关配置', '智慧體報告錯誤，請檢查智慧體相關配置', 'The agent reported an error. Please check the configuration.', 'エージェントがエラーを報告しました。設定を確認してください。'],
+  ['chat.error_details', '点击查看详情', '點擊查看詳情', 'Click to view details', '詳細を表示'],
+  ['chat.select_feedback_option', '请选择至少一个反馈选项', '請選擇至少一個反饋選項', 'Please select at least one feedback option', '少なくとも1つのフィードバックオプションを選択してください'],
+  ['chat.deep_thinking', '深度思考', '深度思考', 'Deep Thinking', '深層思考'],
+  ['chat.fast_response', '快速回答', '快速回答', 'Quick Response', '迅速な回答'],
   // 使用指引相关
   ['chat.usage_guide', '使用指引', '使用指引', 'Usage Guide', '使用ガイド'],
   ['chat.usage_case', '使用案例', '使用案例', 'Use Cases', '使用例'],
@@ -31,9 +36,15 @@ const CHAT_KEYS: readonly KeyRow[] = [
   ['chat.failed_tip', '请求失败', '請求失敗', 'Request failed', 'リクエスト失敗'],
   ['chat.no_available_agent', '暂无可用智能体', '暫無可用智能體', 'No available agent', '利用可能なエージェントなし'],
   ['chat.loading_messages', '加载消息...', '加載消息...', 'Loading messages...', 'メッセージを読み込み中...'],
+  ['chat.loading_more', '正在加载更早的消息...', '正在加載更早的消息...', 'Loading earlier messages...', '以前のメッセージを読み込み中...'],
   ['chat.load_more', '加载更多', '加載更多', 'Load more', 'もっと読み込む'],
   ['chat.no_messages', '暂无消息', '暫無消息', 'No messages', 'メッセージなし'],
   ['chat.ai_disclaimer', '回答内容均由AI生成，仅供参考', '回答內容均由AI生成，僅供參考', 'AI-generated content is for reference only', 'AI生成の内容は参考用です'],
+  ['chat.quotation', '引用 {{count}} 篇资料作为参考', '引用 {{count}} 篇資料作為參考', 'Referenced {{count}} sources', '{{count}}件のソースを参照'],
+  ['chat.like_feedback', '喜欢反馈', '喜歡反饋', 'Like feedback', 'いいねフィードバック'],
+  ['chat.dislike_feedback', '不喜欢反馈', '不喜歡反饋', 'Dislike feedback', 'よくないフィードバック'],
+  ['chat.submit_success', '提交成功', '提交成功', 'Submitted successfully', '送信成功'],
+  ['chat.feedback_placeholder', '(可选)告诉我们更多关于你的使用体验', '(可選)告訴我們更多關於你的使用體驗', '(Optional) Tell us more about your experience', '(任意)詳細をお聞かせください'],
   // 操作
   ['action.del', '删除', '刪除', 'Delete', '削除'],
   ['action.rename', '重命名', '重命名', 'Rename', '名前変更'],
@@ -44,7 +55,7 @@ const CHAT_KEYS: readonly KeyRow[] = [
   ['action.copy_markdown', '复制 Markdown', '複製 Markdown', 'Copy Markdown', 'Markdownをコピー'],
   ['action.copy_text', '复制纯文本', '複製純文本', 'Copy plain text', 'プレーンテキストをコピー'],
   ['action.add', '添加', '添加', 'Add', '追加'],
-  ['action.add_as_file', '添加为文件', '添加為文件', 'Add as file', 'ファイルとして追加'],
+  ['action.add_as_file', '添加到', '添加到', 'Add to', '追加先'],
   ['chat.satisfied', '满意', '滿意', 'Satisfied', '満足'],
   ['chat.unsatisfied', '不满意', '不滿意', 'Unsatisfied', '不満'],
   ['action.view', '查看', '查看', 'View', '表示'],
@@ -55,6 +66,9 @@ const CHAT_KEYS: readonly KeyRow[] = [
   ['action.copy_success', '复制成功', '複製成功', 'Copy successful', 'コピー成功'],
   ['action.copy_failed', '复制失败', '複製失敗', 'Copy failed', 'コピー失敗'],
   ['action.click_upload', '点击上传', '點擊上傳', 'Click to upload', 'クリックでアップロード'],
+  ['action.submit', '提交', '提交', 'Submit', '送信'],
+  ['action.favorite', '收藏', '收藏', 'Favorite', 'お気に入り'],
+  ['action.unfavorite', '取消收藏', '取消收藏', 'Unfavorite', 'お気に入り解除'],
   // 文件相关
   ['file.file_size', '文件大小: ${size}MB', '文件大小: ${size}MB', 'Max file size: ${size}MB', 'ファイルサイズ: ${size}MB'],
   ['file.file_format', '格式: ${format}', '格式: ${format}', 'Format: ${format}', '形式: ${format}'],
@@ -71,6 +85,9 @@ const CHAT_KEYS: readonly KeyRow[] = [
   ['common.related_agent', '相关智能体', '相關智能體', 'Related Agents', '関連エージェント'],
   ['related_scene.title', '相关场景', '相關場景', 'Related Scenes', '関連シーン'],
   ['related_scene.next_step', '下一步操作', '下一步操作', 'Next Step', '次のステップ'],
+  ['source.chunk_title', '引用片段', '引用片段', 'Citation', '引用箇所'],
+  ['source.knowledge_title', '知识库引用', '知識庫引用', 'Knowledge References', 'ナレッジ参照'],
+  ['source.view_document', '查看文档', '查看文档', 'View Document', 'ドキュメントを表示'],
   ['form.input_placeholder', '请输入', '請輸入', 'Please input', '入力してください'],
   // 分享相关
   ['action.select_all', '全选', '全選', 'Select All', '全選'],
@@ -90,6 +107,52 @@ const CHAT_KEYS: readonly KeyRow[] = [
   ['chat.timeout_title', '提示', '提示', 'Notice', 'お知らせ'],
   ['chat.timeout_message', '聊天对话已超时，请创建新对话', '聊天對話已超時，請創建新對話', 'Chat session timed out, please start a new conversation', 'チャットセッションがタイムアウトしました。新しい会話を開始してください。'],
   ['chat.timeout_ok', '全新对话', '全新對話', 'Create New Conversation', '新しい会話を開始'],
+  // Graph 图谱相关
+  ['graph.knowledge_graph', '知识图谱', '知識圖譜', 'Knowledge Graph', 'ナレッジグラフ'],
+  ['graph.view', '查看图谱', '查看圖譜', 'View Graph', 'グラフを表示'],
+  ['graph.no_data', '暂无图谱数据', '暫無圖譜數據', 'No graph data', 'グラフデータなし'],
+  // ProcessFlow 过程流相关
+  ['process.intent_classification.running', '意图理解中...', '意圖理解中...', 'Understanding intent...', '意図を理解中...'],
+  ['process.intent_classification.completed', '意图理解完成', '意圖理解完成', 'Intent understood', '意図理解完了'],
+  ['process.knowledge_search.running', '智能检索中...', '智能檢索中...', 'Searching...', '検索中...'],
+  ['process.knowledge_search.completed', '智能检索完成', '智能檢索完成', 'Search complete', '検索完了'],
+  ['process.skill_load.running', '技能加载中...', '技能加載中...', 'Loading skill...', 'スキル読み込み中...'],
+  ['process.skill_load.completed', '技能加载完成', '技能加載完成', 'Skill loaded', 'スキル読み込み完了'],
+  ['process.llm_delta.running', '思考中...', '思考中...', 'Thinking...', '思考中...'],
+  ['process.llm_delta.completed', '思考完成', '思考完成', 'Thinking complete', '思考完了'],
+  ['process.tool_execution.running', '技能执行中...', '技能執行中...', 'Executing skill...', 'スキル実行中...'],
+  ['process.tool_execution.completed', '技能执行完成', '技能執行完成', 'Skill execution complete', 'スキル実行完了'],
+  ['process.hide_process', '隐藏任务执行过程', '隱藏任務執行過程', 'Hide execution process', '実行プロセスを非表示'],
+  ['process.show_process', '显示任务执行过程', '顯示任務執行過程', 'Show execution process', '実行プロセスを表示'],
+  ['process.graph_found', '从知识图谱中检索到实体关系', '從知識圖譜中檢索到實體關係', 'Found entity relations in knowledge graph', 'ナレッジグラフからエンティティ関係を検出'],
+  ['process.knowledge_found', '从知识库中检索到', '從知識庫中檢索到', 'Found in knowledge base: ', 'ナレッジベースから検出: '],
+  ['process.knowledge_libraries', '个知识库', '個知識庫', ' knowledge bases', '件のナレッジベース'],
+  ['process.knowledge_documents', '篇知识文档', '篇知識文檔', ' documents', '件のドキュメント'],
+  ['process.web_found', '从联网搜索中检索到', '從聯網搜索中檢索到', 'Found from web search: ', 'ウェブ検索から検出: '],
+  ['process.web_pages', '个相关网页', '個相關網頁', ' relevant pages', '件の関連ページ'],
+  ['process.copied', '已复制', '已複製', 'Copied', 'コピーしました'],
+  ['process.tool_running', '执行中...', '執行中...', 'Executing...', '実行中...'],
+  ['process.tool_completed', '执行完成', '執行完成', 'Execution complete', '実行完了'],
+  ['process.output', '输出', '輸出', 'Output', '出力'],
+  ['process.bash', '命令', '命令', 'Bash', 'Bash'],
+  // Query Expansion 问题拆解
+  ['process.query_expansion.running', '正在拆解复杂问题...', '正在拆解複雜問題...', 'Breaking down question...', '問題を分解中...'],
+  ['process.query_expansion.completed', '问题拆解完成', '問題拆解完成', 'Question broken down', '問題分解完了'],
+  ['process.query_expansion.user_question', '用户问题', '用戶問題', 'User question', 'ユーザー質問'],
+  ['process.query_expansion.expanded', '拆解问题', '拆解問題', 'Expanded queries', '展開クエリ'],
+  ['process.query_expansion.keywords', '关键词', '關鍵詞', 'Keywords', 'キーワード'],
+  // Scope Narrowing 范围收敛
+  ['process.scope_narrowing.running', '正在收敛查询范围...', '正在收斂查詢範圍...', 'Narrowing scope...', '範囲を絞り込み中...'],
+  ['process.scope_narrowing.completed', '查询范围收敛完成', '查詢範圍收斂完成', 'Scope narrowed', '範囲絞り込み完了'],
+  ['process.scope_narrowing.converged_to', '已收敛至', '已收斂至', 'Converged to', '絞り込み先'],
+  ['process.scope_narrowing.libraries', '个知识库', '個知識庫', ' knowledge bases', '件のナレッジベース'],
+  // 推荐问题
+  ['chat.suggested_questions', '你可以问：', '你可以問：', 'You can ask:', 'あなたは聞くことができます：'],
+  // 时间分类
+  ['time.today', '今天', '今天', 'Today', '今日'],
+  ['time.yesterday', '昨天', '昨天', 'Yesterday', '昨日'],
+  ['time.within_7_days', '7天内', '7天內', 'Last 7 days', '7日以内'],
+  ['time.over_7_days', '7天前', '7天前', 'Earlier', '7日以前'],
 ]
 
 export const chatMessages = buildMessages(CHAT_KEYS)

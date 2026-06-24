@@ -87,8 +87,8 @@ export default function AIGeneratedView({
     fetchDirs: (params) => mySpaceApi.getAIGenerated({ ...params, type: 'dir' }),
     mapItem,
     pageSize: PAGE_SIZE,
-    timeLabel: '创建时间',
-    emptyText: '暂无AI生成的文档',
+    timeLabel: t("common.create_time"),
+    emptyText: t("mine.ai_empty"),
     enableFavorite,
     onPreview,
     refreshKey,
@@ -144,7 +144,7 @@ export default function AIGeneratedView({
       {!isEmpty && (
         <div className="bg-white rounded-lg border border-gray-200 mt-4">
           <div className="h-12 flex items-center gap-2 px-4 border-b border-gray-100">
-            <div className="flex-1 min-w-0 text-sm text-[#4F5052] font-medium">名称</div>
+            <div className="flex-1 min-w-0 text-sm text-[#4F5052] font-medium">{t("name")}</div>
             <div className="w-[140px] flex-shrink-0 text-sm text-[#4F5052] font-medium text-right">{timeLabel}</div>
             <div className="w-[48px] flex-shrink-0"></div>
           </div>
@@ -191,13 +191,13 @@ export default function AIGeneratedView({
                         {
                           key: 'favorite',
                           icon: item.isFavorite ? 'star-cancel' : 'star',
-                          label: item.isFavorite ? '取消收藏' : '收藏',
+                          label: item.isFavorite ? t('action.unfavorite') : t('action.favorite'),
                         },
                       ] : []),
                       { key: 'divider-2', divided: true },
-                      { key: 'rename', icon: 'edit', label: '重命名' },
+                      { key: 'rename', icon: 'edit', label: t('action.rename') },
                       { key: 'divider-3', divided: true },
-                      { key: 'delete', icon: 'delete', label: '删除', danger: true },
+                      { key: 'delete', icon: 'delete', label: t('action.delete'), danger: true },
                     ]}
                     onCommand={(cmd) => {
                       if (cmd === 'new-tab') handleOpenNewTab(item)

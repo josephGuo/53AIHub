@@ -1,8 +1,8 @@
 import React, {
-  useState,
-  forwardRef,
-  useImperativeHandle,
-  useRef,
+    useState,
+    forwardRef,
+    useImperativeHandle,
+    useRef,
 } from "react";
 import { Modal, Input, Button, Form, message, Popover, Image } from "antd";
 import { PlusOutlined, CloseOutlined } from "@ant-design/icons";
@@ -227,7 +227,7 @@ export const SlideDialog = forwardRef<SlideDialogRef, SlideDialogProps>(
     const iconContent = (
       <div className="w-[318px] p-1">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="text-sm text-[#1D1E1F]">图标</div>
+          <div className="text-sm text-primary">图标</div>
           <Button
             type="text"
             icon={<CloseOutlined />}
@@ -303,7 +303,7 @@ export const SlideDialog = forwardRef<SlideDialogRef, SlideDialogProps>(
                         color="#a1a5af"
                       />
                     </div>
-                    <div className="flex-1 text-sm text-[#1D1E1F] truncate">
+                    <div className="flex-1 text-sm text-primary truncate">
                       {item.name}
                     </div>
                     {item.prompt_id && (
@@ -358,8 +358,8 @@ export const SlideDialog = forwardRef<SlideDialogRef, SlideDialogProps>(
                 </div>
               </Form.Item>
               <div>
-                <div className="flex items-center text-sm text-[#999999] mb-2">
-                  把 <span className="text-[#2563EB]">{"{划词内容}"}</span>{" "}
+                <div className="flex items-center text-sm text-placeholder mb-2">
+                  把 <span className="text-brand">{"{划词内容}"}</span>{" "}
                   填入到指令内容里，例如：总结以下内容：{"{划词内容}"}
                 </div>
                 <Form.Item

@@ -99,59 +99,84 @@ export const CozeOSV = forwardRef<CozeOSVRef, CozeOSVProps>(
                 </Popover>
               </div>
             </div>
-            <Form form={form} layout="vertical" className="mt-3">
-              <Form.Item label={t('module.website_info_name')}>
-                <Select
-                  className="w-full"
-                  value={customConfig.provider_id}
-                  onChange={(value) => updateCustomConfig({ provider_id: value })}
-                  options={providers.map((item) => ({
-                    label: item.name,
-                    value: item.provider_id,
-                  }))}
+            <div className="p-4 border rounded-xl bg-white mt-3">
+              <Form form={form} layout="vertical">
+                <Form.Item label={t('module.website_info_name')}>
+                  <Select
+                    className="w-full"
+                    value={customConfig.provider_id}
+                    onChange={(value) => updateCustomConfig({ provider_id: value })}
+                    options={providers.map((item) => ({
+                      label: item.name,
+                      value: item.provider_id,
+                    }))}
+                  />
+                </Form.Item>
+                {agentType === AGENT_TYPES.COZE_WORKFLOW_OSV ? (
+                  <Form.Item
+                    label={t('agent.coze.workflow_link')}
+                    name="base_url"
+                    rules={generateInputRules({ message: 'form_link_validator', validator: ['link'] })}
+                    getValueProps={() => ({ value: channelConfig.base_url || '' })}
+                    getValueFromEvent={(e) => {
+                      const val = e?.target?.value ?? e
+                      updateCustomConfig({
+                        channel_config: {
+                          ...channelConfig,
+                          base_url: val,
+                        },
+                      })
+                      return val
+                    }}
+                    className="0"
+                  >
+                    <Input placeholder={t('form_input_placeholder')} />
+                  </Form.Item>
+                ) : (
+                  <Form.Item
+                    className="0"
+                    label={t('agent.coze.agent_link')}
+                    name="base_url"
+                    rules={generateInputRules({ message: 'form_link_validator', validator: ['link'] })}
+                    getValueProps={() => ({ value: channelConfig.base_url || '' })}
+                    getValueFromEvent={(e) => {
+                      const val = e?.target?.value ?? e
+                      updateCustomConfig({
+                        channel_config: {
+                          ...channelConfig,
+                          base_url: val,
+                        },
+                      })
+                      return val
+                    }}
+                  >
+                    <Input placeholder={t('form_input_placeholder')} />
+                  </Form.Item>
+                )}
+              </Form>
+            </div>
+            { agentType === AGENT_TYPES.COZE_WORKFLOW_OSV && (
+              <>
+                <FieldInput
+                  list={inputFields}
+                  onChange={updateInputFields}
+                  title={t('agent.input_variable')}
+                  allowAdd
+                  type="input"
+                  agentType={agentType}
+                  className="mt-2"
                 />
-              </Form.Item>
-              {agentType === AGENT_TYPES.COZE_WORKFLOW_OSV ? (
-                <Form.Item
-                  label={t('agent.coze.workflow_link')}
-                  name="base_url"
-                  rules={generateInputRules({ message: 'form_link_validator', validator: ['link'] })}
-                  getValueProps={() => ({ value: channelConfig.base_url || '' })}
-                  getValueFromEvent={(e) => {
-                    const val = e?.target?.value ?? e
-                    updateCustomConfig({
-                      channel_config: {
-                        ...channelConfig,
-                        base_url: val,
-                      },
-                    })
-                    return val
-                  }}
-                >
-                  <Input placeholder={t('form_input_placeholder')} />
-                </Form.Item>
-              ) : (
-                <Form.Item
-                  className="mb-9"
-                  label={t('agent.coze.agent_link')}
-                  name="base_url"
-                  rules={generateInputRules({ message: 'form_link_validator', validator: ['link'] })}
-                  getValueProps={() => ({ value: channelConfig.base_url || '' })}
-                  getValueFromEvent={(e) => {
-                    const val = e?.target?.value ?? e
-                    updateCustomConfig({
-                      channel_config: {
-                        ...channelConfig,
-                        base_url: val,
-                      },
-                    })
-                    return val
-                  }}
-                >
-                  <Input placeholder={t('form_input_placeholder')} />
-                </Form.Item>
-              )}
-            </Form>
+                <FieldInput
+                  list={outputFields}
+                  onChange={updateOutputFields}
+                  title={t('agent.output_variable')}
+                  allowAdd
+                  type="output"
+                  agentType={agentType}
+                  className="mt-2"
+                />
+              </>  
+            )}
           </>
         )}
 
@@ -164,29 +189,17 @@ export const CozeOSV = forwardRef<CozeOSVRef, CozeOSVProps>(
             <>
               {agentType === AGENT_TYPES.COZE_WORKFLOW_OSV ? (
                 <>
-                  <FieldInput
-                    list={inputFields}
-                    onChange={updateInputFields}
-                    title={t('agent.input_variable')}
-                    allowAdd
-                    type="input"
-                    agentType={agentType}
-                  />
-                  <FieldInput
-                    list={outputFields}
-                    onChange={updateOutputFields}
-                    title={t('agent.output_variable')}
-                    allowAdd
-                    type="output"
-                    agentType={agentType}
-                  />
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <RelateAgents />
+                  <div className="h-3"></div>
                 </>
               ) : (
                 <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <BaseConfig />
                   <RelateAgents />
                   <ExpandConfig />
+                  <div className="h-3"></div>
                 </>
               )}
             </>

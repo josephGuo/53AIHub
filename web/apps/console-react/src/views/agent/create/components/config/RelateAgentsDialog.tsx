@@ -169,14 +169,14 @@ export const RelateAgentsDialog = forwardRef<RelateAgentsDialogRef, Props>(
                 <Search
                   value={filterForm.keyword}
                   placeholder={t("module.ai_toolbox_search_placeholder")}
-                  onInput={(val) => {
+                  onDebouncedChange={(val) => {
                     filterFormRef.current = {
                       ...filterFormRef.current,
                       keyword: val,
                     };
                     setFilterForm((prev) => ({ ...prev, keyword: val }));
+                    refresh();
                   }}
-                  onChange={refresh}
                 />
               </div>
             </div>
@@ -187,65 +187,72 @@ export const RelateAgentsDialog = forwardRef<RelateAgentsDialogRef, Props>(
                   <Spin />
                 </div>
               )}
-              {tableData.list.map((item) => (
-                <div
-                  key={item.agent_id}
-                  className="bg-white rounded border p-4 flex items-center gap-2 relative group"
-                >
-                  <img
-                    alt="AI 搜索"
-                    src={
-                      item.logo ||
-                      getPublicPath("/images/agent/default-logo.png")
-                    }
-                    className="size-10 rounded-md"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        getPublicPath("/images/agent/default-logo.png");
-                    }}
-                  />
-                  <div className="flex-1 overflow-hidden">
-                    <div className="text-sm text-[#1D1E1F] flex items-center gap-3">
-                      <span>{item.name}</span>
-                      <span className="px-2 py-1 bg-gray-100 text-xs text-[#939499] rounded flex items-center gap-1">
-                        <SvgIcon
-                          name={
-                            item.custom_config?.agent_mode === "chat"
-                              ? "agent"
-                              : "app-one"
-                          }
-                          width={16}
-                          height={16}
-                        />
-                        {item.custom_config?.agent_mode === "chat"
-                          ? t("agent_type_chat_v2")
-                          : t("agent_type_completion_v2")}
-                      </span>
-                    </div>
-                    <div className="text-xs text-[#1D1E1F] text-opacity-60 truncate mt-1">
-                      {item.description}
-                    </div>
-                  </div>
-                  {isExist(item.agent_id) ? (
-                    <Button
-                      type="primary"
-                      ghost
-                      className="border-none"
-                      disabled
+              {tableData.list.map((item) => {
+                  const agentMode = item.custom_config?.agent_mode;
+                  return (
+                    <div
+                      key={item.agent_id}
+                      className="bg-white rounded border p-4 flex items-center gap-2 relative group"
                     >
-                      {t("action.added")}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      className="invisible group-hover:visible"
-                      onClick={() => handleAdd(item)}
-                    >
-                      {t("action_add")}
-                    </Button>
-                  )}
-                </div>
-              ))}
+                      <img
+                        alt="AI 搜索"
+                        src={
+                          item.logo ||
+                          getPublicPath("/images/agent/default-logo.png")
+                        }
+                        className="size-10 rounded-md"
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            getPublicPath("/images/agent/default-logo.png");
+                        }}
+                      />
+                      <div className="flex-1 overflow-hidden">
+                        <div className="text-sm text-primary flex items-center gap-3">
+                          <span>{item.name}</span>
+                          <span className="px-2 py-1 bg-gray-100 text-xs text-hint rounded flex items-center gap-1">
+                            <SvgIcon
+                              name={
+                                agentMode === "chat"
+                                  ? "chat_v2"
+                                  : agentMode === "assistant"
+                                    ? "agent"
+                                    : "app-one"
+                              }
+                              width={16}
+                              height={16}
+                            />
+                            {agentMode === "chat"
+                              ? t("agent_type_chat_v2")
+                              : agentMode === "assistant"
+                                ? t("agent_type.assistant")
+                                : t("agent_type_completion_v2")}
+                          </span>
+                        </div>
+                        <div className="text-xs text-primary text-opacity-60 truncate mt-1">
+                          {item.description}
+                        </div>
+                      </div>
+                      {isExist(item.agent_id) ? (
+                        <Button
+                          type="primary"
+                          ghost
+                          className="border-none"
+                          disabled
+                        >
+                          {t("action.added")}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="primary"
+                          className="invisible group-hover:visible"
+                          onClick={() => handleAdd(item)}
+                        >
+                          {t("action_add")}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
 
               {showEmpty && <Empty />}
             </div>

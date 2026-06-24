@@ -5,7 +5,7 @@
   --hubx-color-focus: #1890ff;
   --hubx-color-bg: #fff;
   --hubx-color-bg-secondary: #F6F7F9;
-  --hubx-color-bg-tertiary: #F3F3F5;
+  --hubx-color-bg-tertiary: #D3D4D9;
   --hubx-color-text: #1D1E1F;
   --hubx-color-text-secondary: #939499;
   --hubx-color-text-tertiary: #333;
@@ -434,12 +434,7 @@ html {
 }
 
 /* ========== Dark Mode ========== */
-.markdown-body.dark-mode {
-  color: #e6e6e6;
-}
-
 .markdown-body.dark-mode pre {
-  color: #e6e6e6;
   background-color: #2d2d2d;
 }
 

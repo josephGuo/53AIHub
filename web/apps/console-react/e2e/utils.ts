@@ -40,6 +40,8 @@ export async function setupAuth(context: BrowserContext) {
 export async function navigateTo(page: Page, path: string) {
   await page.goto(path)
   await page.waitForLoadState('domcontentloaded')
+  // 等待页面内容加载
+  await page.waitForTimeout(1000)
 }
 
 // 常用选择器

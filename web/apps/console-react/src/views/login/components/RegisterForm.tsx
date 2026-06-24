@@ -1,5 +1,5 @@
 import { Button, Form, Input, message } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { t } from '@/locales'
 import { useUserStore, useEnterpriseStore } from '@/stores'
 import { authApi } from '@/api/modules/auth'
@@ -118,13 +118,13 @@ export function RegisterForm({ onLogin }: RegisterFormProps) {
       className="relative max-w-[440px] w-full"
       initialValues={{ username_type: 'mobile' }}
     >
-      <h4 className="text-3xl text-[#1D1E1F] font-bold text-center mb-10">
+      <h4 className="text-3xl text-primary font-bold text-center mb-10">
         {t('account_register')}
       </h4>
 
       {/* Account */}
       <Form.Item
-        label={<span className="text-[#1D1E1F]">{t('account')}</span>}
+        label={<span className="text-primary">{t('account')}</span>}
         name="username"
         className="relative"
         rules={[
@@ -169,7 +169,7 @@ export function RegisterForm({ onLogin }: RegisterFormProps) {
 
       {/* Verification Code */}
       <Form.Item
-        label={<span className="text-[#1D1E1F]">{t('verification_code')}</span>}
+        label={<span className="text-primary">{t('verification_code')}</span>}
         name="verification_code"
         className="relative mt-6"
         rules={[{ required: true, message: t('verification_code_placeholder') }]}
@@ -185,7 +185,7 @@ export function RegisterForm({ onLogin }: RegisterFormProps) {
 
       {/* Password */}
       <Form.Item
-        label={<span className="text-[#1D1E1F]">{t('password')}</span>}
+        label={<span className="text-primary">{t('password')}</span>}
         name="password"
         className="relative"
         rules={[
@@ -224,7 +224,7 @@ export function RegisterForm({ onLogin }: RegisterFormProps) {
       </Form.Item>
 
       {/* Login Link */}
-      <div className="w-full flex justify-center mt-4 text-sm text-[#9A9A9A]">
+      <div className="w-full flex justify-center mt-4 text-sm text-disabled">
         {t('login.has_account')}
         <Button type="link" className="!p-0 !bg-transparent" onClick={onLogin}>
           {t('login.direct_login')}

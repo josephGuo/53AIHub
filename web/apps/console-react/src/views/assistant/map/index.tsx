@@ -93,17 +93,17 @@ export function AssistantMapPage() {
             alt=""
           />
           <div className="flex-1">
-            <h2 className="text-2xl text-[#1D1E1F] m-0">
+            <h2 className="text-2xl text-primary m-0">
               {t("module.document_map")}
             </h2>
-            <p className="text-sm text-[#999999] m-0 mt-2">
+            <p className="text-sm text-placeholder m-0 mt-2">
               {t("module.document_map_desc")}
             </p>
           </div>
           {activeTab === "setting" && agentMap && (
             <div className="flex items-center gap-1">
               <Switch checked={agentMap.enable} onChange={handleStatusChange} />
-              <span className="text-sm text-[#2563EB]">
+              <span className="text-sm text-brand">
                 {agentMap.enable ? t("action_enable") : t("action_disable")}
               </span>
             </div>

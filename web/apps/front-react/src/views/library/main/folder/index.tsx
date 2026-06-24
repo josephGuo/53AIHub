@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button, Empty, Spin, message, Tooltip } from "antd";
+import { Button, Empty, Spin, Tooltip } from "antd";
 import { Dropdown } from "@km/shared-components-react";
 import type { MenuProps } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
@@ -13,6 +13,7 @@ import {
   RESOURCE_TYPE,
 } from "@/components/KMPermission/constant";
 import { PermissionFrame } from "@/components/KMPermission/frame";
+import { EntityDisplay } from "@/components/EntityDisplay";
 import FilePermission from "../../components/permission/File";
 import { canEdit, useInlineEdit } from "../../composables/useInlineEdit";
 import { CatalogDropdown } from "../components/catalog/dropdown";
@@ -46,7 +47,6 @@ export function LibraryFolderView() {
       libraryStore.treeFiles(),
     );
   }, [currentFile?.path, libraryStore]);
-
   const fileList = useMemo(() => {
     if (!folder || !folder.children) {
       return [];
@@ -390,7 +390,7 @@ export function LibraryFolderView() {
                           </FilePermission>
                         </div>
                         <div className="w-20 text-center text-sm text-[#9A9A9A]">
-                          {item.creator || "-"}
+                          <EntityDisplay type="user" id={item.user_id} mode="name" />
                         </div>
                         <div className="w-1/5 text-right text-sm text-[#9A9A9A]">
                           {item.updated_at}

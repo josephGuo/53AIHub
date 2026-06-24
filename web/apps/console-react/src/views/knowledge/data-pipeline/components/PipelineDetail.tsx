@@ -179,7 +179,7 @@ export function PipelineDetail({
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar: Nodes Flow */}
           <div className="w-96 bg-[#F7F8FA] border-r border-gray-100 p-6 overflow-y-auto overflow-x-hidden">
-            <div className="text-sm text-[#999999] mb-4">
+            <div className="text-sm text-placeholder mb-4">
               {t("data_pipeline.section_title")}
             </div>
             {visibleNodes.map((node, i) => (
@@ -212,8 +212,8 @@ export function PipelineDetail({
                     />
                   </div>
                   <div className="flex-1 text-left">
-                    <div className="text-sm text-[#1D1E1F]">{node.name}</div>
-                    <div className="text-xs text-[#999999]">
+                    <div className="text-sm text-primary">{node.name}</div>
+                    <div className="text-xs text-placeholder">
                       {node.description}
                     </div>
                   </div>

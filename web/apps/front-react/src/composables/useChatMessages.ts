@@ -18,6 +18,10 @@ interface FileInfo {
   id: string
   file_name: string
   url: string
+  mime_type?: string
+  size?: number
+  kind?: string
+  message_id?: string | number
 }
 
 interface ProcessRecord {
@@ -76,18 +80,54 @@ interface ProcessedMessage extends FeedbackParams {
 
 function processRecordsToOutputFiles(records: ProcessRecord[]): FileInfo[] {
   const outputFiles: FileInfo[] = []
+  const indexByKey = new Map<string, number>()
+
+  const appendFiles = (files: any[]) => {
+    files.forEach((file: any) => {
+      if (!file || typeof file !== 'object') return
+      const fileName = file.file_name ?? file.fileName ?? file.filename ?? file.name
+      const url = file.url ?? file.href ?? file.download_url ?? file.downloadUrl
+      const id = file.id ?? file.file_id ?? file.fileId ?? url ?? fileName
+      if (id == null && !url && !fileName) return
+      const key = id != null ? String(id) : `${url || ''}|${fileName || ''}`
+      const incoming = {
+        id: String(id ?? key),
+        file_name: fileName != null ? String(fileName) : '',
+        url: url != null ? String(url) : '',
+        download_url: typeof file.download_url === 'string' ? file.download_url : typeof file.downloadUrl === 'string' ? file.downloadUrl : undefined,
+        signed_download_url: typeof file.signed_download_url === 'string' ? file.signed_download_url : typeof file.signedDownloadUrl === 'string' ? file.signedDownloadUrl : undefined,
+        mime_type: file.mime_type ?? file.mimeType ?? file.mime,
+        size: typeof file.size === 'number' ? file.size : Number.isFinite(Number(file.size)) ? Number(file.size) : undefined,
+        kind: file.kind,
+        message_id: file.message_id ?? file.messageId,
+        source_kind: file.source_kind ?? file.sourceKind
+      }
+      if (key && indexByKey.has(key)) {
+        const index = indexByKey.get(key)!
+        const existing = outputFiles[index]
+        outputFiles[index] = {
+          ...incoming,
+          ...existing,
+          mime_type: existing.mime_type ?? incoming.mime_type,
+          size: existing.size ?? incoming.size,
+          kind: existing.kind ?? incoming.kind,
+          message_id: existing.message_id ?? incoming.message_id,
+          download_url: existing.download_url ?? incoming.download_url,
+          signed_download_url: existing.signed_download_url ?? incoming.signed_download_url,
+          source_kind: existing.source_kind ?? incoming.source_kind
+        }
+        return
+      }
+      if (key) indexByKey.set(key, outputFiles.length)
+      outputFiles.push(incoming)
+    })
+  }
 
   for (const record of records) {
     if (record.step_code === 'output_files' && record.status === 'completed' && record.data) {
       const data = typeof record.data === 'string' ? parseJson(record.data) : record.data
-      const files = data?.files
-      if (Array.isArray(files) && files.length > 0) {
-        outputFiles.push(...files.map(file => ({
-          id: file.id,
-          file_name: file.file_name,
-          url: file.url
-        })))
-      }
+      if (Array.isArray(data?.files)) appendFiles(data.files)
+      if (Array.isArray(data?.media_attachments)) appendFiles(data.media_attachments)
     }
   }
 
@@ -166,7 +206,7 @@ export function useChatMessages(options?: UseChatMessagesOptions) {
           const textItem = userContent.find((item: any) => item?.type === 'text')
           questionText = textItem?.content || ''
           uploaded_files = userContent
-            .filter((item: any) => item != null && item.type === 'file')
+            .filter((item: any) => item != null && item.type === 'file' && !item.library_id)
             .map((fileItem: any) => {
               const fileId = fileItem.content?.replace('file_id:', '') || ''
               return {
@@ -177,6 +217,21 @@ export function useChatMessages(options?: UseChatMessagesOptions) {
                 preview_key: fileItem.preview_key
               }
             })
+            specified_files = userContent
+              .filter((item: any) => item != null && item.type === 'file' && item.library_id)
+              .map((fileItem: any) => {
+                const fileId = fileItem.content?.replace('file_id:', '') || ''
+                const file = formatFileInfo(fileItem.filename || '', fileItem.isfolder)
+                return {
+                  icon: file.icon,
+                  id: fileItem.file_id,
+                  upload_file_id: fileId,
+                  name: fileItem.filename,
+                  file_id: fileItem.file_id,
+                  library_id: fileItem.library_id,
+                  mime_type: fileItem.mime_type,
+                }
+              })
         } else {
           // Old format: plain text or object
           const content = userMessage.content;
@@ -219,13 +274,13 @@ export function useChatMessages(options?: UseChatMessagesOptions) {
           const infoType = userInfo.content?.type
 
           if (infoType === 'specified_files') {
-            specified_files = userInfo.content.list.map((fileItem: any) => {
+            specified_files = [...specified_files, ...userInfo.content.list.map((fileItem: any) => {
               const file = formatFileInfo(fileItem.name, fileItem.isfolder)
               return {
                 icon: file.icon,
                 ...fileItem
               }
-            })
+            })]
           } else if (infoType === 'specified_content' && supportSpecifiedContent) {
             specified_content = userInfo.content.content || ''
           }
@@ -391,6 +446,9 @@ export function useChatMessages(options?: UseChatMessagesOptions) {
       atList: message.specified_files || [],
       files: message.uploaded_files || [],
       skill: message.skill || {},
+      networkSearch: message.rag_stats?.type === 'web_search',
+      knowledgeGraph: message.knowledge_graph,
+      specifiedContent: message.specified_content,
     })
   }, [])
 

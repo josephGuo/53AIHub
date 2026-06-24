@@ -8,8 +8,9 @@ import { useBasicLayout } from "@/hooks/useBasicLayout";
 import { t } from "@/locales";
 import { SvgIcon } from "@km/shared-components-react";
 import { getPublicPath } from "@/utils/config";
+import { checkPermission } from '@/utils/permission';
 import AccountDialog, { AccountDialogRef } from "./AccountDialog";
-import "./list.css";
+import "./List.css";
 
 const DEFAULT_LOGO = getPublicPath("/images/default_logo.png");
 
@@ -30,6 +31,20 @@ interface ToolkitListProps {
   onlyAll?: boolean;
   groupId?: number;
   className?: string;
+  loading?: boolean;
+}
+
+// 骨架屏组件
+export function ToolkitCardSkeleton() {
+  return (
+    <div className="min-h-20 bg-white rounded px-5 py-4 flex items-center gap-2 border border-[#ECECEC] animate-pulse">
+      <div className="w-10 h-10 bg-gray-200 rounded-full shrink-0"></div>
+      <div className="flex-1 overflow-hidden">
+        <div className="h-5 bg-gray-200 rounded w-1/3 mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      </div>
+    </div>
+  );
 }
 
 export function ToolkitList({
@@ -38,6 +53,7 @@ export function ToolkitList({
   onlyAll = false,
   groupId = 0,
   className = "",
+  loading = false,
 }: ToolkitListProps) {
   const linksStore = useLinksStore();
   const userStore = useUserStore();
@@ -47,11 +63,6 @@ export function ToolkitList({
 
   const [showMobileModal, setShowMobileModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<LinkState | null>(null);
-
-  const hasPermission = (userGroupIds: number[], itemGroupIds: number[]) => {
-    if (!itemGroupIds || itemGroupIds.length === 0) return false;
-    return userGroupIds.some((groupId) => itemGroupIds.includes(groupId));
-  };
 
   const highlightText = (text: string, searchKeyword: string) => {
     if (!text || !searchKeyword) return text;
@@ -80,14 +91,8 @@ export function ToolkitList({
     return categories
       .map((category) => {
         const children = links.filter((link) => {
-          const hasAccess = hasPermission(
-            userStore.info.group_ids || [],
-            link.user_group_ids || [],
-          );
           return (
-            hasAccess &&
-            link.group_id === category.group_id &&
-            (link.user_group_ids?.length || 0) > 0
+            link.group_id === category.group_id
           );
         });
 
@@ -109,22 +114,37 @@ export function ToolkitList({
   }, [linksStore.categorys, list, keyword, onlyAll, userStore.info.group_ids]);
 
   const handleCardClick = (item: LinkState) => {
-    if (isSmScreen && item.has_share_account) {
-      setSelectedItem(item);
-      setShowMobileModal(true);
-    } else {
-      window.open(item.url, "_blank");
-    }
+    checkPermission({
+      groupIds: item.user_group_ids,
+      onClick: async () => {
+        if (isSmScreen && item.has_share_account) {
+          setSelectedItem(item);
+          setShowMobileModal(true);
+        } else {
+          window.open(item.url, "_blank");
+        }
+      }
+    })
   };
 
   const handleTo = (item: LinkState) => {
-    closeMobileModal();
-    window.open(item.url, "_blank");
+    checkPermission({
+      groupIds: item.user_group_ids,
+      onClick: async () => {
+        closeMobileModal();
+        window.open(item.url, "_blank");
+      }
+    })
   };
 
   const handleVisit = (item: LinkState) => {
-    closeMobileModal();
-    dialogRef.current?.open(item);
+    checkPermission({
+      groupIds: item.user_group_ids,
+      onClick: () => {
+        closeMobileModal();
+        dialogRef.current?.open(item);
+      }
+    })
   };
 
   const closeMobileModal = () => {
@@ -134,13 +154,28 @@ export function ToolkitList({
 
   const handleMoreCommand = (item: LinkState, command: string) => {
     if (command === "add-shortcut") {
-      shortcutsStore.addShortcut("ai_link", String(item.id));
+      checkPermission({
+        groupIds: item.user_group_ids,
+        onClick: () => {
+          shortcutsStore.addShortcut("ai_link", String(item.id));
+        }
+      })
     } else if (command === "remove-shortcut") {
       shortcutsStore.removeShortcut("ai_link", String(item.id));
     } else if (command === "account-access") {
       handleVisit(item);
     }
   };
+
+  if (loading) {
+    return (
+      <div className={className}>
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <ToolkitCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
 
   if (!showList.length) {
     return (

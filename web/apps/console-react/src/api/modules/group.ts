@@ -19,6 +19,10 @@ interface RequestType {
   resource_type: ResourceType
 }
 
+// 缓存和请求去重
+const groupCache = new Map<GroupType, Group[]>()
+const pendingRequests = new Map<GroupType, Promise<Group[]>>()
+
 export const groupApi = {
   async list({
     params = {},
@@ -30,10 +34,42 @@ export const groupApi = {
     params = JSON.parse(JSON.stringify(params))
     const { group_type } = params
     delete params.group_type
-    const { data = [] } = await service
-      .get(`/api/groups/type/${group_type}`, { params })
-      .catch(handleError)
-    return data || []
+
+    // 检查缓存
+    if (groupCache.has(group_type)) {
+      return groupCache.get(group_type)!
+    }
+
+    // 检查是否有正在进行的请求，避免重复请求
+    if (pendingRequests.has(group_type)) {
+      return pendingRequests.get(group_type)!
+    }
+
+    // 发起请求
+    const request = (async () => {
+      try {
+        const { data = [] } = await service
+          .get(`/api/groups/type/${group_type}`, { params })
+          .catch(handleError)
+        const result = data || []
+        groupCache.set(group_type, result)
+        return result
+      } finally {
+        pendingRequests.delete(group_type)
+      }
+    })()
+
+    pendingRequests.set(group_type, request)
+    return request
+  },
+
+  // 清除缓存（在添加/删除/修改分组后调用）
+  clearCache(groupType?: GroupType) {
+    if (groupType !== undefined) {
+      groupCache.delete(groupType)
+    } else {
+      groupCache.clear()
+    }
   },
   async save({
     data: { group_type, groups },

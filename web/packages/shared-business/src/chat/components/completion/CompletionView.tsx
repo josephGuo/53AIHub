@@ -5,11 +5,11 @@ import { BubbleAssistant } from '@km/hub-ui-x-react';
 import { isUrl, copyToClip, downloadFile } from '@km/shared-utils';
 import { useTranslation } from '../../i18n';
 import { useConversationStore } from '../../stores';
-import { usePluginAdapters } from '../../ChatProvider';
-import { useEmbedMode } from '../../engine';
+import { usePluginAdapters } from '../../context';
+import { useEmbedMode } from '../../hooks';
 import { UsageGuide, LoadingState } from '../index';
 import { RelatedScene } from '../related-scene';
-import ChatHeader from '../chat/ChatHeader';
+import ChatHeader from '../ChatView/ChatHeader';
 import type { IAgentInfo } from '../../adapters/types';
 
 interface FormItem {
@@ -93,6 +93,7 @@ export const CompletionView = forwardRef<CompletionViewRef, CompletionViewProps>
     const createConversation = useConversationStore((state) => state.createConversation);
     const addConversation = useConversationStore((state) => state.addConversation);
     const setCurrentState = useConversationStore((state) => state.setCurrentState);
+    const currentConversationId = useConversationStore((state) => state.current_conversationid);
     const nextAgentPrepare = useConversationStore((state) => state.next_agent_prepare);
     const setNextAgentPrepare = useConversationStore((state) => state.setNextAgentPrepare);
 
@@ -171,6 +172,123 @@ export const CompletionView = forwardRef<CompletionViewRef, CompletionViewProps>
         initForm();
       }
     }, [inputFields, initForm]);
+
+    useEffect(() => {
+      // 当会话变化时，加载历史数据或重置表单状态
+      if (!currentConversationId || currentConversationId === 0) {
+        // 新会话，重置表单和结果状态
+        initForm();
+        setShowResult(false);
+        setResult([]);
+        setResultString('');
+        return;
+      }
+
+      // 加载历史数据
+      const loadHistory = async () => {
+        try {
+          const response = await adapters.conversationApi.messages(String(currentConversationId), { limit: 10 });
+          const messages = response?.data?.messages || response?.messages || [];
+
+          if (messages.length === 0) {
+            initForm();
+            return;
+          }
+
+          // 查找最后一条用户消息和助手消息
+          const lastAssistantMessage = [...messages].reverse().find((m: any) =>
+            m.role === 'assistant' || m.answer
+          );
+
+          let inputParams: Record<string, any> = {};
+          const parsedMessage = lastAssistantMessage?.parsed_message;
+
+          if (parsedMessage && typeof parsedMessage === 'object' && !Array.isArray(parsedMessage)) {
+            inputParams = parsedMessage;
+          }
+
+          // 恢复表单状态 - 使用 inputFields 而不是 formItems
+          if (Object.keys(inputParams).length > 0 && inputFields.length > 0) {
+            const newItems = inputFields.map((item: any) => {
+              console.log('inputParams', inputParams, item)
+              const value = inputParams[item.label] ?? inputParams[item.variable];
+              // 根据类型初始化默认值
+              let defaultValue: any;
+              if (['tag', 'file', 'array_image', 'array_audio', 'array_video', 'array_file'].includes(item.type)) {
+                defaultValue = [];
+              } else if (item.type === 'array_text') {
+                defaultValue = [''];
+              } else {
+                defaultValue = item.type === 'select' && item.multiple ? [] : '';
+              }
+
+              if (value !== undefined) {
+                if (Array.isArray(defaultValue)) {
+                  return { ...item, value: typeof value === 'string' ? value.split(',') : value };
+                }
+                return { ...item, value };
+              }
+              return { ...item, value: defaultValue };
+            });
+            setFormItems(newItems);
+          }
+
+          if (lastAssistantMessage) {
+            const parsedAnswer = lastAssistantMessage.parsed_answer;
+            let outputData: Record<string, any> = {};
+            if (parsedAnswer && typeof parsedAnswer === 'object') {
+              // 对于 workflow 模式，parsed_answer 可能直接包含输出变量
+              const metadataKeys = ['created_at', 'message_id', 'mode', 'text', 'updated_at', 'conversation_id'];
+              for (const key of Object.keys(parsedAnswer)) {
+                if (!metadataKeys.includes(key)) {
+                  outputData[key] = parsedAnswer[key];
+                }
+              }
+
+              // 如果没有其他输出字段，使用 text 作为结果
+              if (Object.keys(outputData).length === 0 && parsedAnswer.text) {
+                outputData = { text: parsedAnswer.text };
+              }
+            }
+
+            // 恢复结果显示
+            if (Object.keys(outputData).length > 0) {
+              const output: ResultItem[] = outputFields
+                .filter((item: any) => outputData[item.variable])
+                .map((item: any) => ({
+                  id: item.id,
+                  label: item.label,
+                  type: item.type,
+                  variable: item.variable,
+                  value: outputData[item.variable] || '',
+                }));
+
+              if (output.length > 0) {
+                setResult(output);
+                const resultStr = output.map((item) => String(item.value)).join('\n');
+                setResultString(resultStr);
+                setShowResult(true);
+              } else if (parsedAnswer?.text) {
+                // 如果没有匹配的输出字段，显示 text
+                setResult([]);
+                setResultString(parsedAnswer.text);
+                setShowResult(true);
+              }
+            } else if (lastAssistantMessage.answer) {
+              // 兜底：使用 answer 字段
+              setResult([]);
+              setResultString(lastAssistantMessage.answer);
+              setShowResult(true);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load history:', error);
+          initForm();
+        }
+      };
+
+      void loadHistory();
+    }, [currentConversationId, adapters.conversationApi, inputFields, outputFields, initForm]);
 
     // Handle next_agent_prepare - 预填充表单参数
     useEffect(() => {
@@ -409,6 +527,17 @@ export const CompletionView = forwardRef<CompletionViewRef, CompletionViewProps>
     const handleDownload = () => {
       downloadFile(result, `result_output_${Date.now()}.json`);
     };
+
+    // 检查是否存在必填项为空
+    const hasRequiredEmpty = useMemo(() => {
+      return formItems.some(item =>
+        item.required &&
+        (item.value === '' ||
+         item.value === undefined ||
+         item.value === null ||
+         (Array.isArray(item.value) && item.value.length === 0))
+      );
+    }, [formItems]);
 
     useImperativeHandle(ref, () => ({
       restart: handleRestart,
@@ -754,7 +883,7 @@ export const CompletionView = forwardRef<CompletionViewRef, CompletionViewProps>
     // Usage Guide Panel - 右侧固定宽度面板
     const guidePanel = showGuide && features.guide && (
       <div className="flex-none w-[450px] h-full flex flex-col bg-white overflow-hidden">
-        <div className="min-h-[70px] flex items-center justify-between px-5 border-b">
+        <div className="h-15 flex items-center justify-between px-5 border-b">
           <h4 className="text-lg text-[#1F2123]">{t('chat.usage_guide')}</h4>
           <div
             className="flex items-center justify-center size-6 rounded cursor-pointer hover:bg-[#ECEDEE]"
@@ -902,6 +1031,7 @@ export const CompletionView = forwardRef<CompletionViewRef, CompletionViewProps>
                   className="w-full"
                   size="large"
                   loading={loading}
+                  disabled={hasRequiredEmpty}
                   onClick={handleStartRunning}
                 >
                   {t('chat.start_generate') || 'Start Generate'}

@@ -107,50 +107,54 @@ export const Tencent = forwardRef<TencentRef, TencentProps>(
         >
           {showChannelConfig ? (
             <>
-              <div className="text-sm font-medium text-primary mb-3">{t("provider_platform.platform_auth")}</div>
-              <Form.Item label={t('agent_app.tencent')}>
-                <Select
-                  value={customConfig.provider_id}
-                  onChange={(value) => {
-                    updateCustomConfig({ provider_id: value })
-                    onProviderChange()
-                  }}
-                  options={providers.map((item) => ({
-                    label: item.name,
-                    value: item.provider_id,
-                  }))}
-                />
-              </Form.Item>
-              <div className="flex items-center gap-4">
-                <Form.Item
-                  className="flex-1"
-                  label={t('agent.name')}
-                  name="tencent_bot_id"
-                  rules={[{ required: true, message: t('form.select_placeholder') }]}
-                  getValueProps={() => ({ value: customConfig.tencent_bot_id })}
-                  getValueFromEvent={(value) => {
-                    onBotChange(value, bots.find(b => b.value === value))
-                    return value
-                  }}
-                >
-                  <SelectPlus
-                    t={t}
-                    useI18n={false}
-                    options={bots.map((item) => ({
-                      value: item.value,
-                      label: item.label,
-                      icon: item.logo,
-                      description: item.description,
+              <div className="text-sm font-medium text-primary">{t("provider_platform.platform_auth")}</div>
+              <div className="p-4 border rounded-xl bg-white mt-3">
+                <Form.Item label={t('agent_app.tencent')}>
+                  <Select
+                    value={customConfig.provider_id}
+                    onChange={(value) => {
+                      updateCustomConfig({ provider_id: value })
+                      onProviderChange()
+                    }}
+                    options={providers.map((item) => ({
+                      label: item.name,
+                      value: item.provider_id,
                     }))}
                   />
                 </Form.Item>
+                <div className="flex items-center gap-4">
+                  <Form.Item
+                    className="flex-1 mb-0"
+                    label={t('agent.name')}
+                    name="tencent_bot_id"
+                    rules={[{ required: true, message: t('form.select_placeholder') }]}
+                    getValueProps={() => ({ value: customConfig.tencent_bot_id })}
+                    getValueFromEvent={(value) => {
+                      onBotChange(value, bots.find(b => b.value === value))
+                      return value
+                    }}
+                  >
+                    <SelectPlus
+                      t={t}
+                      useI18n={false}
+                      options={bots.map((item) => ({
+                        value: item.value,
+                        label: item.label,
+                        icon: item.logo,
+                        description: item.description,
+                      }))}
+                    />
+                  </Form.Item>
+                </div>
               </div>
             </>
           ) : (
             <>
+              <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
               <BaseConfig />
               <RelateAgents />
               <ExpandConfig />
+              <div className="h-3"></div>
             </>
           )}
         </Form>

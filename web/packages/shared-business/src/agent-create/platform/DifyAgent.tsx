@@ -107,9 +107,10 @@ export const DifyAgent = forwardRef<DifyAgentRef, DifyAgentProps>(
       <div className={`${className || ''}`}>
         {showChannelConfig && (
           <>
+            <div className="text-sm font-medium text-primary mb-3">{t("provider_platform.platform_auth")}</div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1">
-                <h3 className="text-base text-[#1D1E1F]">{t('dify')}</h3>
+                <h3 className="text-sm text-[#1D1E1F]">{t('dify')}</h3>
                 <Popover
                   content={
                     <div
@@ -130,31 +131,60 @@ export const DifyAgent = forwardRef<DifyAgentRef, DifyAgentProps>(
                 </Popover>
               </div>
             </div>
-            <Form form={channelForm} layout="vertical" className="mt-3">
-              <div className="flex items-center gap-4">
-                <Form.Item
-                  className="flex-1"
-                  label={t('api_host')}
-                  name="base_url"
-                  rules={generateInputRules({
-                    message: 'form_input_placeholder',
-                    validator: ['text', 'link'],
-                  })}
-                >
-                  <Input placeholder={t('form_input_placeholder')} />
-                </Form.Item>
-                <Form.Item
-                  className="flex-1"
-                  label={t('api_screet')}
-                  name="key"
-                  rules={generateInputRules({
-                    message: 'form_input_placeholder',
-                  })}
-                >
-                  <Input placeholder={t('form_input_placeholder')} />
-                </Form.Item>
-              </div>
-            </Form>
+            
+            <div className="p-4 border rounded-xl bg-white mt-3">
+              <Form form={channelForm} layout="vertical">
+                <div className="flex items-center gap-4">
+                  <Form.Item
+                    className="flex-1 mb-0"
+                    label={t('api_host')}
+                    name="base_url"
+                    rules={generateInputRules({
+                      message: 'form_input_placeholder',
+                      validator: ['text', 'link'],
+                    })}
+                  >
+                    <Input placeholder={t('form_input_placeholder')} />
+                  </Form.Item>
+                  <Form.Item
+                    className="flex-1 mb-0"
+                    label={t('api_screet')}
+                    name="key"
+                    rules={generateInputRules({
+                      message: 'form_input_placeholder',
+                    })}
+                  >
+                    <Input placeholder={t('form_input_placeholder')} />
+                  </Form.Item>
+                </div>
+              </Form>
+            </div>
+            {
+              agentType === AGENT_TYPES.DIFY_WORKFLOW && (
+                <>
+                  <FieldInput
+                    list={inputFields}
+                    onChange={updateInputFields}
+                    title={t('agent.input_variable')}
+                    allowUpdate
+                    allowAdd
+                    updateRequest={inputUpdateRequest}
+                    type="input"
+                    agentType={agentType}
+                    className="mt-2"
+                  />
+                  <FieldInput
+                    list={outputFields}
+                    onChange={updateOutputFields}
+                    title={t("agent.output_variable")}
+                    allowAdd
+                    type="output"
+                    agentType={agentType}
+                    className="mt-2"
+                  />
+                </>
+              )
+            }
           </>
         )}
 
@@ -167,31 +197,17 @@ export const DifyAgent = forwardRef<DifyAgentRef, DifyAgentProps>(
             <>
               {agentType === AGENT_TYPES.DIFY_WORKFLOW ? (
                 <>
-                  <FieldInput
-                    list={inputFields}
-                    onChange={updateInputFields}
-                    title={t('agent.input_variable')}
-                    allowUpdate
-                    allowAdd
-                    updateRequest={inputUpdateRequest}
-                    type="input"
-                    agentType={agentType}
-                  />
-                  <FieldInput
-                    list={outputFields}
-                    onChange={updateOutputFields}
-                    title={t('agent.output_variable')}
-                    allowAdd
-                    type="output"
-                    agentType={agentType}
-                  />
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <RelateAgents />
+                  <div className="h-3"></div>
                 </>
               ) : (
                 <>
+                  <div className="text-sm font-medium text-[#9CA3AF] py-1.5">{t('agent.chat_enhance')}</div>
                   <BaseConfig />
                   <RelateAgents />
                   <ExpandConfig />
+                  <div className="h-3"></div>
                 </>
               )}
             </>

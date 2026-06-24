@@ -1,22 +1,35 @@
 /**
  * System Log 系统日志页面（重构版）
- * 使用 Zustand 状态管理
+ * 使用 Zustand 状态管理 + useListState URL持久化
  */
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo, useRef } from "react";
 import { Select, Table } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 
 import { t } from "@/locales";
 import { PageLayoutContent } from "@/components/PageLayout";
 import { DateRangeFilter } from "@/components/Filter";
+import { useListState } from "@/hooks";
 
 import {
   useSystemLogStore,
   calculateCurrentPage,
   calculateOffset,
 } from "./store";
-import { COLUMN_WIDTH, EMPTY_TEXT_COLOR, PAGE_SIZE_OPTIONS } from "./constants";
+import { COLUMN_WIDTH, EMPTY_TEXT_COLOR, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from "./constants";
 import type { SystemLogDisplayItem } from "./types";
+
+/**
+ * URL持久化状态接口
+ */
+interface UrlPersistedState {
+  offset: number;
+  limit: number;
+  action: number | undefined;
+  module: number | undefined;
+  start_time: number | null;
+  end_time: number | null;
+}
 
 /**
  * 渲染可空文本
@@ -34,25 +47,52 @@ function renderNullableText(
  * 系统日志页面
  */
 export function SystemLogRefactoredPage() {
-  // 从 Store 获取状态和方法
+  // 默认状态（稳定引用）
+  const defaultUrlState = useMemo<UrlPersistedState>(() => ({
+    offset: 0,
+    limit: DEFAULT_PAGE_SIZE,
+    action: undefined,
+    module: undefined,
+    start_time: null,
+    end_time: null,
+  }), []);
+
+  // 使用 useListState 管理 URL持久化状态
+  const { state: urlState, stateRef: urlStateRef, updateState } = useListState<UrlPersistedState>(
+    defaultUrlState,
+    { urlPrefix: 'log_' }
+  );
+
+  // 标记是否已初始化
+  const initializedRef = useRef(false);
+
+  // 从 Store 获取数据状态和方法
   const {
     list,
     total,
     actions,
     modules,
-    params,
-    dateRange,
     loading,
     loadList,
     loadActions,
     loadModules,
-    setParams,
-    setFilterParams,
-    setDateRange,
   } = useSystemLogStore();
 
   // 计算当前页码
-  const currentPage = calculateCurrentPage(params.offset, params.limit);
+  const currentPage = calculateCurrentPage(urlState.offset, urlState.limit);
+
+  // 加载数据 - 使用 urlStateRef 获取最新状态
+  const loadData = useCallback(async () => {
+    const current = urlStateRef.current;
+    await loadList({
+      offset: current.offset,
+      limit: current.limit,
+      action: current.action,
+      module: current.module,
+      start_time: current.start_time,
+      end_time: current.end_time,
+    });
+  }, [loadList, urlStateRef]);
 
   // 表格列定义
   const columns: ColumnsType<SystemLogDisplayItem> = [
@@ -110,52 +150,68 @@ export function SystemLogRefactoredPage() {
   const handlePageChange = useCallback(
     (pagination: TablePaginationConfig) => {
       const page = pagination.current || 1;
-      const pageSize = pagination.pageSize || params.limit;
+      const pageSize = pagination.pageSize || urlState.limit;
       const offset = calculateOffset(page, pageSize);
-      setParams({ offset, limit: pageSize });
+      updateState({ offset, limit: pageSize });
     },
-    [params.limit, setParams],
+    [urlState.limit, updateState],
   );
 
   // 处理日期范围变化
   const handleDateChange = useCallback(
     (dates: (string | number)[]) => {
       if (dates && dates.length === 2) {
-        setDateRange([
-          dates[0] ? Number(dates[0]) : null,
-          dates[1] ? Number(dates[1]) : null,
-        ]);
+        updateState({
+          start_time: dates[0] ? Number(dates[0]) : null,
+          end_time: dates[1] ? Number(dates[1]) : null,
+          offset: 0, // 重置页码
+        });
       } else {
-        setDateRange([null, null]);
+        updateState({
+          start_time: null,
+          end_time: null,
+          offset: 0,
+        });
       }
     },
-    [setDateRange],
+    [updateState],
   );
 
   // 处理操作类型变化
   const handleActionChange = useCallback(
     (value: number | undefined) => {
-      setFilterParams({ action: value });
+      updateState({ action: value, offset: 0 });
     },
-    [setFilterParams],
+    [updateState],
   );
 
   // 处理模块变化
   const handleModuleChange = useCallback(
     (value: number | undefined) => {
-      setFilterParams({ module: value });
+      updateState({ module: value, offset: 0 });
     },
-    [setFilterParams],
+    [updateState],
   );
 
   // 初始化加载
   useEffect(() => {
-    Promise.all([loadList(), loadActions(), loadModules()]);
-  }, [loadList, loadActions, loadModules]);
+    Promise.all([loadActions(), loadModules()]).then(() => {
+      initializedRef.current = true;
+      loadData();
+    });
+  }, [loadActions, loadModules, loadData]);
+
+  // 监听 URL 状态变化，重新加载数据
+  const stateKey = JSON.stringify(urlState);
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateKey]);
 
   // 日期值：过滤掉 null
-  const dateValue = dateRange[0] && dateRange[1]
-    ? [dateRange[0], dateRange[1]]
+  const dateValue = urlState.start_time && urlState.end_time
+    ? [urlState.start_time, urlState.end_time]
     : [];
 
   // 筛选栏
@@ -170,7 +226,7 @@ export function SystemLogRefactoredPage() {
         allowClear
         className="w-44"
         placeholder={t("system_log.log_action")}
-        value={params.action}
+        value={urlState.action}
         onChange={handleActionChange}
         options={actions.map((item) => ({
           label: item.text,
@@ -181,7 +237,7 @@ export function SystemLogRefactoredPage() {
         allowClear
         className="w-44"
         placeholder={t("system_log.log_module")}
-        value={params.module}
+        value={urlState.module}
         onChange={handleModuleChange}
         options={modules.map((item) => ({
           label: item.text,
@@ -200,7 +256,7 @@ export function SystemLogRefactoredPage() {
         dataSource={list}
         pagination={{
           current: currentPage,
-          pageSize: params.limit,
+          pageSize: urlState.limit,
           total,
           showSizeChanger: true,
           pageSizeOptions: PAGE_SIZE_OPTIONS,

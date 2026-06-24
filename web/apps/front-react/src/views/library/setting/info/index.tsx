@@ -4,7 +4,7 @@ import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import { useLibraryStore } from "@/stores/modules/library";
 import { useNavigate, useParams } from "react-router-dom";
 import librariesApi from "@/api/modules/libraries";
-import { SetIcon } from "@/views/space/components/SetIcon";
+import { SetIcon } from "@/views/knowledge/components/SetIcon";
 import { Header } from "@/components/Header";
 import { createIconFileFromStatic } from "@km/shared-utils";
 import UploadService from "@/services/upload";

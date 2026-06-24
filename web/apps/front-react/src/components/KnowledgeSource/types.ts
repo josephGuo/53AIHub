@@ -14,13 +14,29 @@ export interface SelectedFile {
   isfolder?: boolean
 }
 
+/** 已选知识库 */
+export interface SelectedLibrary {
+  id: string
+  name: string
+  icon?: string
+}
+
+/** 已选空间 */
+export interface SelectedSpace {
+  id: string
+  name: string
+  icon?: string
+}
+
 /** 知识源选择器状态 */
 export interface KnowledgeSourceState {
-  mode: 'all' | 'files'
+  mode: 'all' | 'files' | 'libraries' | 'spaces'
   allKnowledge: boolean
   knowledgeGraph: boolean
   networkSearch: boolean
   selectedFiles: SelectedFile[]
+  selectedLibraries?: SelectedLibrary[]
+  selectedSpaces?: SelectedSpace[]
 }
 
 /** KnowledgeSourceSelector 组件 Props */
@@ -29,6 +45,8 @@ export interface KnowledgeSourceSelectorProps {
   onChange: (state: KnowledgeSourceState) => void
   library?: { name: string; value: string[]; isSpace?: boolean }
   disabled?: boolean
+  allowSelectLibrary?: boolean
+  allowSelectSpace?: boolean
   agentInfo?: {
     agent_id: string
     name: string

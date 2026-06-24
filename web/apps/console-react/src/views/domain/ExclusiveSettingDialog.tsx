@@ -111,7 +111,7 @@ export const ExclusiveSettingDialog = forwardRef<
       >
         <Form form={form} layout="vertical">
           <div className="flex items-center w-full">
-            <span className="h-[32px] px-3 bg-[#f5f5f5] border border-r-0 rounded-l flex items-center text-[#606266]">
+            <span className="h-[32px] px-3 bg-[#f5f5f5] border border-r-0 rounded-l flex items-center text-secondary">
               https://
             </span>
             <Form.Item
@@ -151,7 +151,7 @@ export const ExclusiveSettingDialog = forwardRef<
                 placeholder={t("module.domain_exclusive")}
               />
             </Form.Item>
-            <span className="h-[32px] px-3 bg-[#f5f5f5] border border-l-0 rounded-r flex items-center text-[#606266]">
+            <span className="h-[32px] px-3 bg-[#f5f5f5] border border-l-0 rounded-r flex items-center text-secondary">
               {DOMAIN_SUFFIX}
             </span>
           </div>

@@ -2,6 +2,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  useCallback,
   useRef,
   forwardRef,
   useImperativeHandle,
@@ -25,16 +26,14 @@ import {
   ApplyDialog,
   type ApplyDialogRef,
 } from "@/views/library/components/apply";
-import {
-  InfoSaveDialog,
-  type InfoSaveDialogRef,
-} from "@/views/space/components/InfoSaveDialog";
+import { InfoSaveDialog, type InfoSaveDialogRef } from "./InfoSaveDialog";
 import VirtualLogo from "@/components/VirtualLogo";
 import { EntityDisplay } from "@/components/EntityDisplay";
 import { useAbortController } from "@/hooks/useAbortController";
 import { checkVersion } from "@/utils/version";
 import { VERSION_MODULE } from "@/constants/enterprise";
 import { getFormatTimeStamp } from "@km/shared-utils";
+import type { SortOrder } from "./GroupList";
 import "./List.css";
 
 interface LibraryDisplayItem extends LibraryItem {
@@ -45,13 +44,15 @@ interface LibraryDisplayItem extends LibraryItem {
 
 interface ListProps {
   spaceId: string;
+  keyword?: string;
+  sortOrder?: SortOrder;
 }
 
 export interface ListRef {
   search: (keyword: string) => void;
 }
 
-export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
+export const List = forwardRef<ListRef, ListProps>(({ spaceId, keyword = "", sortOrder = 'updated_time' }, ref) => {
   const navigate = useNavigate();
   const spaceStore = useSpaceStore();
   useAbortController();
@@ -75,7 +76,23 @@ export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
       : checkHasKMPermission(spacePermission, PERMISSION_TYPE.viewer);
   }, [spacePermission, spaceStore.currentSpace?.visibility]);
 
-  const loadLibraryList = async () => {
+  // 前端排序
+  const sortedLibraries = useMemo(() => {
+    const sortKey = sortOrder as keyof LibraryItem;
+    return [...libraryList].sort((a, b) => {
+      const aVal = (a[sortKey] as number) || 0;
+      const bVal = (b[sortKey] as number) || 0;
+      return bVal - aVal; // 降序：最新的在前
+    });
+  }, [libraryList, sortOrder]);
+
+  // 根据关键词过滤列表
+  const visibleLibraries = useMemo(() => {
+    if (!keyword) return sortedLibraries;
+    return sortedLibraries.filter((item) => item.name.includes(keyword));
+  }, [sortedLibraries, keyword]);
+
+  const loadLibraryList = useCallback(async () => {
     const list = await librariesApi.list({
       space_id: spaceId,
       with_file_count: 1,
@@ -96,11 +113,12 @@ export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
           resource_ids: realItems.map((item) => item.id),
         });
         setLibraryList((prev) =>
-          prev.map((lib, index) => {
+          prev.map((lib) => {
             const key = `${RESOURCE_TYPE.library}:${lib.id}`;
             // 如果 myBatch 没有返回权限，使用 list 返回的原始权限（继承权限）
             const batchPermission = permissionMap[key];
-            const originalPermission = list[index]?.permission ?? PERMISSION_TYPE.none;
+            const originalItem = list.find(item => item.id === lib.id);
+            const originalPermission = originalItem?.permission ?? PERMISSION_TYPE.none;
             const permission = batchPermission !== undefined ? batchPermission : originalPermission;
             return { ...lib, permission };
           }),
@@ -109,7 +127,7 @@ export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
         console.error("Failed to load library permissions:", error);
       }
     }
-  };
+  }, [spaceId]);
 
   const loadSpacePermission = async () => {
     const res = await permissionsApi.my({
@@ -147,13 +165,8 @@ export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
     });
   };
 
-  const search = (keyword: string) => {
-    setLibraryList((prev) =>
-      prev.map((item) => ({
-        ...item,
-        visible: !keyword ? true : item.name.includes(keyword),
-      })),
-    );
+  const search = (kw: string) => {
+    if (kw === keyword) return;
   };
 
   useImperativeHandle(ref, () => ({
@@ -178,6 +191,7 @@ export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
       });
 
     spaceStore.setSpaceId(spaceId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   return (
@@ -196,6 +210,8 @@ export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
         </div>
       ) : (
         <div className="mt-3 grid grid-cols-3 gap-5 max-md:grid-cols-2">
+          {/* Library cards */}
+          
           {/* Create library button */}
           {hasManagePermission && (
             <div
@@ -211,11 +227,7 @@ export const List = forwardRef<ListRef, ListProps>(({ spaceId }, ref) => {
               </div>
             </div>
           )}
-
-          {/* Library cards */}
-          {libraryList.map((item) => {
-            if (!item.visible) return null;
-
+          {visibleLibraries.map((item) => {
             return (
               <div
                 key={item.id}

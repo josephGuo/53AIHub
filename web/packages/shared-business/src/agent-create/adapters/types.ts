@@ -57,7 +57,7 @@ export interface CreateAgentDialogProps {
 
 // ==================== 基础类型 ====================
 
-/** 平台类型（与 @km/shared-types 保持一致） */
+/** 平台类型 */
 export type AgentType = string
 
 /** 配置项 key */
@@ -441,6 +441,11 @@ export interface IAgentCreateAdapter {
 
   /** 内联预览组件（直接嵌入页面，用于第三列） */
   InlinePreviewComponent?: ComponentType<{
+    className?: string
+  }>
+
+  /** OpenClaw 内联调试组件（复用正式 OpenClaw 对话工作台） */
+  OpenClawPreviewComponent?: ComponentType<{
     className?: string
   }>
 

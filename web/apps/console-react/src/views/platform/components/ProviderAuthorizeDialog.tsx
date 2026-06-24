@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle, useRef } from 'react'
 import {
-  Modal, Form, Input, Button, message
+    Modal, Form, Input, Button, message
 } from 'antd'
 import { CopyOutlined } from '@ant-design/icons'
 import { t } from '@/locales'
@@ -204,7 +204,7 @@ export const ProviderAuthorizeDialog = forwardRef<ProviderAuthorizeDialogRef, Pr
       if (!config) return ''
 
       const tipParams: Record<string, string> = {
-        url: `<a class='text-[#5A6D9E]' href='${config.tip.url}' target='_blank'>${config.tip.url}</a>`,
+        url: `<a class='text-link' href='${config.tip.url}' target='_blank'>${config.tip.url}</a>`,
       }
 
       if (config.tip.needRedirectUrl) {
@@ -411,7 +411,7 @@ export const ProviderAuthorizeDialog = forwardRef<ProviderAuthorizeDialogRef, Pr
         footer={
           <>
             {isCozeCN && (
-              <div className="text-center text-sm text-[#9A9A9A] mb-3">
+              <div className="text-center text-sm text-disabled mb-3">
                 {t('platform_auth.coze_cn.tip_1')}
               </div>
             )}
@@ -428,7 +428,7 @@ export const ProviderAuthorizeDialog = forwardRef<ProviderAuthorizeDialogRef, Pr
       >
         <Form form={form} layout="vertical">
           {/* Guide info */}
-          <div className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-4 box-border text-sm text-[#4F5052]">
+          <div className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-4 box-border text-sm text-secondary">
             <div
               className="whitespace-pre-wrap leading-7"
               dangerouslySetInnerHTML={{ __html: guideHtml }}
@@ -436,7 +436,7 @@ export const ProviderAuthorizeDialog = forwardRef<ProviderAuthorizeDialogRef, Pr
             {isCozeCN && (
               <span
                 ref={copyIconRef}
-                className="cursor-pointer ml-1 text-[#4F5052] hover:text-[#3664EF]"
+                className="cursor-pointer ml-1 text-secondary hover:text-brand"
                 onClick={() => handleCopy(coze_auth_url)}
               >
                 <CopyOutlined style={{ fontSize: 14 }} />

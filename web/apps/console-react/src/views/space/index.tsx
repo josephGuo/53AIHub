@@ -1,9 +1,8 @@
-import { Table, Input, Button } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Table, Button } from "antd";
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { t } from "@/locales";
 import type { ColumnsType } from "antd/es/table";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import { spacesApi } from "@/api/modules/spaces";
 import { transformSpaceList } from "@/api/modules/spaces/transform";
 import type {
@@ -25,12 +24,14 @@ export function SpacePage() {
     limit: 10,
     view: "admin",
   });
+  const filterFormRef = useRef<SpaceListRequest>(filterForm);
+  filterFormRef.current = filterForm;
 
   // Load data
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await spacesApi.list(filterForm);
+      const res = await spacesApi.list(filterFormRef.current);
       setTableData(transformSpaceList(res?.spaces || []));
       setTotal(res?.count || 0);
     } catch (error) {
@@ -38,11 +39,12 @@ export function SpacePage() {
     } finally {
       setLoading(false);
     }
-  }, [filterForm]);
+  }, []);
 
   const refresh = useCallback(
     (reset: boolean = true) => {
       if (reset) {
+        filterFormRef.current = { ...filterFormRef.current, offset: 0 };
         setFilterForm((prev) => ({ ...prev, offset: 0 }));
       }
       loadData();
@@ -50,22 +52,13 @@ export function SpacePage() {
     [loadData],
   );
 
-  // Handle search
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFilterForm((prev) => ({ ...prev, name: e.target.value, offset: 0 }));
-    },
-    [],
-  );
 
-  const handleSearch = useCallback(() => {
-    refresh();
-  }, [refresh]);
 
   // Handle view
   const handleView = useCallback((item: SpaceDisplayItem) => {
     detailRef.current?.open(item as SpaceItem);
   }, []);
+
 
   // Pagination handlers
   const handlePageSizeChange = useCallback((page: number, pageSize: number) => {
@@ -117,7 +110,7 @@ export function SpacePage() {
             return (
               <div className="flex items-center gap-2">
                 <div className="size-7 bg-[#E0EEFF] flex items-center justify-center rounded-full">
-                  <div className="text-xs text-[#2563EB]">系</div>
+                  <div className="text-xs text-brand">系</div>
                 </div>
                 {t("space.system")}
               </div>
@@ -157,18 +150,23 @@ export function SpacePage() {
         key: "operation",
         width: 80,
         align: "right",
-        render: (_, record) => (
-          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              type="link"
-              icon={<SvgIcon name="view" />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleView(record);
-              }}
-            />
-          </div>
-        ),
+        render: (_, record) => {
+          const isSystemSpace = record.is_default;
+          const hasLibraries = record.library_count > 0;
+
+          return (
+            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                type="link"
+                icon={<SvgIcon name="view" />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleView(record);
+                }}
+              />
+            </div>
+          );
+        },
       },
     ],
     [t, handleView],
@@ -176,21 +174,22 @@ export function SpacePage() {
 
   useEffect(() => {
     loadData();
-  }, [filterForm.offset, filterForm.limit]);
+  }, [filterForm.offset, filterForm.limit, loadData]);
 
   return (
     <div className="h-full flex flex-col bg-white px-2 py-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Input
+          <Search
+            mode="expanded"
             value={filterForm.name}
-            onChange={handleSearchChange}
-            onPressEnter={handleSearch}
-            onBlur={handleSearch}
-            style={{ maxWidth: 268 }}
-            allowClear
-            prefix={<SearchOutlined />}
+            onDebouncedChange={(val) => {
+              filterFormRef.current = { ...filterFormRef.current, name: val, offset: 0 };
+              setFilterForm((prev) => ({ ...prev, name: val, offset: 0 }));
+              loadData();
+            }}
+            className="max-w-[268px]"
             placeholder={t("space.search_placeholder")}
           />
         </div>

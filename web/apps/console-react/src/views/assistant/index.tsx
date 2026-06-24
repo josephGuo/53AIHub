@@ -10,7 +10,7 @@ import { transformAgentInfo } from "@/api/modules/agents/transform";
 import type { AgentInfo } from "@/api/modules/agents/index";
 import { getPublicPath } from "@/utils/config";
 import RelateAgentsDialog, {
-  RelateAgentsDialogRef,
+    RelateAgentsDialogRef,
 } from "@/views/agent/create/components/config/RelateAgentsDialog";
 import { useEnterpriseStore } from "@/stores/modules/enterprise";
 import { VERSION_MODULE } from "@/constants/enterprise";
@@ -161,11 +161,11 @@ export function AssistantPage() {
                   <div className="size-6 bg-[#5899FC] flex items-center justify-center rounded">
                     <CommentOutlined style={{ color: "white", fontSize: 16 }} />
                   </div>
-                  <div className="flex-1 text-sm font-medium text-[#1D1E1F]">
+                  <div className="flex-1 text-sm font-medium text-primary">
                     {t("module.search")}
                   </div>
                 </div>
-                <p className="text-xs text-[#999999] mt-3">
+                <p className="text-xs text-placeholder mt-3">
                   {t("module.search_desc")}
                 </p>
               </Link>
@@ -181,7 +181,7 @@ export function AssistantPage() {
                 src={getPublicPath("/images/document-app/chat.png")}
                 alt="chat"
               />
-              <div className="flex-1 text-sm font-medium text-[#1D1E1F]">
+              <div className="flex-1 text-sm font-medium text-primary">
                 {t("module.document_assistant")}
               </div>
               {chatAgent && (
@@ -193,7 +193,7 @@ export function AssistantPage() {
                 </div>
               )}
             </div>
-            <p className="text-xs text-[#999999] mt-3">
+            <p className="text-xs text-placeholder mt-3">
               {t("module.document_assistant_desc")}
             </p>
           </Link>
@@ -208,7 +208,7 @@ export function AssistantPage() {
                 src={getPublicPath("/images/document-app/map.png")}
                 alt="map"
               />
-              <div className="flex-1 text-sm font-medium text-[#1D1E1F]">
+              <div className="flex-1 text-sm font-medium text-primary">
                 {t("module.document_map")}
               </div>
               {mapAgent && (
@@ -220,7 +220,7 @@ export function AssistantPage() {
                 </div>
               )}
             </div>
-            <p className="text-xs text-[#999999] mt-3">
+            <p className="text-xs text-placeholder mt-3">
               {t("module.document_map_desc")}
             </p>
           </Link>
@@ -235,7 +235,7 @@ export function AssistantPage() {
             <div className="size-10 rounded flex bg-[#E6EEFF] items-center justify-center text-primary">
               <PlusOutlined style={{ fontSize: 16, color: "#2563EB" }} />
             </div>
-            <div className="ml-2 text-sm font-medium text-primary text-[#2563EB]">
+            <div className="ml-2 text-sm font-medium text-primary text-brand">
               {t("module.add_application")}
             </div>
           </div>
@@ -245,7 +245,7 @@ export function AssistantPage() {
               key={agent.agent_id}
               className="border rounded-lg p-4 relative hover:shadow group cursor-pointer"
             >
-              <div className="absolute top-0 right-0 px-2 py-1 bg-gray-100 text-xs text-[#939499] rounded-bl-lg flex items-center gap-1">
+              <div className="absolute top-0 right-0 px-2 py-1 bg-gray-100 text-xs text-hint rounded-bl-lg flex items-center gap-1">
                 <SvgIcon
                   name={agent?.agent_mode === "chat" ? "agent" : "app-one"}
                   width={16}
@@ -265,7 +265,7 @@ export function AssistantPage() {
                     }
                     alt="logo"
                   />
-                  <div className="flex-1 text-sm font-medium text-[#1D1E1F] truncate">
+                  <div className="flex-1 text-sm font-medium text-primary truncate">
                     {agent.name}
                   </div>
                 </div>
@@ -279,7 +279,7 @@ export function AssistantPage() {
                       },
                       {
                         key: "delete",
-                        icon: <SvgIcon name="delete" />,
+                        icon: <SvgIcon name="delete" color="#FF4D4F" />,
                         label: (
                           <span className="text-red-500">
                             {t("action_delete")}
@@ -297,7 +297,7 @@ export function AssistantPage() {
                   />
                 </Dropdown>
               </div>
-              <p className="text-xs text-[#999999] mt-3 line-clamp-2 h-8">
+              <p className="text-xs text-placeholder mt-3 line-clamp-2 h-8">
                 {agent.description}
               </p>
             </div>

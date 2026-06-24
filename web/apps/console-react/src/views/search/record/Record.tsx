@@ -1,17 +1,16 @@
-import { Table, Input, Button, Tag, Tooltip, Select, Spin } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Table, Button, Tag, Tooltip, Select, Spin } from "antd";
 import { useEffect, useState, useRef } from "react";
 import { t } from "@/locales";
 import recordApi from "@/api/modules/record";
 import userApi from "@/api/modules/user";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import Detail, { DetailRef } from "../components/detail";
 import { SEARCH_TYPE } from "@/api/modules/feedback/types";
 import {
-  type RecordDisplayItem,
-  THINKING_MODE,
-  RESPONSE_STATUS,
-  KNOWLEDGE_TYPE,
+    type RecordDisplayItem,
+    THINKING_MODE,
+    RESPONSE_STATUS,
+    KNOWLEDGE_TYPE,
 } from "@/api/modules/record/types";
 import { DateRangeFilter } from "@/components/Filter/date-range";
 import { getLastTimeAsDay } from "@km/shared-utils";
@@ -281,7 +280,7 @@ export function Record({ agentId }: RecordProps) {
       render: (_: any, __: RecordDisplayItem, index: number) => (
         <Button
           type="link"
-          className="invisible group-hover:visible hover:!text-[#2563EB]"
+          className="invisible group-hover:visible hover:!text-brand"
           icon={<SvgIcon name="view" />}
           onClick={(e) => {
             e.stopPropagation();
@@ -362,7 +361,7 @@ export function Record({ agentId }: RecordProps) {
               >
                 <SvgIcon name={item.svg} />
               </div>
-              <span className="ml-2 mr-1 text-[#1D1E1F] text-sm">
+              <span className="ml-2 mr-1 text-primary text-sm">
                 {item.label}
               </span>
               <Tooltip title={item.tip}>
@@ -399,18 +398,13 @@ export function Record({ agentId }: RecordProps) {
               }}
             />
           </div>
-          <Input
+          <Search
+            mode="expanded"
             value={detailedForm.keyword}
             placeholder={t("search-record.search_question")}
-            style={{ width: 240 }}
-            allowClear
-            onChange={(e) => {
-              setDetailedForm((prev) => ({ ...prev, keyword: e.target.value }));
-            }}
-            onPressEnter={() => handleFilterChange()}
-            prefix={<SearchOutlined />}
-            onClear={() => {
-              const newForm = { ...detailedForm, keyword: "" };
+            className="w-[240px]"
+            onDebouncedChange={(val) => {
+              const newForm = { ...detailedForm, keyword: val };
               setDetailedForm(newForm);
               handleFilterChange(newForm, detailedDate);
             }}

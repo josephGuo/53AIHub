@@ -182,7 +182,7 @@ export const Agent53AI = forwardRef<Agent53AIRef, Agent53AIProps>(
             <>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1">
-                  <h3 className="text-base text-[#1D1E1F]">{t('53ai')}</h3>
+                  <h3 className="text-base text-primary">{t('53ai')}</h3>
                 </div>
               </div>
               <Form.Item label={t('module.website_info_name')}>

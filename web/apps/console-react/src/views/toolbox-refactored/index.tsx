@@ -1,20 +1,20 @@
 /**
  * Toolbox 工具箱页面（重构版）
- * 使用 Zustand 状态管理 + Ant Design Form
+ * 使用 Zustand 状态管理 + useListState URL持久化
  */
-import { Modal, message, Input, Button, Spin, Empty } from "antd";
+import { Modal, message, Button, Spin, Empty } from "antd";
 import { HolderOutlined } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
-import { useEffect, useRef, useCallback } from "react";
+import { SvgIcon, Search } from "@km/shared-components-react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { debounce } from "lodash-es";
 
 import { PageLayoutContent } from "@/components/PageLayout";
 import SortableGroupGrid from "@/components/SortableGroupGrid";
 import { GroupTabs } from "@/components/GroupTabs/GroupTabs";
+import { useListState } from "@/hooks";
 import type {
-  SortableGroup,
-  SortableRenderProps,
+    SortableGroup,
+    SortableRenderProps,
 } from "@/components/SortableGroupGrid/types";
 import { GROUP_TYPE } from "@/constants/group";
 import { t } from "@/locales";
@@ -26,6 +26,14 @@ import type { AiLinkItem, RawGroupOption } from "./types";
 import StoreDialog, { StoreDialogRef } from "./components/StoreDialog";
 
 /**
+ * URL持久化状态接口
+ */
+interface UrlPersistedState {
+  selectedGroups: (string | number)[];
+  keyword: string;
+}
+
+/**
  * Toolbox 工具箱页面
  */
 export function ToolboxRefactoredPage() {
@@ -33,19 +41,27 @@ export function ToolboxRefactoredPage() {
   const storeDialogRef = useRef<StoreDialogRef>(null);
   const hasLoadedRef = useRef(false);
 
-  // 从 Store 获取状态和方法
+  // 默认状态（稳定引用）
+  const defaultUrlState = useMemo<UrlPersistedState>(() => ({
+    selectedGroups: [ALL_GROUP_ID],
+    keyword: '',
+  }), []);
+
+  // 使用 useListState 管理 URL持久化状态
+  const { state: urlState, stateRef: urlStateRef, updateState } = useListState<UrlPersistedState>(
+    defaultUrlState,
+    { urlPrefix: 'toolbox_', searchFields: ['keyword'] }
+  );
+
+  // 从 Store 获取数据状态和方法
   const {
     groupOptions,
     rawGroupOptions,
-    selectedGroups,
-    keyword,
     loading,
     saving,
     isSort,
     loadGroups,
     loadListData,
-    setSelectedGroups,
-    setKeyword,
     setIsSort,
     setSaving,
     updateGroupOptions,
@@ -53,24 +69,43 @@ export function ToolboxRefactoredPage() {
     refresh,
   } = useToolboxStore();
 
-  // 使用 ref 存储 debounce 函数，避免依赖变化导致重新创建
-  const debouncedLoadListDataRef = useRef(debounce(() => loadListData(), 300));
-
   // 计算属性
   const hasAllSelected =
-    selectedGroups.includes(ALL_GROUP_ID) || selectedGroups.length === 0;
+    urlState.selectedGroups.includes(ALL_GROUP_ID) || urlState.selectedGroups.length === 0;
   let showGroupOptions = groupOptions.filter(
     (item) =>
       String(item.group_id) !== ALL_GROUP_ID && item.children?.length > 0,
   );
   // 当选中具体分组时，只显示选中的分组（参考Vue版本）
-  if (selectedGroups.length > 0 && !hasAllSelected) {
+  if (urlState.selectedGroups.length > 0 && !hasAllSelected) {
     showGroupOptions = showGroupOptions.filter((item) =>
-      selectedGroups.some((id) => String(id) === String(item.group_id)),
+      urlState.selectedGroups.some((id) => String(id) === String(item.group_id)),
     );
   }
   // 排序按钮禁用条件：有搜索关键词 或 未选择全部（参考Vue版本）
-  const sortDisabled = !!keyword || !hasAllSelected;
+  const sortDisabled = !!urlState.keyword || !hasAllSelected;
+
+  // 加载数据 - 使用 urlStateRef 获取最新状态
+  const loadData = useCallback(async () => {
+    const current = urlStateRef.current;
+    await loadListData(current.keyword);
+  }, [loadListData, urlStateRef]);
+
+  // 处理分组变更（参考Vue版本：只前端过滤，不重新请求接口）
+  const handleGroupChange = useCallback(
+    (groups: (string | number)[]) => {
+      updateState({ selectedGroups: groups });
+    },
+    [updateState],
+  );
+
+  // 处理关键词变更
+  const handleKeywordChange = useCallback(
+    (val: string) => {
+      updateState({ keyword: val });
+    },
+    [updateState],
+  );
 
   // 初始化加载
   useEffect(() => {
@@ -81,33 +116,17 @@ export function ToolboxRefactoredPage() {
   useEffect(() => {
     if (rawGroupOptions.length > 0 && !hasLoadedRef.current) {
       hasLoadedRef.current = true;
-      loadListData();
+      loadData();
     }
-  }, [rawGroupOptions, loadListData]);
+  }, [rawGroupOptions, loadData]);
 
-  // 处理分组变更（参考Vue版本：只前端过滤，不重新请求接口）
-  const handleGroupChange = useCallback(
-    (groups: (string | number)[]) => {
-      setSelectedGroups(groups);
-    },
-    [setSelectedGroups],
-  );
-
-  // 处理关键词变更（带防抖）
-  const handleKeywordChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setKeyword(e.target.value);
-      debouncedLoadListDataRef.current();
-    },
-    [setKeyword],
-  );
-
-  // 清理防抖函数
+  // 监听 URL 状态变化，重新加载数据
+  const stateKey = JSON.stringify(urlState);
   useEffect(() => {
-    return () => {
-      debouncedLoadListDataRef.current.cancel();
-    };
-  }, []);
+    if (!hasLoadedRef.current) return;
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateKey]);
 
   // 处理从 GroupTabs 获取选项
   const handleGetOptions = useCallback(
@@ -251,10 +270,10 @@ export function ToolboxRefactoredPage() {
           alt={item.name}
         />
         <div className="flex-1 w-0">
-          <div className="text-sm text-[#1D1E1F] font-semibold line-clamp-1">
+          <div className="text-sm text-primary font-semibold line-clamp-1">
             {item.name}
           </div>
-          <div className="text-sm text-[#1D1E1F] text-opacity-60 line-clamp-1">
+          <div className="text-sm text-primary text-opacity-60 line-clamp-1">
             {item.description}
           </div>
         </div>
@@ -263,7 +282,7 @@ export function ToolboxRefactoredPage() {
             ref={handleProps.setActivatorNodeRef}
             {...handleProps.attributes}
             {...handleProps.listeners}
-            className="sort-icon cursor-move text-[#a1a5af] hover:text-[#666] transition-colors"
+            className="sort-icon cursor-move text-[#a1a5af] hover:text-tertiary transition-colors"
           >
             <HolderOutlined style={{ fontSize: 24 }} />
           </div>
@@ -280,7 +299,7 @@ export function ToolboxRefactoredPage() {
         <GroupTabs
           className="w-[200px]"
           type="dropdown"
-          value={selectedGroups}
+          value={urlState.selectedGroups}
           onChange={handleGroupChange}
           groupType={GROUP_TYPE.AI_LINK}
           disabled={isSort}
@@ -289,12 +308,12 @@ export function ToolboxRefactoredPage() {
         />
       </div>
       <div className="flex items-center gap-3">
-        <Input
-          allowClear
+        <Search
+          mode="expanded"
           placeholder={t("module.ai_toolbox_search_placeholder_v2")}
-          style={{ width: 268 }}
-          value={keyword}
-          onChange={handleKeywordChange}
+          className="w-[268px]"
+          value={urlState.keyword}
+          onDebouncedChange={handleKeywordChange}
           disabled={isSort}
         />
         {isSort ? (

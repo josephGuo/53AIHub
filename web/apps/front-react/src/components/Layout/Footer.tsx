@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useEnterpriseStore, useIsSoftStyle } from '@/stores/modules/enterprise'
 import { getPublicPath } from '@/utils/config'
@@ -36,7 +36,7 @@ export function Footer({ fixed = true }: { fixed?: boolean }) {
     return (
       <>
         {copyright !== 'true' && (
-          <div className="mt-auto w-full flex justify-center items-center gap-1.5 text-xs text-[#999999] my-4">
+          <div className="mt-auto w-full flex justify-center items-center gap-1.5 text-xs text-[#999999] py-4">
             <span>本网站由</span>
             <div className="flex-none h-4 overflow-hidden">
               <img
@@ -81,7 +81,7 @@ export function Footer({ fixed = true }: { fixed?: boolean }) {
   // 网站风格布局
   return (
     <div className="mt-auto relative py-8 md:py-10 lg:py-12 footer-bg footer-text">
-      <div className="w-11/12 lg:w-4/5 mx-auto flex flex-col md:flex-row items-center">
+      <div className="w-11/12 lg:w-4/5 mx-auto max-w-[1200px] flex flex-col md:flex-row items-center">
         <div className="flex-1 w-full md:w-auto mb-6 md:mb-0">
           {/* 版权信息和ICP备案 */}
         </div>

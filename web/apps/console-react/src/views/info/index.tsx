@@ -1,13 +1,13 @@
 import {
-  Form,
-  Input,
-  Button,
-  Image,
-  Select,
-  Switch,
-  message,
-  Modal,
-  Divider,
+    Form,
+    Input,
+    Button,
+    Image,
+    Select,
+    Switch,
+    message,
+    Modal,
+    Divider,
 } from "antd";
 import { CheckOutlined } from "@ant-design/icons";
 import { useEffect, useState, useMemo } from "react";
@@ -19,11 +19,11 @@ import { enterpriseApi } from "@/api/modules/enterprise";
 import { useEnv } from "@/hooks/useEnv";
 import { useInternalUserStats } from "@/hooks/useInternalUserStats";
 import {
-  WEBSITE_TYPE,
-  WEBSITE_VERSION,
-  WEBSITE_TYPE_LABEL_MAP,
-  WEBSITE_TYPE_DESC_MAP,
-  VERSION_MODULE,
+    WEBSITE_TYPE,
+    WEBSITE_VERSION,
+    WEBSITE_TYPE_LABEL_MAP,
+    WEBSITE_TYPE_DESC_MAP,
+    VERSION_MODULE,
 } from "@/constants/enterprise";
 import { checkVersion, checkVersionPermission } from "@/utils/version";
 import { VersionGuard } from "@/components/VersionGuard";
@@ -253,7 +253,7 @@ export function InfoPage() {
           labelAlign="left"
           colon={false}
         >
-          <h1 className="text-[#1D1E1F] font-semibold mb-4">{t("basic_info")}</h1>
+          <h1 className="text-primary font-semibold mb-4">{t("basic_info")}</h1>
 
           {/* Logo */}
           <Form.Item label={t("module.website_info_logo")} name="logo">
@@ -273,7 +273,7 @@ export function InfoPage() {
                 cropperDisabled
               />
             </div>
-            <div className="mt-2 w-full text-sm text-[#9A9A9A]">
+            <div className="mt-2 w-full text-sm text-disabled">
               {t("module.website_info_logo_tip")}
             </div>
           </Form.Item>
@@ -301,7 +301,7 @@ export function InfoPage() {
                 allowTypeList={["ico", "jpg", "png", "jpeg"]}
               />
             </div>
-            <div className="mt-2 w-full text-sm text-[#9A9A9A]">
+            <div className="mt-2 w-full text-sm text-disabled">
               {t("module.website_info_ico_tip")}
             </div>
           </Form.Item>
@@ -377,10 +377,10 @@ export function InfoPage() {
                     content={t("version.not_support")}
                   >
                     <li
-                      className={`relative w-[300px] px-5 py-4 bg-[#F5F5F5] flex flex-col gap-2 border rounded box-border overflow-hidden text-sm cursor-pointer hover:border-[#3664EF] hover:text-[#3664EF] ${
+                      className={`relative w-[300px] px-5 py-4 bg-[#F5F5F5] flex flex-col gap-2 border rounded box-border overflow-hidden text-sm cursor-pointer hover:border-[#3664EF] hover:text-brand ${
                         isSelected
-                          ? "border-[#3664EF] text-[#3664EF]"
-                          : "text-[#1D1E1F] border-transparent"
+                          ? "border-[#3664EF] text-brand"
+                          : "text-primary border-transparent"
                       }`}
                       onClick={() => handleWebsiteTypeChange(value)}
                     >
@@ -395,7 +395,7 @@ export function InfoPage() {
                       <div className="text-base">
                         {t(WEBSITE_TYPE_LABEL_MAP.get(value) || "")}
                       </div>
-                      <div className="text-sm text-[#939499]">
+                      <div className="text-sm text-hint">
                         {t(WEBSITE_TYPE_DESC_MAP.get(value) || "")}
                       </div>
                     </li>
@@ -513,6 +513,7 @@ export function InfoPage() {
             </>
           )}
           {/* Version Info */}
+          <Divider style={{ margin: "12px 0" }} />
           <Form.Item label={t("version.title")}>
             <div className="text-base text-primary">
               {t(`website_version.${enterpriseInfo.version_name}`)}{" "}
@@ -523,14 +524,14 @@ export function InfoPage() {
                   </>
                 )
               }
-              |{" "} {enterpriseInfo.expired_time || t("apply.expired_time_forever")}
+              |{" "} {enterpriseInfo.expired_time || t("apply.expired_time_forever")} { enterpriseInfo.expired_time && t('internal_user.account.expired')}
               {enterpriseInfo.version <= WEBSITE_VERSION.ENTERPRISE &&  !isPrivatePremEnv && !isOpLocalEnv && (
                 <Button
                   type="link"
                   className="text-base"
                   onClick={() => openUpgradeDialog()}
                 >
-                  {t("action_upgrade")}
+                  {t("action_upgrade_renewal")}
                 </Button>
                 )}
             </div>

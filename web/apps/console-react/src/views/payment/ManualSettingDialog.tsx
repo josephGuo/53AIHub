@@ -125,7 +125,7 @@ export const ManualSettingDialog = forwardRef<
       }
     >
       <Form form={form} layout="vertical" initialValues={defaultFormData}>
-        <ol className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-6 box-border text-sm text-[#4F5052]">
+        <ol className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-6 box-border text-sm text-secondary">
           <li>{t("payment.manual_tip")}</li>
         </ol>
         <Form.Item
@@ -149,7 +149,7 @@ export const ManualSettingDialog = forwardRef<
                 ) : (
                   <>
                     <PlusOutlined style={{ fontSize: 20, color: "#9A9A9A" }} />
-                    <span className="text-[#9A9A9A] text-sm">
+                    <span className="text-disabled text-sm">
                       {t("action_upload")}
                     </span>
                   </>

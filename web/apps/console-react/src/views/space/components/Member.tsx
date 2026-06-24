@@ -4,11 +4,11 @@ import { MemberSelector } from '@/components/Permission/member-selector'
 import PermissionSelector from '@/components/Permission/selector'
 import { EntityDisplay } from '@/components/EntityDisplay'
 import {
-  PERMISSION_TYPE,
-  SUBJECT_TYPE,
-  VISIBILITY_TYPE,
-  type PermissionType,
-  type SubjectType,
+    PERMISSION_TYPE,
+    SUBJECT_TYPE,
+    VISIBILITY_TYPE,
+    type PermissionType,
+    type SubjectType,
 } from '@/components/Permission/constant'
 import type { SpaceCreateRequest } from '@/api/modules/spaces/types'
 import { useUserStore } from '@/stores/modules/user'
@@ -86,7 +86,7 @@ export function Member({
       {/* 成员与权限 */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-[#1D1E1F]">
+          <span className="text-sm text-primary">
             {type === 'detail' ? t('common.member') : t('space.member_and_permission')}
           </span>
           <MemberSelector onConfirm={handleMemberConfirm}>
@@ -110,7 +110,7 @@ export function Member({
                         alt={t('space.all_members')}
                         className="w-5 h-5"
                       />
-                      <span className="text-sm text-[#1D1E1F]">{t('space.all_members')}</span>
+                      <span className="text-sm text-primary">{t('space.all_members')}</span>
                     </>
                   ) : (
                     <EntityDisplay
@@ -127,6 +127,7 @@ export function Member({
                     onChange={(permission) => handlePermissionChange(permission, index)}
                     onSelect={(permission) => handlePermissionSelect(permission, index)}
                     remove={!isSelf(member.subject_id)}
+                    none={true}
                     disabled={isSelf(member.subject_id) || isCreator(member.subject_id)}
                   />
                 </div>
@@ -138,7 +139,7 @@ export function Member({
 
       {/* 可见性设置 */}
       <div className="mb-4">
-        <div className="text-sm text-[#1D1E1F] mb-2">{t('space.visibility_setting')}</div>
+        <div className="text-sm text-primary mb-2">{t('space.visibility_setting')}</div>
         <div className="grid grid-cols-2 gap-3">
           <div
             className={`rounded-md border p-3 relative cursor-pointer ${
@@ -150,9 +151,9 @@ export function Member({
           >
             <div className="mb-2 flex items-center gap-1">
               <EyeOutlined style={{ color: '#999', fontSize: 16 }} />
-              <span className="text-sm text-[#1D1E1F]">{t('space.visible')}</span>
+              <span className="text-sm text-primary">{t('space.visible')}</span>
             </div>
-            <div className="text-xs text-[#939499]">{t('space.non_space_member_can_view')}</div>
+            <div className="text-xs text-hint">{t('space.non_space_member_can_view')}</div>
             <div className="absolute top-1 right-1">
               <Radio
                 checked={formData.visibility === VISIBILITY_TYPE.public}
@@ -170,9 +171,9 @@ export function Member({
           >
             <div className="mb-2 flex items-center gap-1">
               <EyeInvisibleOutlined style={{ color: '#999', fontSize: 16 }} />
-              <span className="text-sm text-[#1D1E1F]">{t('space.invisible')}</span>
+              <span className="text-sm text-primary">{t('space.invisible')}</span>
             </div>
-            <div className="text-xs text-[#939499]">{t('space.only_space_member_can_view')}</div>
+            <div className="text-xs text-hint">{t('space.only_space_member_can_view')}</div>
             <div className="absolute top-1 right-1">
               <Radio
                 checked={formData.visibility === VISIBILITY_TYPE.private}

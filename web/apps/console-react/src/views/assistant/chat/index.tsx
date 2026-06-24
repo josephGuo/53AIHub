@@ -96,10 +96,10 @@ export function ChatPage() {
             alt=""
           />
           <div className="flex-1">
-            <h2 className="text-2xl text-[#1D1E1F] font-normal m-0">
+            <h2 className="text-2xl text-primary font-normal m-0">
               {t("module.document_assistant")}
             </h2>
-            <p className="text-sm text-[#999999] mt-1 mb-0">
+            <p className="text-sm text-placeholder mt-1 mb-0">
               {t("module.document_assistant_desc")}
             </p>
           </div>
@@ -109,7 +109,7 @@ export function ChatPage() {
                 checked={agentChat.enable}
                 onChange={handleStatusChange}
               />
-              <span className="text-sm text-[#2563EB]">
+              <span className="text-sm text-brand">
                 {agentChat.enable ? t("action_enable") : t("action_disable")}
               </span>
             </div>

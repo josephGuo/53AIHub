@@ -193,12 +193,12 @@ export function GraphConfig({
       <div className="flex flex-col justify-start">
         {/* 智能匹配开关 */}
         <div className="flex items-center gap-2 mb-5">
-          <span className="text-base text-[#1D1E1F]">智能匹配</span>
+          <span className="text-base text-primary">智能匹配</span>
           <Switch
             checked={isSmartMatchEnabled}
             onChange={handleSmartMatchChange}
           />
-          <span className="text-sm text-[#9A9A9A]">{isSmartMatchEnabled ? '智能选择本体模板' : '手动选择本体模板'}</span>
+          <span className="text-sm text-disabled">{isSmartMatchEnabled ? '智能选择本体模板' : '手动选择本体模板'}</span>
         </div>
 
         {/* 模板列表 */}
@@ -252,15 +252,15 @@ export function GraphConfig({
                       <div className="size-7 rounded-lg bg-[#EBF1FF] overflow-hidden flex items-center justify-center">
                         <img src={item.logo || DEFAULT_GRAPH_LOGO} className="size-full object-cover" alt={item.name} />
                       </div>
-                      <h3 className="flex-1 text-base font-medium text-[#1D1E1F] truncate" title={item.name}>
+                      <h3 className="flex-1 text-base font-medium text-primary truncate" title={item.name}>
                         {item.name}
                       </h3>
                     </div>
-                    <p className="text-sm text-[#999999] mb-4 min-h-[20px] line-clamp-1" title={item.description}>
+                    <p className="text-sm text-placeholder mb-4 min-h-[20px] line-clamp-1" title={item.description}>
                       {item.description || "暂无描述"}
                     </p>
                     <div className="flex items-center overflow-hidden">
-                      <div className="flex items-center text-[#999999] gap-1 mr-3 shrink-0">
+                      <div className="flex items-center text-placeholder gap-1 mr-3 shrink-0">
                         <SvgIcon name="application-two" width={16} height={16} />
                         <span className="text-xs">实体类型</span>
                       </div>
@@ -269,19 +269,19 @@ export function GraphConfig({
                           {entities.shown.map((name, idx) => (
                             <span
                               key={`${item.id}-entity-${name}-${idx}`}
-                              className="px-2 py-1 bg-[#F7F7F8] text-[#4F5052] text-xs rounded whitespace-nowrap max-w-[80px] truncate"
+                              className="px-2 py-1 bg-[#F7F7F8] text-secondary text-xs rounded whitespace-nowrap max-w-[80px] truncate"
                             >
                               {name}
                             </span>
                           ))}
                           {entities.more > 0 && (
-                            <span className="px-2 py-1 bg-[#F7F7F8] text-[#2563EB] text-xs rounded shrink-0">
+                            <span className="px-2 py-1 bg-[#F7F7F8] text-brand text-xs rounded shrink-0">
                               +{entities.more}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <div className="text-xs text-[#999999]">暂无标签</div>
+                        <div className="text-xs text-placeholder">暂无标签</div>
                       )}
                     </div>
                   </div>
@@ -296,7 +296,7 @@ export function GraphConfig({
           <>
             <div className="mt-5 flex items-center gap-2">
               <SvgIcon name="trending-down" width={16} height={16} />
-              <span className="text-sm text-[#4F5052]">若无最匹配模板，将兜底执行</span>
+              <span className="text-sm text-secondary">若无最匹配模板，将兜底执行</span>
             </div>
             <div className="mt-2 border border-[#E6E8EB] rounded-xl bg-white px-4 py-3">
               <div className="flex items-center justify-between">
@@ -305,8 +305,8 @@ export function GraphConfig({
                     <SvgIcon name="globe" width={16} height={16} color="#2563EB" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-base text-[#1D1E1F]">智能生成</span>
-                    <span className="text-sm text-[#9A9A9A]">未匹配到本体模板时，将对文档进行智能抽取</span>
+                    <span className="text-base text-primary">智能生成</span>
+                    <span className="text-sm text-disabled">未匹配到本体模板时，将对文档进行智能抽取</span>
                   </div>
                 </div>
                 <Switch

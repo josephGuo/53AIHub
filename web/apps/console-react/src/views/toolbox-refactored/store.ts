@@ -1,6 +1,7 @@
 /**
  * Toolbox 模块状态管理
- * 使用 Zustand 统一管理列表页状态
+ * 使用 Zustand 统一管理列表页数据状态
+ * 注意：筛选状态由 useListState hook 管理（URL持久化）
  */
 import { create } from 'zustand'
 import type { AiLinkItem, GroupOption, RawGroupOption } from './types'
@@ -13,10 +14,6 @@ interface ToolboxState {
   groupOptions: GroupOption[]
   rawGroupOptions: RawGroupOption[]
 
-  // 筛选
-  selectedGroups: (string | number)[]
-  keyword: string
-
   // 状态
   loading: boolean
   saving: boolean
@@ -24,9 +21,7 @@ interface ToolboxState {
 
   // Actions
   loadGroups: () => Promise<void>
-  loadListData: () => Promise<void>
-  setSelectedGroups: (groups: (string | number)[]) => void
-  setKeyword: (keyword: string) => void
+  loadListData: (keyword?: string) => Promise<void>
   setIsSort: (isSort: boolean) => void
   setSaving: (saving: boolean) => void
   updateGroupOptions: (options: RawGroupOption[]) => void
@@ -39,8 +34,6 @@ export const useToolboxStore = create<ToolboxState>((set, get) => ({
   aiLinkList: [],
   groupOptions: [],
   rawGroupOptions: [],
-  selectedGroups: [ALL_GROUP_ID],
-  keyword: '',
   loading: false,
   saving: false,
   isSort: false,
@@ -52,8 +45,8 @@ export const useToolboxStore = create<ToolboxState>((set, get) => ({
   },
 
   // 加载列表数据（参考Vue版本：不传group_id给后端，前端过滤）
-  loadListData: async () => {
-    const { keyword, groupOptions } = get()
+  loadListData: async (keyword?: string) => {
+    const { groupOptions } = get()
 
     set({ loading: true })
     try {
@@ -88,12 +81,6 @@ export const useToolboxStore = create<ToolboxState>((set, get) => ({
     }
   },
 
-  // 设置选中分组
-  setSelectedGroups: (groups) => set({ selectedGroups: groups }),
-
-  // 设置关键词
-  setKeyword: (keyword) => set({ keyword }),
-
   // 设置排序模式
   setIsSort: (isSort) => set({ isSort }),
 
@@ -123,8 +110,10 @@ export const useToolboxStore = create<ToolboxState>((set, get) => ({
   // 更新排序顺序
   updateSortOrder: (groups) => set({ groupOptions: groups }),
 
-  // 刷新数据
+  // 刷新数据（需要外部传入参数）
   refresh: async () => {
-    await get().loadListData()
+    // refresh 仅触发 loading 状态，实际数据加载由组件控制
+    set({ loading: true })
+    set({ loading: false })
   },
 }))

@@ -48,7 +48,7 @@ import AuthTagGroup from "@/components/AuthTagGroup";
 import MoreDropdown from "@/components/MoreDropdown";
 import { MessageMenu } from "@/components/Chat/MessageMenu";
 import { getPublicPath } from "@/utils/config";
-import { AGENT_TYPES } from "@/constants/platform/config";
+import { isOpenClawCompatibleChannelType } from "@km/shared-business/agent-create";
 import "./Chat.css";
 
 const DEFAULT_IMG = "/images/default_agent.png";
@@ -573,9 +573,8 @@ const ChatIndex = forwardRef<ChatIndexRef, ChatIndexProps>(
           onClick: async () => {
             const { agent_id } = currentAgent;
             const from = searchParams.get("from") || "";
-            const type = searchParams.get("type") || "";
-            // 判断是否为 Openclaw 智能体（URL 参数或智能体属性）
-            const isOpenclaw = type === "openclaw" || currentAgent?.custom_config_obj?.agent_type === AGENT_TYPES.OPENCLAW;
+            // 判断是否为 Openclaw 渠道类型
+            const isOpenclaw = isOpenClawCompatibleChannelType(currentAgent?.channel_type);
             if (!agent_id) {
               message.warning(t("chat.no_available_agent"));
               return;
@@ -737,8 +736,8 @@ const ChatIndex = forwardRef<ChatIndexRef, ChatIndexProps>(
 
     const onSelectAgent = useCallback(
       (agent: Agent.State) => {
-        // 判断是否为 Openclaw 智能体
-        const isOpenclaw = agent.custom_config_obj?.agent_type === AGENT_TYPES.OPENCLAW;
+        // 判断是否为 Openclaw 渠道类型
+        const isOpenclaw = isOpenClawCompatibleChannelType(agent.channel_type);
 
         if (isOpenclaw) {
           // Openclaw 智能体：通过 navigate 更新 URL 参数
@@ -1108,7 +1107,7 @@ const ChatIndex = forwardRef<ChatIndexRef, ChatIndexProps>(
             {/* 底部操作区域 */}
             <div className="flex gap-2 mb-2.5">
               {/* 智能体切换 - Openclaw 或非 hideBottomActions 时显示 */}
-              {(searchParams.get("type") === "openclaw" || !hideBottomActions) && (
+              {(isOpenClawCompatibleChannelType(currentAgent?.channel_type) || !hideBottomActions) && (
                 <AgentTooltip onSelect={onSelectAgent}>
                   <div className="h-8 px-2 rounded-full flex-center gap-1.5 bg-[#F1F2F3] cursor-pointer hover:bg-[#E1E2E3]">
                     <img

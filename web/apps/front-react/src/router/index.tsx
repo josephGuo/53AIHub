@@ -4,7 +4,7 @@ import {
   createHashRouter,
   Navigate,
   Outlet,
-  useLocation,
+  useLocation, useBlocker
 } from "react-router-dom";
 import {
   useEnterpriseStore,
@@ -58,31 +58,38 @@ const Layout = lazyWithSuspense(() =>
 const IndexView = lazyWithSuspense(() =>
   import("@/views/index/index").then((m) => ({ default: m.IndexView })),
 );
-const WorkAiChatView = lazyWithSuspense(() =>
-  import("@/views/index/work-ai-chat").then((m) => ({
-    default: m.WorkAiChatView,
-  })),
+const IndexChatView = lazyWithSuspense(() =>
+  import("@/views/index/IndexChat").then((m) => ({ default: m.IndexChatView })),
 );
+
 const KnowledgeChatView = lazyWithSuspense(() =>
   import("@/views/knowledge/chat").then((m) => ({
     default: m.KnowledgeChatView,
+  })),
+);
+const IndexLayout = lazyWithSuspense(() =>
+  import("@/views/index/IndexLayout").then((m) => ({
+    default: m.IndexLayout,
   })),
 );
 // 使用 shared-business 组件
 const ChatView = lazyWithSuspense(() =>
   import("@/views/chat/index").then((m) => ({ default: m.default })),
 );
-const AgentView = lazyWithSuspense(() =>
-  import("@/views/agent").then((m) => ({ default: m.AgentPage })),
+const PortalView = lazyWithSuspense(() =>
+  import("@/views/portal").then((m) => ({ default: m.PortalView })),
 );
-const AgentCreateView = lazyWithSuspense(() =>
-  import("@/views/agent/create").then((m) => ({ default: m.AgentCreate })),
+const AgentView = lazyWithSuspense(() =>
+  import("@/views/agent").then((m) => ({ default: m.default })),
 );
 const AgentCreateV2View = lazyWithSuspense(() =>
   import("@/views/agent/create-v2").then((m) => ({ default: m.AgentCreateV2 })),
 );
+const AgentDetailView = lazyWithSuspense(() =>
+  import("@/views/agent/detail").then((m) => ({ default: m.AgentDetailView })),
+);
 const PromptView = lazyWithSuspense(() =>
-  import("@/views/prompt/prompt").then((m) => ({ default: m.PromptView })),
+  import("@/views/prompt").then((m) => ({ default: m.PromptView })),
 );
 const PromptDetailView = lazyWithSuspense(() =>
   import("@/views/prompt/detail").then((m) => ({
@@ -96,18 +103,12 @@ const SkillsView = lazyWithSuspense(() =>
   import("@/views/skills").then((m) => ({ default: m.default })),
 );
 const SkillDetailView = lazyWithSuspense(() =>
-  import("@/views/skills/components/Detail").then((m) => ({ default: m.default })),
+  import("@/views/skills/detail").then((m) => ({ default: m.default })),
 );
 const KnowledgeView = lazyWithSuspense(() =>
   import("@/views/knowledge").then((m) => ({ default: m.KnowledgeView })),
 );
-const SpaceLayout = lazyWithSuspense(() =>
-  import("@/views/space/layout").then((m) => ({ default: m.SpaceLayout })),
-);
-const SpaceView = lazyWithSuspense(() =>
-  import("@/views/space").then((m) => ({ default: m.SpaceView })),
-);
-const MineView2 = lazyWithSuspense(() =>
+const MineView = lazyWithSuspense(() =>
   import("@/views/mine2").then((m) => ({ default: m.MineView2 })),
 );
 const ProfileView = lazyWithSuspense(() =>
@@ -242,7 +243,43 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// 需要登录认证的路径匹配规则
+const AUTH_REQUIRED_PATTERNS = [
+  /^\/agent\/[^/]+$/, // /agent/:agent_id
+  /^\/skills\/[^/]+$/, // /skills/:skill_id
+  /^\/prompt\/[^/]+$/, // /prompt/:prompt_id
+];
+
+// 检查路径是否需要认证
+function requiresAuth(pathname: string): boolean {
+  return AUTH_REQUIRED_PATTERNS.some((pattern) => pattern.test(pathname));
+}
+
+// 拦截未登录用户访问需要认证的路由
+function AuthBlocker({ children }: { children: React.ReactNode }) {
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      const token = localStorage.getItem("access_token");
+      return (
+        !token &&
+        requiresAuth(nextLocation.pathname) &&
+        !requiresAuth(currentLocation.pathname)
+      );
+    }
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      blocker.reset();
+      window.dispatchEvent(new CustomEvent("open-login-modal"));
+    }
+  }, [blocker]);
+
+  return <>{children}</>;
+}
+
 // Route guard for checking permissions
+// 只处理直接地址栏访问/刷新的情况，应用内导航由 AuthBlocker 拦截
 function PermissionGuard({
   children,
   auth,
@@ -266,6 +303,7 @@ function PermissionGuard({
 
   return <>{children}</>;
 }
+
 
 function useVisibleNavigations() {
   const isSoftStyle = useIsSoftStyle();
@@ -301,7 +339,7 @@ function IndexComponent() {
   const isSoftStyle = useIsSoftStyle();
 
   if (isSoftStyle) {
-    return <WorkAiChatView />;
+    return <IndexLayout />;
   }
   return <IndexView />;
 }
@@ -309,14 +347,10 @@ function IndexComponent() {
 // Dynamic component for knowledge route
 function KnowledgeComponent() {
   const isSoftStyle = useIsSoftStyle();
-  return isSoftStyle ? <KnowledgeChatView /> : <KnowledgeView />;
+  return isSoftStyle ? <KnowledgeView /> : <KnowledgeView />;
 }
 
-// Dynamic component for knowledge space route
-function KnowledgeSpaceComponent() {
-  const isSoftStyle = useIsSoftStyle();
-  return isSoftStyle ? <SpaceView /> : <KnowledgeView />;
-}
+
 
 // Dynamic custom page handler
 function DynamicCustomPage() {
@@ -352,28 +386,18 @@ function DynamicCustomPage() {
   return <CustomView title={customNav.name} />;
 }
 
-// Check if current path is a custom navigation
-function isCustomNavigationPath(
-  pathname: string,
-  navigations: Navigation.State[],
-): boolean {
-  return navigations.some((item) => {
-    if (item.menu_path === pathname || item.jump_path === pathname) {
-      return (
-        item.type === NAVIGATION_TYPE.CUSTOM ||
-        (item.type === NAVIGATION_TYPE.EXTERNAL &&
-          item.target === NAVIGATION_TARGET.SELF)
-      );
-    }
-    return false;
-  });
-}
 
 // Build routes
 const buildRoutes = () => {
   const routes = [
     {
-      element: <InitGuard><Outlet /></InitGuard>,
+      element: (
+        <InitGuard>
+          <AuthBlocker>
+            <Outlet />
+          </AuthBlocker>
+        </InitGuard>
+      ),
       children: [
         {
           path: "/",
@@ -386,6 +410,12 @@ const buildRoutes = () => {
             {
               path: "index",
               element: <IndexComponent />,
+              children: [
+                { index: true, element: <Navigate to="chat" replace /> },
+                { path: "chat", element: <IndexChatView /> },
+                { path: "knowledge", element: <KnowledgeChatView /> },
+                { path: "agent", element: <ChatView /> },
+              ],
             },
             {
               path: "index/apilogin",
@@ -395,18 +425,24 @@ const buildRoutes = () => {
               path: "chat",
               element: <ChatView />,
             },
-                        {
+            {
+              path: 'portal',
+              element: <PortalView />,
+            },
+            {
               path: "agent",
               element: <AgentView />,
               handle: { banner: true },
             },
             {
-              path: "agent/create",
-              element: <AgentCreateView />,
-            },
-            {
               path: "agent/create-v2",
               element: <AgentCreateV2View />,
+            },
+            {
+              path: "agent/:agent_id",
+              element: (
+                  <AgentDetailView />
+              ),
             },
             {
               path: "toolkit",
@@ -419,9 +455,10 @@ const buildRoutes = () => {
               handle: { banner: true },
             },
             {
-              path: "skill-detail",
-              element: <SkillDetailView />,
-              handle: { banner: true },
+              path: "skills/:skill_id",
+              element: (
+                  <SkillDetailView />
+              ),
             },
             {
               path: "prompt",
@@ -430,7 +467,9 @@ const buildRoutes = () => {
             },
             {
               path: "prompt/:prompt_id",
-              element: <PromptDetailView />,
+              element: (
+                  <PromptDetailView />
+              ),
             },
             ...(includeKm
               ? [
@@ -445,7 +484,7 @@ const buildRoutes = () => {
                     children: [
                       {
                         path: ":space_id",
-                        element: <KnowledgeSpaceComponent />,
+                        element: <KnowledgeComponent />,
                         handle: { banner: true },
                       },
                     ],
@@ -464,7 +503,7 @@ const buildRoutes = () => {
               path: "mine",
               element: (
                 <PermissionGuard auth>
-                  <MineView2 />
+                  <MineView />
                 </PermissionGuard>
               ),
             },

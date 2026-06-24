@@ -197,7 +197,7 @@ function GroupSelectInner(
         >
           {options.map((opt) => (
             <Radio key={opt.group_id} value={opt.group_id}>
-              <span className="text-[#1D1E1F]">{opt.group_name}</span>
+              <span className="text-primary">{opt.group_name}</span>
             </Radio>
           ))}
         </Radio.Group>
@@ -218,7 +218,7 @@ function GroupSelectInner(
         >
           {options.map((opt) => (
             <Checkbox key={opt.group_id} value={opt.group_id}>
-              <span className="text-[#1D1E1F]">{opt.group_name}</span>
+              <span className="text-primary">{opt.group_name}</span>
             </Checkbox>
           ))}
         </Checkbox.Group>

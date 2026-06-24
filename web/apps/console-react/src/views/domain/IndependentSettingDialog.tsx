@@ -1,26 +1,26 @@
 import {
-  Modal,
-  Form,
-  Input,
-  Button,
-  message,
-  Switch,
-  Radio,
-  Divider,
-  Tooltip,
+    Modal,
+    Form,
+    Input,
+    Button,
+    message,
+    Switch,
+    Radio,
+    Divider,
+    Tooltip,
 } from "antd";
 import {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-  useMemo,
+    forwardRef,
+    useImperativeHandle,
+    useRef,
+    useState,
+    useMemo,
 } from "react";
 import { t } from "@/locales";
 import { domainApi } from "@/api/modules/domain";
 import {
-  INDEPENDENT_RESOLVE_TYPE,
-  INDEPENDENT_SSL_CERT_TYPE,
+    INDEPENDENT_RESOLVE_TYPE,
+    INDEPENDENT_SSL_CERT_TYPE,
 } from "@/constants/domain";
 import { useEnterpriseStore } from "@/stores";
 import { SvgIcon } from "@km/shared-components-react";
@@ -233,7 +233,7 @@ export const IndependentSettingDialog = forwardRef<
           }}
         >
           <div className="flex items-center w-full mb-6">
-            <span className="h-[32px] px-3 bg-[#f5f5f5] border border-r-0 rounded-l flex items-center text-[#606266]">
+            <span className="h-[32px] px-3 bg-[#f5f5f5] border border-r-0 rounded-l flex items-center text-secondary">
               https://
             </span>
             <Form.Item
@@ -263,7 +263,7 @@ export const IndependentSettingDialog = forwardRef<
 
             {shouldShowSubdirInput && (
               <div className="flex items-center">
-                <span className="h-[32px] px-3 bg-[#f5f5f5] border-y flex items-center text-[#606266]">
+                <span className="h-[32px] px-3 bg-[#f5f5f5] border-y flex items-center text-secondary">
                   /
                 </span>
                 <Form.Item
@@ -286,11 +286,11 @@ export const IndependentSettingDialog = forwardRef<
 
           {isCustomResolveType && (
             <Form.Item>
-              <div className="flex items-center text-sm text-[#4F5052]">
+              <div className="flex items-center text-sm text-secondary">
                 <span>{t("module.use_subdirectories")}</span>
                 <Tooltip title={t("module.use_subdirectories_tip")}>
                   <SvgIcon
-                    className="text-[#A4AABA] ml-1"
+                    className="text-hint ml-1"
                     name="help"
                     width="14"
                     height="14"
@@ -321,7 +321,7 @@ export const IndependentSettingDialog = forwardRef<
 
           {isCnameResolveType && (
             <>
-              <ul className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-6 box-border text-sm text-[#4F5052]">
+              <ul className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-6 box-border text-sm text-secondary">
                 <li>{t("module.domain_independent_cname_desc")}</li>
                 <li>{t("module.domain_independent_cname_desc_1")}</li>
                 <li>{t("module.domain_independent_cname_desc_2")}</li>
@@ -329,7 +329,7 @@ export const IndependentSettingDialog = forwardRef<
               </ul>
 
               <Form.Item>
-                <div className="flex items-center gap-2 text-sm text-[#4F5052]">
+                <div className="flex items-center gap-2 text-sm text-secondary">
                   <span>{t("module.domain_independent_https")}</span>
                   <Form.Item
                     name="enable_https"
@@ -358,7 +358,7 @@ export const IndependentSettingDialog = forwardRef<
           )}
 
           {!isCnameResolveType && (
-            <ul className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-6 box-border text-sm text-[#4F5052]">
+            <ul className="w-full flex flex-col gap-3 bg-[#F6F9FC] p-5 mb-6 box-border text-sm text-secondary">
               <li>{t("module.domain_independent_self_desc_1")}</li>
               <li>{t("module.domain_independent_self_desc_2")}</li>
               <Divider className="!my-2" />

@@ -1,15 +1,21 @@
-import React, { useState, forwardRef, useImperativeHandle, useRef, useMemo } from 'react';
-import { Drawer, Button, Tooltip } from 'antd';
-import { EnterOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { useState, forwardRef, useImperativeHandle, useMemo, useRef, useCallback } from 'react';
+import { Drawer, Button, Tooltip, message } from 'antd';
 import { t } from '@/locales';
-import { XBubbleList, XBubbleUser, XBubbleAssistant } from '@km/hub-ui-x-react';
-import ChatChunk, { ChunkRef } from './Chunk';
-import ChatQuotation from './Quotation';
-import ChatThinkKnowledge, { ThinkKnowledgeRef } from './ThinkKnowledge';
-import SpecifiedFiles from '@/components/Chat/SpecifiedFiles';
+import {
+  ChatMessages,
+  ChatConfigProvider,
+  SourceReferenceManager,
+  createSourceReferenceHandler,
+  createSourceClickHandler,
+  type SourceReferenceManagerRef, type SourceReferenceData,
+  type KnowledgePanelData
+} from '@km/shared-business';
+import { useLocaleStore } from '@/stores/modules/locale';
+import { useEnv } from '@/hooks/useEnv';
 import { SEARCH_TYPE } from '@/api/modules/feedback/types';
 import { getMessageList } from '@/api/modules/feedback/transform';
-import { api_host } from '@/utils/config';
+import chunksApi from '@/api/modules/chunks';
+import { markdownPreview } from '@/components/Markdown/helper';
 
 export interface DetailRef {
   open: (params: { index: number; tableData: any[]; type: string }) => void;
@@ -21,6 +27,60 @@ const Detail = forwardRef<DetailRef>((props, ref) => {
   const [curIndex, setCurIndex] = useState<number>(0);
   const [curType, setCurType] = useState<string>('');
   const [list, setList] = useState<any[]>([]);
+  const locale = useLocaleStore((state) => state.locale);
+  const { buildFrontLibraryFileUrl, buildFrontLibraryUrl } = useEnv();
+
+  // 源引用管理器 ref
+  const sourceRefManagerRef = useRef<SourceReferenceManagerRef>(null);
+
+  // 获取 chunk 详情回调
+  const fetchChunkDetail = useCallback(async (chunkId: string) => {
+    const res = await chunksApi.get(chunkId);
+    return {
+      content: res?.content || '',
+      token_count: res?.token_count || 0,
+      chunk_index: res?.chunk_index || 0,
+    };
+  }, []);
+
+  // Markdown 渲染回调
+  const handleRenderMarkdown = useCallback(async (element: HTMLDivElement, content: string) => {
+    await markdownPreview(element, content);
+  }, []);
+
+  // 未找到 chunk 时的回调
+  const handleChunkNotFound = useCallback((data: SourceReferenceData) => {
+    message.info(`查看引用: ${data.sourceType}-${data.sourceNumber}`);
+  }, []);
+
+  // 后台场景：知识面板点击跳转前台
+  const handleOpenKnowledgePanel = useCallback((data: KnowledgePanelData) => {
+    // scope_narrowing: 点击知识库名称跳转知识库首页
+    if (data.type === 'scope_narrowing' && data.source?.library_id) {
+      const url = buildFrontLibraryUrl(data.source.library_id);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return true;
+    }
+    // source_click: 点击单个源文件
+    if (data.type === 'source_click' && data.source) {
+      const source = data.source;
+      if (source.library_id && source.file_id) {
+        const url = buildFrontLibraryFileUrl(source.library_id, source.file_id);
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return true;
+      }
+    }
+    // knowledge_search: 点击知识检索结果
+    if (data.type === 'knowledge_search' && data.files && data.files.length > 0) {
+      const firstFile = data.files[0];
+      if (firstFile.library_id && firstFile.file_id) {
+        const url = buildFrontLibraryFileUrl(firstFile.library_id, firstFile.file_id);
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return true;
+      }
+    }
+    return false;
+  }, [buildFrontLibraryFileUrl, buildFrontLibraryUrl]);
 
   const [feedbackInfo, setFeedbackInfo] = useState([
     { label: t('search-feedback.user'), value: '---' },
@@ -37,11 +97,6 @@ const Detail = forwardRef<DetailRef>((props, ref) => {
   ]);
 
   const [messageList, setMessageList] = useState<any[]>([]);
-  const [showThinkKnowledge, setShowThinkKnowledge] = useState(false);
-
-  const chunkRef = useRef<ChunkRef>(null);
-  const thinkKnowledgeRef = useRef<ThinkKnowledgeRef>(null);
-  const chunkSourceRef = useRef<any>(null);
 
   const info = useMemo(() => {
     return curType === SEARCH_TYPE.FEEDBACK ? feedbackInfo : recordInfo;
@@ -101,75 +156,10 @@ const Detail = forwardRef<DetailRef>((props, ref) => {
     }
   };
 
-  const renderSource = (type: string, number: number, message: any) => {
-    if (message.rag_stats && message.rag_stats.type === 'web_search') {
-      return number.toString();
-    }
-    return `${type}-${number}`;
-  };
-
-  const handleSourceReferenceHover = (data: any, message: any) => {
-    const chunks = message.rag_stats?.chunks || [];
-    const key = `[Source:${data.sourceType}-${data.sourceNumber}]`;
-    const chunk = chunks.find((item: any) => item.source_key === key || item.source === key);
-    if (chunk) {
-      chunkSourceRef.current = data.element;
-      chunkRef.current?.setLibraryInfo(chunk, message.rag_stats?.type);
-    } else {
-      chunkSourceRef.current = null;
-      chunkRef.current?.setLibraryInfo(null, '');
-    }
-  };
-
-  const handleOpenKnow = (message: any) => {
-    setShowThinkKnowledge(true);
-    setTimeout(() => {
-      thinkKnowledgeRef.current?.updateResults(message.rag_stats?.files_search || [], message.rag_stats?.type || '');
-    }, 0);
-  };
-
-  const handleFileClick = (file: { id: string | number; file_name?: string; url?: string; preview_key?: string }) => {
-    console.log(file);
-    if (!file.preview_key) return;
-    window.open(api_host + '/api/preview/' + file.preview_key, '_blank');
-  };
-
-  // 输出文件下载
-  const handleDownloadOutputFile = async (file: { id: string | number; file_name?: string; url?: string }) => {
-    if (!file.url) return;
-    const token = localStorage.getItem('access_token') || '';
-    try {
-      const response = await fetch(file.url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`${t('download_failed')}: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = file.file_name || `文件 ${file.id}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      setTimeout(() => {
-        URL.revokeObjectURL(blobUrl);
-      }, 100);
-    } catch (error) {
-      console.error('error', error);
-    }
-  };
-
   const closeDrawer = () => {
     setVisible(false);
   };
+
 
   const drawerTitle = (
     <div className="w-full text-2xl flex items-center">
@@ -212,107 +202,43 @@ const Detail = forwardRef<DetailRef>((props, ref) => {
         <div className="text-base font-medium mb-5">{t('search-feedback.search-detail')}</div>
 
         <div className="border border-gray-200 rounded-xl py-4 flex flex-col h-[calc(100%-150px)]">
-          <XBubbleList messages={messageList} className="flex-1 overflow-y-auto px-4">
-            {messageList.map((message, index) => (
-              <React.Fragment key={message.id || index}>
-                {/* User Message */}
-                <XBubbleUser content={message.question} files={message.user_files}>
-                  <div className="flex flex-col gap-2 items-end">
-                    {/* 指定内容 */}
-                    {message.specified_content && (
-                      <div className="mb-2">
-                        <Tooltip title={message.specified_content}>
-                          <div className="max-w-40 h-7 px-2 rounded-lg cursor-pointer text-gray-600 bg-gray-50 hover:bg-gray-200 inline-flex items-center gap-1">
-                            <EnterOutlined className="flex-none" />
-                            <p className="text-sm truncate m-0">{message.specified_content}</p>
-                          </div>
-                        </Tooltip>
-                      </div>
-                    )}
-                    <SpecifiedFiles files={[...message.specified_files, ...message.uploaded_files]} type="no_jump" onFileClick={handleFileClick} />
-                  </div>
-                  {/* 技能标签 */}
-                  {message.skill?.display_name && (
-                    <span className="bg-[#e6e9f2] rounded py-1 px-2 text-sm">
-                      {message.skill.display_name ?? ''}
-                    </span>
-                  )}
-                </XBubbleUser>
-
-                {/* Assistant Message */}
-                <XBubbleAssistant
-                  content={message.answer}
-                  loading={message.loading}
-                  error={message.response_status === 2}
-                  errorMessage="回答被拒绝"
-                  reasoning={message.reasoning_content}
-                  reasoningExpanded={message.reasoning_expanded}
-                  sourceEnabled={true}
-                  renderSource={(type: string, number: number) => renderSource(type, number, message)}
-                  onSourceReferenceClick={(data: any) => handleSourceReferenceHover(data, message)}
-                >
-                  {/* Header part */}
-                  {message.rag_stats ? (
-                    <div
-                      className="h-8 px-2 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200 inline-flex items-center mb-3 gap-2"
-                      onClick={() => handleOpenKnow(message)}
-                    >
-                      <p className="text-sm text-gray-800 m-0">
-                        {message.rag_stats.type === 'web_search'
-                          ? `搜索到${message.rag_stats.files_search?.length || 0}篇网络资料`
-                          : `搜索到${message.rag_stats.library_search?.length || 0}个知识库${message.rag_stats.files_search?.length || 0}篇资料`}
-                      </p>
-                      <ArrowRightOutlined className="text-gray-400 text-xs" />
-                    </div>
-                  ) : message.loading && message.rag_search_text ? (
-                    <div className="h-8 px-2 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200 inline-flex items-center mb-3">
-                      <p className="flex-1 text-sm text-gray-800 truncate m-0">{message.rag_search_text}</p>
-                    </div>
-                  ) : null}
-
-                  {/* 输出文件展示 */}
-                  {message.outputFiles?.length > 0 && (
-                    <div className="flex flex-wrap gap-3 mt-3">
-                      {message.outputFiles.map((file: any) => (
-                        <div
-                          key={file.id}
-                          className="w-[280px] flex items-center justify-between px-4 py-4 bg-[#f5f7fa] border border-[#E8E8E8] rounded-lg cursor-pointer hover:shadow-sm hover:border-[#D9D9D9] transition-all group"
-                          onClick={() => handleDownloadOutputFile(file)}
-                        >
-                          <div className="flex flex-col gap-1 flex-1 min-w-0">
-                            <svg-icon name="file" size="16" className="text-[#666]" />
-                            <span className="text-sm text-[#555454] truncate">{file.file_name || `文件 ${file.id}`}</span>
-                          </div>
-                          <div className="w-20 relative">
-                            <img src={`/images/output-file.png`} alt="" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Footer part */}
-                  {message.rag_stats?.file_quotations?.length > 0 && (
-                    <div className="mt-3">
-                      <ChatQuotation
-                        type={message.rag_stats.type}
-                        files={message.rag_stats.file_quotations}
-                      />
-                    </div>
-                  )}
-                </XBubbleAssistant>
-              </React.Fragment>
-            ))}
-          </XBubbleList>
-          <ChatChunk ref={chunkRef} virtualRef={chunkSourceRef} />
+          <ChatConfigProvider
+            lang={locale}
+            buildLibraryUrl={buildFrontLibraryFileUrl}
+            onOpenKnowledgePanel={handleOpenKnowledgePanel}
+          >
+            <ChatMessages
+              messageList={messageList}
+              agentInfo={{}}
+              isStreaming={false}
+              features={{
+                menu: {
+                  copy: true,
+                  feedback: false,
+                  regenerate: false,
+                  share: false,
+                  addAsMd: false,
+                },
+                outputFiles: true,
+                sourceRef: true,
+                processFlow: true,
+              }}
+              renderSource={(type: string, number: number) => {
+                if (type === 'web') return `${t('source.chunk_title')}-${number}`;
+                return `${type}-${number}`;
+              }}
+              onSourceClick={useMemo(() => createSourceClickHandler(sourceRefManagerRef), [])}
+              onSourceReferenceClick={useMemo(() => createSourceReferenceHandler(sourceRefManagerRef), [])}
+            />
+            {/* 源引用管理器（包含 Chunk 和 Graph 弹窗） */}
+            <SourceReferenceManager
+              ref={sourceRefManagerRef}
+              fetchChunkDetail={fetchChunkDetail}
+              renderMarkdown={handleRenderMarkdown}
+              onChunkNotFound={handleChunkNotFound}
+            />
+          </ChatConfigProvider>
         </div>
-
-        {showThinkKnowledge && (
-          <ChatThinkKnowledge
-            ref={thinkKnowledgeRef}
-            onClose={() => setShowThinkKnowledge(false)}
-          />
-        )}
       </Drawer>
     </>
   );

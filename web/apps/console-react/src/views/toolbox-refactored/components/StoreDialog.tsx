@@ -1,14 +1,14 @@
-import { Modal, Input, Button, Empty, Tabs } from "antd";
+import { Modal, Button, Empty, Tabs } from "antd";
 import {
-  useRef,
-  useState,
-  forwardRef,
-  useImperativeHandle,
-  useCallback,
-  useMemo,
+    useRef,
+    useState,
+    forwardRef,
+    useImperativeHandle,
+    useCallback,
+    useMemo,
 } from "react";
 import { t } from "@/locales";
-import { SearchOutlined } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
 import { aiLinkApi } from "@/api/modules/ai-link";
 
 // ============================================================================
@@ -110,8 +110,8 @@ const StoreDialog = forwardRef<StoreDialogRef, StoreDialogProps>(
 
     // 处理关键词变更
     const handleKeywordChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        setKeyword(e.target.value);
+      (val: string) => {
+        setKeyword(val);
       },
       [],
     );
@@ -174,13 +174,13 @@ const StoreDialog = forwardRef<StoreDialogRef, StoreDialogProps>(
         <div className="bg-[#F7F7FA] px-4 py-4">
           {showAddManual && (
             <div
-              className="flex items-center justify-center h-15 mb-6 text-[#2563EB] bg-white text-sm cursor-pointer hover:bg-[#F2F4F8]"
+              className="flex items-center justify-center h-15 mb-6 text-brand bg-white text-sm cursor-pointer hover:bg-[#F2F4F8]"
               onClick={() => handleAdd()}
             >
               + {t("commom.add_manual")}
             </div>
           )}
-          <div className="text-base text-[#1D1E1F] font-medium mb-4">
+          <div className="text-base text-primary font-medium mb-4">
             {t("commom.add_market")}
           </div>
 
@@ -195,13 +195,12 @@ const StoreDialog = forwardRef<StoreDialogRef, StoreDialogProps>(
               />
             </div>
             <div className="flex-none ml-8">
-              <Input
+              <Search
+                mode="expanded"
                 placeholder={t("module.ai_toolbox_search_placeholder")}
-                prefix={<SearchOutlined />}
                 value={keyword}
-                onChange={handleKeywordChange}
-                allowClear
-                style={{ width: 200 }}
+                onDebouncedChange={handleKeywordChange}
+                className="w-[200px]"
               />
             </div>
           </div>
@@ -213,7 +212,7 @@ const StoreDialog = forwardRef<StoreDialogRef, StoreDialogProps>(
                 {item.links.length > 0 && (
                   <div
                     id={`toolbox-group-${item.group_id}`}
-                    className="text-sm text-[#939499] mt-4"
+                    className="text-sm text-hint mt-4"
                   >
                     {item.group_name}
                   </div>
@@ -227,10 +226,10 @@ const StoreDialog = forwardRef<StoreDialogRef, StoreDialogProps>(
                       >
                         <img alt="" src={link.logo} className="w-10 h-10" />
                         <div className="flex-1 overflow-hidden">
-                          <div className="text-sm text-[#1D1E1F]">
+                          <div className="text-sm text-primary">
                             {link.name}
                           </div>
-                          <div className="text-xs text-[#1D1E1F] text-opacity-60 truncate mt-1">
+                          <div className="text-xs text-primary text-opacity-60 truncate mt-1">
                             {link.description}
                           </div>
                         </div>

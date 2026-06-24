@@ -1,14 +1,11 @@
-import { Tabs } from "antd";
 import { useEffect, useState } from "react";
 import { t } from "@/locales";
 import { useSearchParams } from "react-router-dom";
 import { PageLayoutTabs } from "@/components/PageLayout";
 import { SpacePage } from "@/views/space";
-import { KnowledgeDocumentSetting } from "./document-setting";
 import { KnowledgeCleaningPolicy } from "./cleaning-policy";
 import { KnowledgeDataPipeline } from "./data-pipeline";
 import { KnowledgeModel } from "./model";
-import GraphTemplateList from "./graph";
 import { AssistantPage } from "@/views/assistant";
 import { getPublicPath } from "@/utils/config";
 
@@ -31,11 +28,7 @@ export function KnowledgePage() {
 
   const tabs = [
     { key: "space", label: t("module.space"), children: <SpacePage /> },
-    {
-      key: "document-setting",
-      label: t("module.document-setting"),
-      children: <KnowledgeDocumentSetting />,
-    },
+
     {
       key: "cleaning-policy",
       label: t("module.cleaning-policy"),
@@ -47,14 +40,9 @@ export function KnowledgePage() {
       children: <KnowledgeDataPipeline />,
     },
     {
-      key: "graph",
-      label: t("module.knowledge_graph"),
-      children: <GraphTemplateList />,
-    },
-    {
       key: "model",
       label: t("module.model_setting"),
-      children: <KnowledgeModel />,
+      children: <KnowledgeModel activeTab={activeTab} />,
     },
     {
       key: "assistant",

@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 import { getSimpleDateFormatString } from '@km/shared-utils'
 import { pathIncludes } from '@/router'
+import { RUNNING_STATUSES } from '@/api/modules/agentRun/types'
+
+export function isRunRunning(latestRun: any): boolean {
+  if (!latestRun) return false
+  return RUNNING_STATUSES.includes(latestRun.status)
+}
 
 interface RouterOptions {
   agent_id?: string | null
@@ -17,19 +23,22 @@ interface KnowledgeConversationState {
   offset: number
   hasMore: boolean
   loadingMore: boolean
+  // Request ID for race condition prevention
+  loadConversationsRequestId: number
   // Computed
   currentConversation: () => any
   // Actions
   setBasePath: (path: string) => void
   setAgentId: (agent_id: string) => void
   setFileId: (file_id: string | null) => void
-  loadConversations: () => Promise<any[]>
+  loadConversations: (signal?: AbortSignal) => Promise<any[]>
   loadMoreConversations: () => Promise<void>
   createConversation: (agent_id: string, file_id: string | undefined, title?: string) => Promise<Conversation.Info>
   addConversation: (conversation: Conversation.Info) => void
   updateConversation: (conversation: Partial<Conversation.Info>) => void
   editConversation: (conversation: Pick<Conversation.Info, 'id' | 'title'>) => Promise<void>
   delConversation: (conversation: Conversation.Info) => Promise<void>
+  updateConversationLatestRun: (conversationId: string, latestRun: any | null) => void
   setCurrentState: (conversation_id: string, setRouter?: boolean) => void
   clearCurrentState: () => void
   setRouter: (data: RouterOptions) => void
@@ -45,6 +54,8 @@ export const useConversationStore = create<KnowledgeConversationState>((set, get
   offset: 0,
   hasMore: true,
   loadingMore: false,
+  // Request ID initialization
+  loadConversationsRequestId: 0,
 
   currentConversation: () => {
     const state = get()
@@ -73,12 +84,28 @@ export const useConversationStore = create<KnowledgeConversationState>((set, get
     set({ file_id })
   },
 
-  loadConversations: async () => {
+  loadConversations: async (signal?: AbortSignal) => {
     const { agent_id, file_id } = get()
     if (!agent_id) return []
 
+    // Generate unique request ID for this call
+    const requestId = Date.now()
+    set({ loadConversationsRequestId: requestId })
+
     const conversationApi = (await import('@/api/modules/conversation/index')).default
     const res = await conversationApi.agentList(agent_id, { file_id, offset: 0, limit: 30 })
+
+    // ✅ Race condition check: discard response if stale
+    const currentRequestId = get().loadConversationsRequestId
+    if (requestId !== currentRequestId) {
+      console.log('Discarding stale loadConversations response')
+      return []
+    }
+
+    // ✅ Check if aborted
+    if (signal?.aborted) {
+      return []
+    }
 
     const conversations = res.data.items.map((item: any) => ({
       ...item,
@@ -123,12 +150,17 @@ export const useConversationStore = create<KnowledgeConversationState>((set, get
         })
       }))
 
-      set(state => ({
-        conversations: [...state.conversations, ...newConversations],
-        offset: state.offset + newConversations.length,
-        hasMore: newConversations.length >= 30,
-        loadingMore: false
-      }))
+      set(state => {
+        // Deduplicate by ID to prevent React key warnings
+        const merged = [...state.conversations, ...newConversations]
+        const deduped = [...new Map(merged.map(c => [c.id, c])).values()]
+        return {
+          conversations: deduped,
+          offset: state.offset + newConversations.length,
+          hasMore: newConversations.length >= 30,
+          loadingMore: false
+        }
+      })
     } catch (error) {
       console.error('Failed to load more conversations:', error)
       set({ loadingMore: false })
@@ -157,9 +189,20 @@ export const useConversationStore = create<KnowledgeConversationState>((set, get
         format: 'YYYY.MM.DD hh:mm'
       })
     }
-    set((state) => ({
-      conversations: [newConversation, ...state.conversations]
-    }))
+    set((state) => {
+      // Check if conversation already exists to prevent duplicates
+      const exists = state.conversations.some(c => c.id === newConversation.id)
+      if (exists) {
+        return {
+          conversations: state.conversations.map(c =>
+            c.id === newConversation.id ? newConversation : c
+          )
+        }
+      }
+      return {
+        conversations: [newConversation, ...state.conversations]
+      }
+    })
   },
 
   updateConversation: (conversation) => {
@@ -192,6 +235,14 @@ export const useConversationStore = create<KnowledgeConversationState>((set, get
     if (current_conversationid === conversation.id) {
       get().setCurrentState('')
     }
+  },
+
+  updateConversationLatestRun: (conversationId, latestRun) => {
+    set((state) => ({
+      conversations: state.conversations.map((item) =>
+        String(item.id) === String(conversationId) ? { ...item, latest_run: latestRun } : item
+      )
+    }))
   },
 
   setCurrentState: (conversation_id, setRouter = true) => {

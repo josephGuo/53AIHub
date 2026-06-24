@@ -5,6 +5,7 @@ import type {
   SkillExploreQuery,
   SkillDetail,
   SkillMyItem,
+  SkillEnvVarItem,
   PagedResponse,
   ApiResponse,
   UpdateMySkillStatusRequest,
@@ -32,7 +33,7 @@ export const skillApi = {
    * 获取技能详情
    * GET /api/skill-library/:id
    */
-  getDetail(id: string): Promise<SkillExploreItem> {
+  getDetail(id: string): Promise<SkillDetail> {
     return service
       .get(`/api/skill-library/${id}`)
       .then((res: { data: SkillDetail }) => res.data)
@@ -81,10 +82,10 @@ export const skillApi = {
    * 下载技能安装包
    * GET /api/skill-library/{id}/download
    */
-  downloadSkillPackage(id: string) {
+  downloadSkillPackage(id: string): Promise<Blob> {
     return service.get(`/api/skill-library/${id}/download`, {
       responseType: 'blob',
-    }).catch(handleError)
+    }).then((res: Blob) => res).catch(handleError)
   },
 
   /**
@@ -96,6 +97,93 @@ export const skillApi = {
       responseType: 'text',
     }).catch(handleError)
   },
+
+  /**
+   * 获取我的技能环境变量列表
+   * GET /api/skill-library/:id/env-vars
+   */
+  getMyEnvVars(id: string): Promise<SkillEnvVarItem[]> {
+    return service
+      .get(`/api/skill-library/${id}/env-vars`, { requiresAuth: true })
+      .then((res: { data: { items?: Array<{ id: string | number; key: string; value: string; sensitive: boolean }> } }) =>
+        (res.data?.items || []).map(normalizeSkillEnvVarItem),
+      )
+      .catch(handleError)
+  },
+
+  /**
+   * 创建我的技能环境变量
+   * POST /api/skill-library/:id/env-vars
+   */
+  createMyEnvVar(
+    id: string,
+    data: { key: string; value: string; sensitive: boolean },
+  ): Promise<SkillEnvVarItem> {
+    return service
+      .post(`/api/skill-library/${id}/env-vars`, data, { requiresAuth: true })
+      .then((res: { data: { id: string | number; key: string; value: string; sensitive: boolean } }) =>
+        normalizeSkillEnvVarItem(res.data),
+      )
+      .catch(handleError)
+  },
+
+  /**
+   * 更新我的技能环境变量
+   * PUT /api/skill-library/:id/env-vars/:env_var_id
+   */
+  updateMyEnvVar(
+    id: string,
+    envVarId: string,
+    data: { key?: string; value?: string; sensitive?: boolean },
+  ): Promise<SkillEnvVarItem> {
+    return service
+      .put(`/api/skill-library/${id}/env-vars/${envVarId}`, data, { requiresAuth: true })
+      .then((res: { data: { id: string | number; key: string; value: string; sensitive: boolean } }) =>
+        normalizeSkillEnvVarItem(res.data),
+      )
+      .catch(handleError)
+  },
+
+  /**
+   * 删除我的技能环境变量
+   * DELETE /api/skill-library/:id/env-vars/:env_var_id
+   */
+  deleteMyEnvVar(id: string, envVarId: string): Promise<void> {
+    return service
+      .delete(`/api/skill-library/${id}/env-vars/${envVarId}`, { requiresAuth: true })
+      .then(() => undefined)
+      .catch(handleError)
+  },
+
+  /**
+   * 批量更新我的技能环境变量
+   * PUT /api/skill-library/:id/env-vars/batch
+   */
+  batchUpdateMyEnvVars(
+    id: string,
+    data: { items: Array<{ key: string; value: string; sensitive: boolean }> },
+  ): Promise<SkillEnvVarItem[]> {
+    return service
+      .put(`/api/skill-library/${id}/env-vars/batch`, data, { requiresAuth: true })
+      .then((res: { data: { items?: Array<{ id: string | number; key: string; value: string; sensitive: boolean }> } }) =>
+        (res.data?.items || []).map(normalizeSkillEnvVarItem),
+      )
+      .catch(handleError)
+  },
+}
+
+function normalizeSkillEnvVarItem(item: {
+  id?: string | number
+  key: string
+  value: string
+  sensitive: boolean
+}): SkillEnvVarItem {
+  return {
+    id: String(item?.id ?? ''),
+    key: item?.key || '',
+    value: item?.value || '',
+    sensitive: Boolean(item?.sensitive),
+  }
 }
 
 export default skillApi

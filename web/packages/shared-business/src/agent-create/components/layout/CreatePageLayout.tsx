@@ -1,5 +1,5 @@
 import { ReactNode, useRef } from 'react'
-import { Spin } from 'antd'
+import { Spin, InputNumber } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { AgentDrawer, AgentDrawerRef } from './Drawer'
@@ -8,9 +8,10 @@ import { UseScope } from '../shared/UseScope'
 import ChannelConfigContext from '../../context/ChannelConfigContext'
 import { useAgentCreateAdapter } from '../../adapters'
 import { useAgentFormStore } from '../../store'
-import { AGENT_MODES } from '../../constants'
+import { AGENT_MODES, isOpenClawCompatibleAgentType } from '../../constants'
 import { Chat, ChatRef } from '../preview/Chat'
 import { Completion, CompletionRef } from '../preview/Completion'
+import { UsageChannel } from '../config/UsageChannel'
 
 /** 页面头部配置 */
 export interface PageHeaderConfig {
@@ -73,12 +74,17 @@ export function CreatePageLayout({
 
   // 从 store 获取当前 agent_type
   const agentType = useAgentFormStore((state) => state.agent_type)
+  const sort = useAgentFormStore((state) => state.form_data.sort)
+  const updateField = useAgentFormStore((state) => state.updateField)
 
   // 从适配器获取平台配置中的 mode，用于选择预览组件
   const agentMode = adapter.getAgentConfig?.(agentType)?.mode || 'chat'
 
   // 判断是否显示使用范围（只有 console-react 有 GroupSelectComponent）
   const showUseScope = !!adapter.GroupSelectComponent
+
+  // 判断是否是 Openclaw 类型（Openclaw 不显示重新开始按钮）
+  const isOpenclaw = isOpenClawCompatibleAgentType(agentType)
 
   // 预览组件 ref，用于调用 restart 方法
   const chatRef = useRef<ChatRef>(null)
@@ -100,8 +106,8 @@ export function CreatePageLayout({
         <div className='h-14 flex items-center px-6 font-base text-primary border-b border-[#E9EEF7]'>{t('agent.config_title')}</div>
         <div className="flex-1 min-h-0 flex">
           {/* 第一列：平台配置 + 使用范围 */}
-          <div className={`flex-1 p-5 border-r ${ agentType === 'prompt' ? 'min-h-0 flex flex-col' : 'overflow-y-auto' }`}>
-            {/* <div className="h-6 flex items-center font-sm font-semibold mb-3">{t('app.connected_platform')}</div> */}
+          <div className={`flex-1 px-5 py-4 border-r overflow-y-auto`}>
+            {/* <div className="h-6 flex items-center font-sm font-medium mb-3">{t('app.connected_platform')}</div> */}
             {
               agentType === 'prompt' ? (
                 <AgentDrawer
@@ -111,15 +117,38 @@ export function CreatePageLayout({
                 />
               ) : (
                 <AgentDrawer
+                  className={ isOpenclaw ? '-mx-5 -my-3' : '' }
                   ref={drawerRef}
                   onSuccess={onSuccess}
                 />
               )
             }
-            
-            <div className="my-5 -mx-6 border-b border-[#E9EEF7]"></div>
+            {/* 排序字段 */}
             {showUseScope && (
               <>
+                <div className="mt-5 border-b "></div>
+                <div className="h-11 flex items-center gap-2">
+                  <div className="text-sm text-[#373A3D]">{t('agent.frontend_sort')}</div>
+                  <span className="text-xs text-disabled">
+                    {t('module.agent_sort_desc')}
+                  </span>
+                </div>
+                <InputNumber
+                  className="w-full"
+                  controls={false}
+                  precision={0}
+                  min={0}
+                  max={99999999}
+                  value={sort}
+                  onChange={(value) => updateField('sort', value ?? 0)}
+                  placeholder={t('form.input_placeholder')}
+                />
+                  
+              </>
+            )}
+            {showUseScope && (
+              <>
+              <div className="my-5 -mx-5 border-b "></div>
                 <div className="font-bold mb-3">{t('user.use_scope')}</div>
                 <UseScope />
               </>
@@ -127,8 +156,7 @@ export function CreatePageLayout({
           </div>
 
           {/* 第二列：应用配置区域 + 使用说明 */}
-          <div className="flex-1 p-5 overflow-y-auto">
-            <div className="text-sm font-semibold text-[#9CA3AF] mb-1.5">{t('agent.chat_enhance')}</div>
+          <div className="flex-1 px-5 py-2 overflow-y-auto">
             {initializing ? (
               <div className="flex items-center justify-center h-64">
                 <Spin />
@@ -144,24 +172,31 @@ export function CreatePageLayout({
               </div>
             )}
             <AgentGuide />
+            {agentType === 'openclaw' && <UsageChannel></UsageChannel> }
           </div>
         </div>
       </div>
 
       {/* 第三列：调试预览 */}
       <div className="w-1/3 border-l bg-white flex flex-col">
-        <div className='flex-none h-14 flex items-center justify-between px-6 font-base text-primary'>
-          <span>{t('app.debug_preview')}</span>
-          <Button type='link' className='px-0' onClick={handleRestart}>
-            <ReloadOutlined />
-            {t('common.restart')}
-          </Button>
-        </div>
-          {agentMode === AGENT_MODES.COMPLETION ? (
-            <Completion ref={completionRef} className="flex-1 min-h-0" />
-          ) : (
-            <Chat ref={chatRef} className="flex-1 min-h-0" hideTitle />
-          )}
+        {isOpenclaw && adapter.OpenClawPreviewComponent ? (
+          <adapter.OpenClawPreviewComponent className="flex-1 min-h-0" />
+        ) : (
+          <>
+            <div className='flex-none h-14 flex items-center justify-between px-6 font-base text-primary'>
+              <span>{t('app.debug_preview')}</span>
+              <Button type='link' className='px-0' onClick={handleRestart}>
+                <ReloadOutlined />
+                {t('common.restart')}
+              </Button>
+            </div>
+            {agentMode === AGENT_MODES.COMPLETION ? (
+              <Completion ref={completionRef} className="flex-1 min-h-0" />
+            ) : (
+              <Chat ref={chatRef} className="flex-1 min-h-0" hideTitle />
+            )}
+          </>
+        )}
       </div>
     </div>
   )

@@ -10,7 +10,6 @@ import {
 import { t } from "@/locales";
 import {
   Tree,
-  Input,
   Button,
   Dropdown,
   Progress,
@@ -19,12 +18,12 @@ import {
   Spin,
 } from "antd";
 import {
-  SearchOutlined,
   PlusOutlined,
   MoreOutlined,
   ReloadOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
 import type { TreeDataNode } from "antd";
 import { departmentApi, userApi } from "@/api";
 import { getPublicPath } from "@/utils/config";
@@ -37,6 +36,7 @@ import {
 import { INTERNAL_USER_STATUS_ALL } from "@/api/modules/user";
 import DepartmentAddDialog from "./DepartmentAddDialog";
 import { SvgIcon } from "@km/shared-components-react";
+import { OpenData } from "@/components/OpenData";
 
 // Types
 interface DepartmentNode {
@@ -76,6 +76,8 @@ export const DepartmentTree = forwardRef<
 >(({ syncFrom = ENTERPRISE_SYNC_FROM.DEFAULT, onNodeClick }, ref) => {
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState("");
+  const keywordRef = useRef(keyword);
+  keywordRef.current = keyword;
   const [treeData, setTreeData] = useState<DepartmentNode[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<(string | number)[]>([
     "root",
@@ -286,7 +288,7 @@ export const DepartmentTree = forwardRef<
       if (isSsoSync) {
         await searchSsoContacts();
       } else {
-        const filteredDepts = filterDepartments(treeData, keyword.trim());
+        const filteredDepts = filterDepartments(treeData, keywordRef.current.trim());
         setSearchDepartments(filteredDepts);
         await fetchDepartmentList();
       }
@@ -299,7 +301,6 @@ export const DepartmentTree = forwardRef<
     searchSsoContacts,
     fetchDepartmentList,
     fetchDepartmentTree,
-    keyword,
     treeData,
     filterDepartments,
   ]);
@@ -462,7 +463,7 @@ export const DepartmentTree = forwardRef<
       const isRoot = !data.did;
 
       return (
-        <div className="w-full flex items-center gap-2 group pr-2">
+        <div className="h-6 w-full flex items-center gap-2 group pr-2">
           <SvgIcon
             name="department"
             width="16px"
@@ -473,7 +474,12 @@ export const DepartmentTree = forwardRef<
             className="flex-1 w-0 text-gray-800 text-sm truncate"
             title={data.name}
           >
-            {data.name}
+            <OpenData
+              type="departmentName"
+              source={syncFrom}
+              openid={data.bind_value}
+              text={data.name}
+            />
           </div>
 
           {isSsoSync ? (
@@ -561,6 +567,7 @@ export const DepartmentTree = forwardRef<
       handleSyncDepartment,
       handleCommand,
       t,
+      syncFrom,
     ],
   );
 
@@ -607,13 +614,15 @@ export const DepartmentTree = forwardRef<
     <div className="h-full flex flex-col">
       {/* Search bar */}
       <div className="px-4 py-4 flex items-center gap-2">
-        <Input
+        <Search
+          mode="expanded"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onPressEnter={refresh}
+          onDebouncedChange={(val) => {
+            keywordRef.current = val;
+            setKeyword(val);
+            refresh();
+          }}
           placeholder={t("internal_user.organization.all_search_placeholder")}
-          prefix={<SearchOutlined className="text-gray-300" />}
-          allowClear
           className="flex-1"
         />
         {!isSsoSync && (
@@ -641,6 +650,7 @@ export const DepartmentTree = forwardRef<
           {/* 企业微信搜索时隐藏树；钉钉搜索时保持显示树并过滤 */}
           {!(isWecomSync && isSearch) && (
             <Tree
+              key={syncFrom}
               treeData={transformTreeData(
                 isSearch && !isWecomSync
                   ? filterDepartments(treeData, keyword.trim())
@@ -678,7 +688,12 @@ export const DepartmentTree = forwardRef<
                       className="flex-1 w-0 text-gray-800 text-sm truncate"
                       title={dept.name}
                     >
-                      {dept.name}
+                      <OpenData
+                        type="departmentName"
+                        source={syncFrom}
+                        openid={dept.bind_value}
+                        text={dept.name}
+                      />
                     </div>
                   </li>
                 ))}
@@ -693,7 +708,12 @@ export const DepartmentTree = forwardRef<
                     className="flex-1 w-0 text-gray-800 text-sm truncate"
                     title={isDingtalkSync ? member.name : member.nickname}
                   >
-                    {isDingtalkSync ? member.name : member.nickname}
+                    <OpenData
+                      type="userName"
+                      source={syncFrom}
+                      openid={member.bind_value}
+                      text={isDingtalkSync ? member.name : member.nickname}
+                    />
                   </div>
                 </li>
               ))}

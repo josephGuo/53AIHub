@@ -8,9 +8,9 @@ import type { MineTabKey } from "./types";
 export const MINE_TAB_LIST: { label: string; value: MineTabKey }[] = [
   { label: t("mine.my_favorites"), value: "fav" },
   { label: t("mine.recent_visit"), value: "visit" },
-  { label: "AI生成的", value: "ai" },
-  { label: "我上传的", value: "upload" },
-  { label: "我的录音", value: "audio" },
+  { label: t("mine.ai_generated"), value: "ai" },
+  { label: t("mine.uploaded"), value: "upload" },
+  { label: t("mine.recording"), value: "audio" },
 ];
 
 /**
@@ -54,7 +54,7 @@ export const createCreateMenuItems = (handlers: {
           src={getPublicPath("/images/export/new.png")}
           alt=""
         />
-        新建文件
+        {t("mine.new_file")}
       </div>
     ),
     onClick: handlers.onCreateFile,

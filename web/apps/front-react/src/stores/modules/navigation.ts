@@ -47,7 +47,9 @@ const CACHE_KEYS = {
   NAVIGATION_LIST: 'navigation_list'
 }
 
-const cacheNavigations = JSON.parse(localStorage.getItem(CACHE_KEYS.NAVIGATION_LIST) || '[]')
+const cacheRaw = JSON.parse(localStorage.getItem(CACHE_KEYS.NAVIGATION_LIST) || 'null')
+const cacheNavigations = Array.isArray(cacheRaw) ? cacheRaw : (cacheRaw?.list || [])
+const cacheHasKnowledge = typeof cacheRaw?.hasKnowledge === 'boolean' ? cacheRaw.hasKnowledge : false
 
 interface NavigationState {
   navigations: Navigation.State[]
@@ -56,9 +58,9 @@ interface NavigationState {
   toolkitNavigation: Partial<Navigation.State>
   homeNavigation: Partial<Navigation.State>
   knowledgeNavigation: Partial<Navigation.State>
+  skillsNavigation: Partial<Navigation.State>
   loading: boolean
   hasKnowledge: boolean
-  hasWorkBench: boolean
   fetchNavigations: () => Promise<Navigation.State[]>
   getNavState: (jump_path: string) => Partial<Navigation.State> | null
 }
@@ -70,9 +72,9 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   toolkitNavigation: cacheNavigations.find((item: Navigation.State) => item.jump_path === '/toolkit') || {},
   homeNavigation: cacheNavigations.find((item: Navigation.State) => item.jump_path === '/index') || {},
   knowledgeNavigation: cacheNavigations.find((item: Navigation.State) => item.jump_path === '/knowledge') || {},
+  skillsNavigation: cacheNavigations.find((item: Navigation.State) => item.jump_path === '/skills') || {},
   loading: false,
-  hasKnowledge: false,
-  hasWorkBench: false,
+  hasKnowledge: cacheHasKnowledge,
 
   fetchNavigations: async () => {
     set({ loading: true })
@@ -85,14 +87,12 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
 
       if (!list.length) list = INIT_DATA_LIST
 
-      const hasWorkBench = checkVersion(VERSION_MODULE.WORKBENCH)
       const hasKnowledge = checkVersion(VERSION_MODULE.KNOWLEDGE_BASE)
       const hasAgent = checkVersion(VERSION_MODULE.AGENT)
       const hasPrompt = checkVersion(VERSION_MODULE.PROMPT)
       const hasToolkit = checkVersion(VERSION_MODULE.AI_LINK)
 
       list = list.filter((item: Navigation.State) => {
-        if (item.jump_path === '/index' || item.jump_path === '/skills') return hasWorkBench
         if (item.jump_path === '/knowledge') return hasKnowledge
         if (item.jump_path === '/agent') return hasAgent
         if (item.jump_path === '/prompt') return hasPrompt
@@ -100,10 +100,12 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
         return true
       })
 
-      return list
+      return { list, hasKnowledge, hasAgent, hasPrompt, hasToolkit }
     }
 
-    const list = await cache.getOrFetch(CACHE_KEYS.NAVIGATION_LIST, fetchData)
+    const result = await cache.getOrFetch(CACHE_KEYS.NAVIGATION_LIST, fetchData)
+    const list = result.list
+    const hasKnowledge = result.hasKnowledge ?? checkVersion(VERSION_MODULE.KNOWLEDGE_BASE)
     const navigations = list.map((item: Navigation.State) => getFormatData(item))
 
     const agentNavigation = navigations.find((item: Navigation.State) => item.jump_path === '/agent') || {}
@@ -111,7 +113,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     const toolkitNavigation = navigations.find((item: Navigation.State) => item.jump_path === '/toolkit') || {}
     const knowledgeNavigation = navigations.find((item: Navigation.State) => item.jump_path === '/knowledge') || {}
     const homeNavigation = navigations.find((item: Navigation.State) => item.jump_path === '/index') || {}
-
+    const skillsNavigation = navigations.find((item: Navigation.State) => item.jump_path === '/skills') || {}
     set({
       loading: false,
       navigations,
@@ -120,8 +122,8 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
       toolkitNavigation,
       knowledgeNavigation,
       homeNavigation,
-      hasKnowledge: !!knowledgeNavigation.status,
-      hasWorkBench: !!homeNavigation.status,
+      skillsNavigation,
+      hasKnowledge: hasKnowledge && !!knowledgeNavigation.status,
     })
 
     // Update i18n translations for module names, do not overwrite other module fields
@@ -131,10 +133,12 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
         prompt: (promptNavigation as Navigation.State).name,
         toolbox: (toolkitNavigation as Navigation.State).name,
         index: (homeNavigation as Navigation.State).name,
+        skill: (skillsNavigation as Navigation.State).name
       }
     }, true, true)
 
-    localStorage.setItem(CACHE_KEYS.NAVIGATION_LIST, JSON.stringify(navigations))
+    // 缓存完整结果（包含版本检查结果）
+    localStorage.setItem(CACHE_KEYS.NAVIGATION_LIST, JSON.stringify({ list: navigations, hasKnowledge }))
     return navigations
   },
 

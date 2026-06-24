@@ -1,12 +1,15 @@
 const formatUrl = (url: string = ''): string => {
   const { origin } = window.location
-  let formattedUrl = ''
-  if (url.startsWith('http')) {
-    formattedUrl = url
-  } else {
-    formattedUrl = origin + url
+  const trimmedUrl = decodeURIComponent(url.trim())
+
+  if (!trimmedUrl) return origin.replace(/\/$/, '')
+  if (/^https?:\/\//i.test(trimmedUrl)) return trimmedUrl.replace(/\/$/, '')
+  if (trimmedUrl.startsWith('//')) {
+    return `${window.location.protocol}${trimmedUrl}`.replace(/\/$/, '')
   }
-  return formattedUrl.replace(/\/$/, '')
+  if (trimmedUrl.startsWith('/')) return `${origin}${trimmedUrl}`.replace(/\/$/, '')
+
+  return `${window.location.protocol}//${trimmedUrl}`.replace(/\/$/, '')
 }
 
 const getConfigValue = (windowKey: string, envKey: string, defaultValue: string = ''): string => {
@@ -67,4 +70,3 @@ export const getPublicPath = (path: string): string => {
   const base = (window as any).$getPublicPath?.('') || '/'
   return base + '/' + path.replace(/^\//, '')
 }
-

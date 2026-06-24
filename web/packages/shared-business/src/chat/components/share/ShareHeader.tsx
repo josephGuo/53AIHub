@@ -31,7 +31,7 @@ function ShareHeaderInner({
 
   return (
     <header className="flex-none sticky top-0 z-10 bg-white border-b">
-      <div className="h-[70px] w-11/12 lg:w-4/5 max-w-[800px] mx-auto flex items-center justify-between">
+      <div className="h-[70px] flex items-center justify-between">
         <Checkbox checked={selectAll} onChange={onSelectAll}>
           {selectAll ? (t("action.unselect_all") || "取消全选") : (t("action.select_all") || "全选")}
         </Checkbox>

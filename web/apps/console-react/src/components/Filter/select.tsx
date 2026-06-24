@@ -1,4 +1,3 @@
-import { Button } from 'antd'
 import { Dropdown } from '@km/shared-components-react'
 import { DownOutlined } from '@ant-design/icons'
 import { useMemo, useCallback } from 'react'
@@ -83,7 +82,7 @@ export function SelectFilter({
         <div style={{ maxHeight: 250, overflow: 'auto' }}>{menu}</div>
       )}
     >
-      <div className="!border-none !outline-none h-9 flex items-center px-5 gap-1.5 rounded-2xl bg-[#F6F7F8] text-xs text-[#1D1E1F] cursor-pointer">
+      <div className="!border-none !outline-none h-9 flex items-center px-5 gap-1.5 rounded-2xl bg-[#F6F7F8] text-xs text-primary cursor-pointer">
         {currentLabel}
         <DownOutlined style={{ fontSize: 14, color: '#9EA5B6' }} />
       </div>

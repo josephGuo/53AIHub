@@ -1,8 +1,8 @@
 import React, {
-  useState,
-  forwardRef,
-  useImperativeHandle,
-  useRef,
+    useState,
+    forwardRef,
+    useImperativeHandle,
+    useRef,
 } from "react";
 import { Modal, Input, Button, Form, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -253,7 +253,7 @@ export const QuickerDialog = forwardRef<QuickerDialogRef, QuickerDialogProps>(
                         color="#a1a5af"
                       />
                     </div>
-                    <div className="flex-1 text-sm text-[#1D1E1F] truncate">
+                    <div className="flex-1 text-sm text-primary truncate">
                       {item.name}
                     </div>
                     {item.prompt_id && (

@@ -166,15 +166,7 @@ export const RelateAgentsDialog = forwardRef<RelateAgentsDialogRef, Props>(
                 <Search
                   value={filterForm.keyword}
                   placeholder={t("module.ai_toolbox_search_placeholder")}
-                  onInput={(val) => {
-                    filterFormRef.current = {
-                      ...filterFormRef.current,
-                      keyword: val,
-                    };
-                    setFilterForm((prev) => ({ ...prev, keyword: val }));
-                    refresh();
-                  }}
-                  onChange={(val) => {
+                  onDebouncedChange={(val) => {
                     filterFormRef.current = {
                       ...filterFormRef.current,
                       keyword: val,

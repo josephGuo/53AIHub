@@ -1,16 +1,12 @@
 import {
   Table,
   Button,
-  Input,
   Select,
   Switch,
   Modal,
-  message, Divider,
+  message,
   Drawer
 } from "antd";
-import {
-  SearchOutlined
-} from "@ant-design/icons";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { t } from "@/locales";
 import { useNavigate } from "react-router-dom";
@@ -22,28 +18,28 @@ import { channelApi } from "@/api/modules/channel";
 import {
   channels,
   getProvidersByAuth,
-  getProviderByAgentId,
-  getAgentByAgentType,
-  AgentType,
+  getProviderByAgentId, AgentType
 } from "@/constants/platform/config";
 import { AGENT_APP_OPTIONS } from "@/constants/platform/agent";
 import { VERSION_MODULE } from "@/constants/enterprise";
 import { GROUP_TYPE } from "@/constants/group";
 import { PageLayoutContent } from "@/components/PageLayout";
 import { GroupDialog } from "@/components/GroupDialog";
-import { useVersion } from "@/hooks";
+import { GroupTabs, type GroupTabsRef } from "@/components/GroupTabs";
+import { useListState, useVersion } from "@/hooks";
 import { eventBus } from "@km/shared-utils";
 import {
-  useAgentFormStore,
   CreateAgentDialog,
   AGENT_TYPE_OPTIONS,
-  createPlatformsByType,
-  getInitialFormData,
+  createPlatformsByType, getOpenClawCompatibleAgentMetadata,
+  isOpenClawCompatibleAgentType
 } from "@km/shared-business/agent-create";
 import type { AgentPlatformOption, CreateAgentDialogResult } from "@km/shared-business/agent-create";
 import { consoleAgentAdapter } from "@/adapters/agent-create-adapter";
-import { SvgIcon } from "@km/shared-components-react";
-import { img_host } from "@/utils/config";
+import { SvgIcon, Search } from "@km/shared-components-react";
+import { img_host, getPublicPath } from "@/utils/config";
+import { buildOpenClawEnterpriseAgentPayload } from "./openclaw-create";
+import { buildAgentListParams, createAgentPlatformFilterOptions } from "./platform-filter";
 
 // 获取默认的注册用户和内部用户分组 ID
 const getDefaultGroupIds = async () => {
@@ -70,7 +66,7 @@ interface ProviderItem {
 }
 
 interface FilterForm {
-  group: string;
+  group_id: number;  // 单选
   platform: string;
   type: string;
   keyword: string;
@@ -81,22 +77,34 @@ interface FilterForm {
 interface AgentState extends AgentData {
   user_group_names: string[];
   internal_members: string[];
+  group_name: string;
 }
 
 export function AgentPage() {
   const navigate = useNavigate();
   const dialogRef = useRef<any>(null);
   const uploadImageRef = useRef<{ trigger: () => void }>(null);
+  const groupTabsRef = useRef<GroupTabsRef>(null);
 
-  const [filterForm, setFilterForm] = useState<FilterForm>({
-    group: "",
+  // 默认状态（稳定引用）
+  const defaultFilterForm = useMemo<FilterForm>(() => ({
+    group_id: 0,  // 0 表示全部
     platform: "",
     type: "",
     keyword: "",
     page: 1,
     page_size: 10,
-  });
-  const filterFormRef = useRef(filterForm);
+  }), []);
+
+  // 使用 useListState 管理 URL 持久化状态
+  const { state: filterForm, stateRef: filterFormRef, updateState } = useListState<FilterForm>(
+    defaultFilterForm,
+    {
+      urlPrefix: 'agent_',
+      searchFields: ['keyword', 'group_id', 'platform', 'type'],
+    }
+  );
+
   const [allTotal, setAllTotal] = useState(0);
   const [tableData, setTableData] = useState<AgentState[]>([]);
   const [tableTotal, setTableTotal] = useState(0);
@@ -104,7 +112,6 @@ export function AgentPage() {
   const [addVisible, setAddVisible] = useState(false);
   const [legacyAddVisible, setLegacyAddVisible] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | undefined>(undefined);
-  const [groupSelectOpen, setGroupSelectOpen] = useState(false);
   const [subscriptionList, setSubscriptionList] = useState<SubscriptionItem[]>(
     [],
   );
@@ -132,31 +139,22 @@ export function AgentPage() {
 
   // 使用 ref 存储最新数据，供 loadListData 使用
   const subscriptionListRef = useRef<SubscriptionItem[]>([]);
+  const groupListRef = useRef<Group[]>([]);
   const internalGroupOptionsRef = useRef<Record<number, string>>({});
   const authProvidersRef = useRef<ProviderItem[]>([]);
 
-  // 更新 filterFormRef
-  useEffect(() => {
-    filterFormRef.current = filterForm;
-  }, [filterForm]);
+  // 标记是否已初始化（避免初始化时重复请求）
+  const initializedRef = useRef(false);
 
   // 更新 authProvidersRef
   useEffect(() => {
     authProvidersRef.current = authProviders;
   }, [authProviders]);
 
-  const openDialog = () => {
-    setGroupSelectOpen(false);
-    setTimeout(() => {
-      dialogRef.current?.open();
-    }, 100);
-  };
-
-  // 类型选项使用公共配置
   const types = AGENT_TYPE_OPTIONS;
 
   // 使用公共配置，并根据权限过滤
-  const platformsByType = useMemo<Record<string, AgentPlatformOption[]>>(() => {
+  const platformsByType = useMemo<AgentPlatformOption[]>(() => {
     // 构建权限映射
     const authMap = new Map(
       authProviders.map((provider) => [
@@ -176,7 +174,7 @@ export function AgentPage() {
     };
 
     // 获取公共配置的平台列表
-    const basePlatforms = createPlatformsByType(img_host);
+    const basePlatforms = createPlatformsByType(img_host, getPublicPath);
     return filterByAuth(basePlatforms);
   }, [authProviders]);
 
@@ -215,7 +213,7 @@ export function AgentPage() {
     await checkAuth(data.value as AgentType);
     navigate({
       pathname: "/agent/create",
-      search: `?type=${data.value}&group_id=${+filterForm.group > 0 ? filterForm.group : ""}&is_new=true&channel_type=${data.channel_type}&title=${data.label}`,
+      search: `?type=${data.value}&group_id=${filterForm.group_id.length > 0 ? filterForm.group_id[0] : ""}&is_new=true&channel_type=${data.channel_type}&title=${data.label}`,
     } as any);
     setLegacyAddVisible(false);
   };
@@ -236,6 +234,7 @@ export function AgentPage() {
     const list = await groupApi.list({
       params: { group_type: GROUP_TYPE.AGENT },
     });
+    groupListRef.current = list;
     setGroupList(list);
   };
 
@@ -273,17 +272,17 @@ export function AgentPage() {
     try {
       const currentFilter = filterFormRef.current;
       const { count = 0, agents = [] } = await agentApi.list({
-        params: {
-          group_id: currentFilter.group,
-          channel_types: currentFilter.platform,
-          agent_types: currentFilter.type,
-          keyword: currentFilter.keyword,
-          offset: (currentFilter.page - 1) * currentFilter.page_size,
-          limit: currentFilter.page_size,
-        },
+        params: buildAgentListParams(currentFilter),
       });
 
       setTableTotal(count);
+
+      // 使用 ref 中的分组数据构建名称映射
+      const currentGroupList = groupListRef.current;
+      const groupOpts: Record<number, string> = {};
+      currentGroupList.forEach((item: Group) => {
+        groupOpts[item.group_id] = item.group_name;
+      });
 
       // 使用 ref 中的最新数据，而不是 state
       const currentSubscriptionList = subscriptionListRef.current;
@@ -294,6 +293,7 @@ export function AgentPage() {
         agent.user_group_ids = agent.user_group_ids || [];
         agent.user_group_names = [];
         agent.internal_members = [];
+        agent.group_name = groupOpts[agent.group_id] || "";
         agent.user_group_ids.forEach((value) => {
           const subscription = currentSubscriptionList.find(
             (row) => row.group_id === value,
@@ -316,44 +316,14 @@ export function AgentPage() {
     loadAllTotal();
   };
 
-  const refresh = useCallback(async () => {
-    // 重置页码并刷新数据
-    filterFormRef.current = { ...filterFormRef.current, page: 1 };
-    setFilterForm((prev) => ({ ...prev, page: 1 }));
-    await loadListData();
-  }, []);
-
-  // 带参数变更的刷新，避免多次 setFilterForm
-  const refreshWithFilter = useCallback(
-    async (key: keyof FilterForm, value: string) => {
-      filterFormRef.current = {
-        ...filterFormRef.current,
-        [key]: value,
-        page: 1,
-      };
-      setFilterForm((prev) => ({ ...prev, [key]: value, page: 1 }));
-      await loadListData();
-    },
-    [],
-  );
+  // Refresh - 只更新状态，数据加载由 useEffect 监听
+  const refresh = useCallback(() => {
+    updateState({ page: 1, group_id: 0 });
+  }, [updateState]);
 
   const handleGroupChange = (result: { value: Group[] }) => {
     setGroupList(result.value);
-    filterFormRef.current = { ...filterFormRef.current, group: "", page: 1 };
-    setFilterForm((prev) => ({ ...prev, group: "", page: 1 }));
-    loadListData();
-  };
-
-  const onTableSizeChange = (size: number) => {
-    filterFormRef.current = { ...filterFormRef.current, page: 1, page_size: size };
-    setFilterForm((prev) => ({ ...prev, page: 1, page_size: size }));
-    loadListData();
-  };
-
-  const onTableCurrentChange = (current: number) => {
-    filterFormRef.current = { ...filterFormRef.current, page: current };
-    setFilterForm((prev) => ({ ...prev, page: current }));
-    loadListData();
+    updateState({ group_id: 0, page: 1 });
   };
 
   const onRowClick = (row: AgentState) => {
@@ -421,17 +391,18 @@ export function AgentPage() {
   const handleCreateConfirm = async (data: CreateAgentDialogResult) => {
     await checkAuth(data.agentType as AgentType);
 
-    // Openclaw 类型：在弹框确定时调用 API 创建
-    if (data.agentType === 'openclaw') {
+    // OpenClaw 兼容族：在弹框确定时调用 API 创建
+    if (isOpenClawCompatibleAgentType(data.agentType)) {
       try {
+        const metadata = getOpenClawCompatibleAgentMetadata(data.agentType)
         // 获取或创建 channel
         const channelList = await channelApi.listv2();
-        const existingChannel = channelList.find((item: any) => item.type === 1014);
+        const existingChannel = channelList.find((item: any) => item.type === metadata.channelType);
         let channelId = existingChannel?.channel_id;
 
         if (!channelId) {
           const res = await channelApi.create({
-            type: 1014,
+            type: metadata.channelType,
             name: t('agent.personal_agent_channel'),
             models: 'openclaw-ws',
           });
@@ -442,95 +413,38 @@ export function AgentPage() {
 
         // 创建智能体
         const result = await agentApi.save({
-          data: {
-            agent_type: 2,
-            name: data.name,
-            description: data.description,
-            logo: data.logo,
-            group_id: data.groupId || 0,
-            channel_type: 1014,
-            model: 'openclaw-ws',
-            prompt: '',
-            tools: [],
-            use_cases: [],
-            user_group_ids: internalGroupIds,
-            subscription_group_ids: subscriptionGroupIds,
-            configs: {
-              completion_params: {
-                temperature: 0.2,
-                top_p: 0.75,
-                presence_penalty: 0.5,
-                frequency_penalty: 0.5,
-              },
-            },
-            custom_config: {
-              agent_type: 'openclaw',
-              agent_mode: 'assistant',
-              provider_id: 0,
-              channel_id: channelId || 0,
-              tencent_bot_id: '',
-              coze_workspace_id: '',
-              coze_bot_id: '',
-              coze_bot_url: '',
-              app_builder_bot_id: '',
-              chat53ai_agent_id: '',
-              channel_config: {},
-            },
-            settings: {
-              opening_statement: '',
-              suggested_questions: [],
-              file_parse: { enable: false },
-              image_parse: { vision: false, enable: false },
-              relate_agents: [],
-              input_fields: [],
-              output_fields: [],
-            },
-            enable: true,
-          }
+          data: buildOpenClawEnterpriseAgentPayload({
+            data,
+            channelId,
+            subscriptionGroupIds,
+            internalGroupIds,
+          })
         })
 
         navigate({
           pathname: '/agent/create-v2',
-          search: `?type=openclaw&agent_id=${result.agent_id}&is_new=false`,
+          search: `?type=${metadata.agentType}&agent_id=${result.agent_id}&is_new=false`,
         } as any)
       } catch (error) {
-        console.error('创建 Openclaw 智能体失败:', error)
+        console.error('创建 OpenClaw 兼容智能体失败:', error)
       }
       return
     }
-
-    // 其他类型：更新 store 状态，在编辑页创建
-    const agentConfig = getAgentByAgentType(data.agentType as AgentType);
-    const { subscriptionGroupIds, internalGroupIds } = await getDefaultGroupIds();
-
-    useAgentFormStore.setState({
-      is_new: true,
-      agent_type: data.agentType,
-      agent_id: 0,
-      form_data: {
-        ...getInitialFormData(),
-        logo: data.logo,
-        name: data.name,
-        group_id: data.groupId || 0,
-        description: data.description,
-        channel_type: agentConfig?.channelType || 0,
-        user_group_ids: internalGroupIds,
-        subscription_group_ids: subscriptionGroupIds,
-        custom_config: {
-          ...getInitialFormData().custom_config,
-          agent_mode: data.agent_mode,
-          agent_type: data.agentType,
-        },
-      },
-    });
-    useAgentFormStore.getState().setAgentData({
-      ...useAgentFormStore.getState().agent_data,
-      backend_agent_type: data.backend_agent_type,
+    // 其他类型：通过 URL 参数传递弹框数据，由编辑页初始化
+    const params = new URLSearchParams({
+      type: data.agentType,
+      is_new: 'true',
     })
+    if (data.name) params.set('name', data.name)
+    if (data.description) params.set('description', data.description)
+    if (data.logo) params.set('logo', data.logo)
+    if (data.groupId) params.set('group_id', String(data.groupId))
+    if (data.agent_mode) params.set('agent_mode', data.agent_mode)
+    if (data.backend_agent_type) params.set('backend_agent_type', String(data.backend_agent_type))
 
     navigate({
       pathname: "/agent/create-v2",
-      search: `?type=${data.agentType}&is_new=true`,
+      search: `?${params.toString()}`,
     } as any);
     setAddVisible(false);
   };
@@ -541,11 +455,10 @@ export function AgentPage() {
     is_new = false,
   ) => {
     await checkAuth(value as AgentType);
-    loadListData();
 
     const searchParams = data.agent_id
       ? `?type=${data.agent_type}&agent_id=${data.agent_id}&is_new=${is_new}`
-      : `?type=${value}&group_id=${+filterForm.group > 0 ? filterForm.group : ""}&is_new=${is_new}`;
+      : `?type=${value}&is_new=${is_new}`;
 
     navigate({
       pathname: "/agent/create-v2",
@@ -565,20 +478,29 @@ export function AgentPage() {
   useEffect(() => {
     const init = async () => {
       await loadInternalGroupList();
+      initializedRef.current = true;
       loadListData();
     };
     init();
     loadProviderList();
-    eventBus.on("user-login-success", loadListData);
-    eventBus.on("agent-create", loadListData);
+    eventBus.on("user-login-success", refresh);
+    eventBus.on("agent-create", refresh);
     eventBus.on("agent-update", loadListData);
 
     return () => {
-      eventBus.off("user-login-success", loadListData);
-      eventBus.off("agent-create", loadListData);
+      eventBus.off("user-login-success", refresh);
+      eventBus.off("agent-create", refresh);
       eventBus.off("agent-update", loadListData);
     };
   }, []);
+
+  // 监听 filterForm 变化，自动加载数据
+  const filterKey = JSON.stringify(filterForm);
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    loadListData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterKey]);
 
   const columns = [
     {
@@ -597,23 +519,15 @@ export function AgentPage() {
             }}
           />
           <div className="flex-1 w-0 text-sm flex flex-col">
-            <div className="text-[#2563EB] truncate">{row.name || "--"}</div>
+            <div className="text-primary truncate">{row.name || "--"}</div>
             {row.description && (
-              <div className="text-xs text-[#808080] truncate">
+              <div className="text-xs text-placeholder truncate">
                 {row.description}
               </div>
             )}
           </div>
         </div>
       ),
-    },
-    {
-      title: t("module.platform_v2"),
-      dataIndex: "agent_type",
-      key: "agent_type",
-      width: 140,
-      render: (_: any, row: AgentState) =>
-        t(`agent_app.${row.agent_type}`) || "--",
     },
     {
       title: t("type"),
@@ -628,25 +542,33 @@ export function AgentPage() {
       },
     },
     {
+      title: t("module.platform_v2"),
+      dataIndex: "agent_type",
+      key: "agent_type",
+      width: 140,
+      render: (_: any, row: AgentState) =>
+        t(`agent_app.${row.agent_type}`) || "--",
+    },
+    {
+      title: t("common.group"),
+      dataIndex: "group_name",
+      key: "group_name",
+      width: 140,
+      ellipsis: true,
+      render: (name: string) => (
+        <span className={!name ? "text-placeholder" : ""}>{name || "--"}</span>
+      ),
+    },
+    {
       title: t("usage_range"),
-      dataIndex: "usage_range",
       key: "usage_range",
       width: 180,
       ellipsis: true,
       render: (_: any, row: AgentState) => (
-        <div>
-          <div
-            className={`whitespace-nowrap truncate ${!row.user_group_names.length ? "text-[#999]" : ""}`}
-          >
-            <span className="text-[#999]">{t("register_user.title")}：</span>
-            {row.user_group_names.join("、") || "--"}
-          </div>
-          <div
-            className={`whitespace-nowrap truncate ${!row.internal_members.length ? "text-[#999]" : ""}`}
-          >
-            <span className="text-[#999]">{t("internal_user.title")}：</span>
-            {row.internal_members.join("、") || "--"}
-          </div>
+        <div
+          className={`whitespace-nowrap truncate ${!row.internal_members?.length ? "text-placeholder" : ""}`}
+        >
+          {row.internal_members?.join("、") || "--"}
         </div>
       ),
     },
@@ -654,7 +576,7 @@ export function AgentPage() {
       title: t("action_enable"),
       dataIndex: "enable",
       key: "enable",
-      width: 80,
+      width: 100,
       render: (_: any, row: AgentState) => (
         <div onClick={(e) => e.stopPropagation()}>
           <Switch
@@ -671,14 +593,15 @@ export function AgentPage() {
     {
       title: t("operation"),
       key: "operation",
-      width: 120,
-      align: "right" as const,
+      width: 100,
+      align: "right",
+      fixed: "end",
       render: (_: any, row: AgentState) => (
         <>
           <Button
             type="text"
             icon={<SvgIcon name="edit" />}
-            className="invisible group-hover:visible hover:!text-[#2563EB]"
+            className="invisible group-hover:visible hover:!text-brand"
             onClick={(e) => {
               e.stopPropagation();
               onAgentAdd(row.agent_type, row);
@@ -688,7 +611,7 @@ export function AgentPage() {
             type="text"
             danger
             icon={<SvgIcon name="delete" />}
-            className="invisible group-hover:visible hover:!text-[#FA5151]"
+            className="invisible group-hover:visible hover:!text-tag-red"
             onClick={(e) => {
               e.stopPropagation();
               onAgentDelete(row);
@@ -699,7 +622,10 @@ export function AgentPage() {
     },
   ];
 
-  const channelOptions = Object.values(channels);
+  const channelOptions = useMemo(
+    () => createAgentPlatformFilterOptions(Object.values(channels), platformsByType),
+    [platformsByType],
+  );
 
   // 分组选项
   const groupOptions = useMemo(() =>
@@ -720,54 +646,43 @@ export function AgentPage() {
   const filterBar = (
     <>
       <div className="flex flex-1 w-0 gap-2">
-        <Select
-          open={groupSelectOpen}
-          onOpenChange={setGroupSelectOpen}
-          value={filterForm.group || undefined}
-          placeholder={t("all")}
-          className="flex-none w-[150px]"
-          onChange={(value) => refreshWithFilter("group", value || "")}
-          prefix={
-            <span className="text-black mr-2">
-              {t("internal_user.group.title")}:
-            </span>
-          }
-          styles={{ popup: { root: { width: "204px" } } }}
-          popupRender={(menu) => (
-            <>
-              {menu}
-              <Divider style={{ margin: "8px 0" }} />
-              <div className="flex justify-between items-center mx-2 px-1 py-2 sticky bottom-0 bg-white z-10">
-                <div
-                  className="cursor-pointer text-[#5A6D9E] text-sm hover:opacity-80"
-                  onClick={openDialog}
-                >
-                  {t("group_management")}
-                </div>
-              </div>
-            </>
-          )}
-        >
-          {filterForm.group && (
-            <Select.Option value="">{t("all_group")}</Select.Option>
-          )}
-          {(groupList || []).map((item) => (
-            <Select.Option
-              key={item.group_id}
-              value={String(item.group_id)}
-              className="bg-[#ffffff]"
-            >
-              {item.group_name}
-            </Select.Option>
-          ))}
-        </Select>
+        <div className="flex-none w-[150px]">
+          <GroupTabs
+            ref={groupTabsRef}
+            type="dropdown"
+            single
+            groupType={GROUP_TYPE.AGENT}
+            value={filterForm.group_id}
+            onChange={(id) => {
+              updateState({ group_id: Number(id) || 0 });
+            }}
+            onOptionsChange={() => loadListData()}
+          />
+        </div>
 
+        <Select
+          value={filterForm.type || undefined}
+          className="flex-none w-[160px]"
+          allowClear
+          placeholder={t("all")}
+          onChange={(value) => updateState({ type: value || "" })}
+          prefix={<span className="text-black mr-2">{t("type")}:</span>}
+        >
+          {filterForm.type && (
+            <Select.Option value="">{t("all_type")}</Select.Option>
+          )}
+          <Select.Option value="1">
+            {t("agent_type_completion_v2")}
+          </Select.Option>
+          <Select.Option value="0">{t("agent_type_chat_v2")}</Select.Option>
+          <Select.Option value="2">{t("agent_type.assistant")}</Select.Option>
+        </Select>
         <Select
           value={filterForm.platform || undefined}
           className="flex-none w-[160px]"
           allowClear
           placeholder={t("all")}
-          onChange={(value) => refreshWithFilter("platform", value || "")}
+          onChange={(value) => updateState({ platform: value || "" })}
           prefix={
             <span className="text-black mr-2">
               {t("module.platform_v2")}:
@@ -781,48 +696,24 @@ export function AgentPage() {
           )}
           {channelOptions.map((item) => (
             <Select.Option
-              key={item.label}
-              value={
-                item.channelType === 0
-                  ? "1,3,44,36"
-                  : String(item.channelType)
-              }
+              key={item.value}
+              value={item.value}
             >
               {item.label}
             </Select.Option>
           ))}
         </Select>
-
-        <Select
-          value={filterForm.type || undefined}
-          className="flex-none w-[160px]"
-          allowClear
-          placeholder={t("all")}
-          onChange={(value) => refreshWithFilter("type", value || "")}
-          prefix={<span className="text-black mr-2">{t("type")}:</span>}
-        >
-          {filterForm.type && (
-            <Select.Option value="">{t("all_type")}</Select.Option>
-          )}
-          <Select.Option value="1">
-            {t("agent_type_completion_v2")}
-          </Select.Option>
-          <Select.Option value="0">{t("agent_type_chat_v2")}</Select.Option>
-          <Select.Option value="2">{t("agent_type.assistant")}</Select.Option>
-        </Select>
+        <div>
+          <Search
+            mode="expanded"
+            value={filterForm.keyword}
+            debounceMs={300}
+            onDebouncedChange={(val) => updateState({ keyword: val })}
+            placeholder={t("agent.name_v2")}
+          />
+        </div>
       </div>
       <div className="flex-none flex items-center gap-3 ml-8">
-        <Input
-          value={filterForm.keyword}
-          onChange={(e) => {
-            setFilterForm((prev) => ({ ...prev, keyword: e.target.value }));
-          }}
-          onBlur={() => refresh()}
-          onPressEnter={() => refresh()}
-          allowClear
-          prefix={<SearchOutlined />}
-          placeholder={t("agent.name_v2")}
-        />
         <Button
           type="primary"
           onClick={() => {
@@ -831,18 +722,8 @@ export function AgentPage() {
             }
           }}
         >
-          {t("action_add")}
+          {t("action.add")}
         </Button>
-        {/* <Button
-          icon={<PlusOutlined />}
-          onClick={() => {
-            if (guardAgentVersion()) {
-              setLegacyAddVisible(true);
-            }
-          }}
-        >
-          旧添加
-        </Button> */}
       </div>
     </>
   );
@@ -861,11 +742,7 @@ export function AgentPage() {
           showSizeChanger: true,
           showTotal: (total) => t("table_footer_text", { total }),
           onChange: (page, pageSize) => {
-            if (pageSize !== filterForm.page_size) {
-              onTableSizeChange(pageSize);
-            } else {
-              onTableCurrentChange(page);
-            }
+            updateState({ page, page_size: pageSize });
           },
         }}
         onRow={(record) => ({
@@ -917,7 +794,7 @@ export function AgentPage() {
         <ul className="w-full min-h-[300px] overflow-y-auto">
           {filteredAgentOptions.map((item, itemIndex) => (
             <li key={itemIndex}>
-              <h4 className="text-sm text-[#939499]">{t(item.title)}</h4>
+              <h4 className="text-sm text-hint">{t(item.title)}</h4>
               <ul className="flex flex-col gap-3 pt-4 pb-6">
                 {item.filteredChildren.map((row) => (
                   <li
@@ -933,7 +810,7 @@ export function AgentPage() {
                           "/images/default_logo.png";
                       }}
                     />
-                    <div className="flex-1 text-base text-[#1D1E1F] truncate">
+                    <div className="flex-1 text-base text-primary truncate">
                       {t(row.label)}
                     </div>
                     <Button

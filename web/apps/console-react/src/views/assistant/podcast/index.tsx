@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Switch } from "antd";
 import { Layout } from "@/components/Layout";
 import { Header } from "@/components/Header";
@@ -17,30 +17,30 @@ export default function Podcast() {
           <div className="border rounded-lg p-4">
             <div className="flex items-center justify-between gap-2.5">
               <div className="size-6"></div>
-              <div className="flex-1 text-sm font-medium text-[#1D1E1F]">{t('podcast.document_qa')}</div>
+              <div className="flex-1 text-sm font-medium text-primary">{t('podcast.document_qa')}</div>
               <Switch />
             </div>
-            <p className="text-xs text-[#999999] mt-3">
+            <p className="text-xs text-placeholder mt-3">
               {t('podcast.document_qa_desc')}
             </p>
           </div>
           <div className="border rounded-lg p-4">
             <div className="flex items-center justify-between gap-2.5">
               <div className="size-6"></div>
-              <div className="flex-1 text-sm font-medium text-[#1D1E1F]">{t('podcast.knowledge_extraction')}</div>
+              <div className="flex-1 text-sm font-medium text-primary">{t('podcast.knowledge_extraction')}</div>
               <Switch />
             </div>
-            <p className="text-xs text-[#999999] mt-3">
+            <p className="text-xs text-placeholder mt-3">
               {t('podcast.knowledge_extraction_desc')}
             </p>
           </div>
           <div className="border rounded-lg p-4">
             <div className="flex items-center justify-between gap-2.5">
               <div className="size-6"></div>
-              <div className="flex-1 text-sm font-medium text-[#1D1E1F]">{t('podcast.ai_podcast')}</div>
+              <div className="flex-1 text-sm font-medium text-primary">{t('podcast.ai_podcast')}</div>
               <Switch />
             </div>
-            <p className="text-xs text-[#999999] mt-3">
+            <p className="text-xs text-placeholder mt-3">
               {t('podcast.ai_podcast_desc')}
             </p>
           </div>

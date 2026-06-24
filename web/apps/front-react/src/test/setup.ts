@@ -2,6 +2,44 @@ import '@testing-library/jest-dom'
 import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
+function createStorageMock(): Storage {
+  const store = new Map<string, string>()
+
+  return {
+    get length() {
+      return store.size
+    },
+    clear: vi.fn(() => store.clear()),
+    getItem: vi.fn((key: string) => store.get(key) ?? null),
+    key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
+    removeItem: vi.fn((key: string) => {
+      store.delete(key)
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      store.set(key, String(value))
+    }),
+  }
+}
+
+function hasStorage(name: 'localStorage' | 'sessionStorage'): boolean {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, name)
+  return Boolean(descriptor && 'value' in descriptor && descriptor.value)
+}
+
+if (!hasStorage('localStorage')) {
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: createStorageMock(),
+  })
+}
+
+if (!hasStorage('sessionStorage')) {
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: createStorageMock(),
+  })
+}
+
 // Cleanup after each test
 afterEach(() => {
   cleanup()

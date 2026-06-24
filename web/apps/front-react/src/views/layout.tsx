@@ -5,7 +5,8 @@ import {
   useCallback,
   useMemo,
   lazy,
-  Suspense
+  Suspense,
+  createPortal,
 } from "react";
 import {
   Outlet,
@@ -14,7 +15,8 @@ import {
   Link,
   useNavigate,
 } from "react-router-dom";
-import { Menu, Avatar, Button, Tooltip, Skeleton, Spin } from "antd";
+import { Menu, Avatar, Button, Tooltip, Skeleton, Spin, Badge } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import { SvgIcon } from "@km/shared-components-react";
 import { MoreDropdown } from "@/components/MoreDropdown";
 import { useUserStore } from "@/stores/modules/user";
@@ -40,6 +42,7 @@ import { recordingChannel } from "@/services/recording-channel";
 import { SidebarContext } from "@/contexts/SidebarContext";
 import { checkVersion } from "@/utils/version";
 import { VERSION_MODULE } from "@/constants/enterprise";
+import notificationsApi from "@/api/modules/notifications";
 import "./layout.css";
 
 // Lazy load heavy components
@@ -59,9 +62,6 @@ const ProfilePopover = lazy(() =>
 const FileSearch = lazy(() =>
   import("@/components/FileSearch").then((m) => ({ default: m.FileSearch })),
 );
-const Upgrade = lazy(() =>
-  import("@/components/Upgrade").then((m) => ({ default: m.Upgrade })),
-);
 const ProfileView = lazy(() => import("@/views/profile/index"));
 const RecordingFloat = lazy(() =>
   import("@/components/RecordingFloat").then((m) => ({
@@ -75,16 +75,13 @@ export function Layout() {
   const navigate = useNavigate();
   const siderRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
-  const upgradeRef = useRef<{
-    open: () => void;
-    validateUpgrade: () => Promise<boolean>;
-  }>(null);
 
   const [showSider, setShowSider] = useState(true);
   const [siderVisible, setSiderVisible] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [messageCenterReady, setMessageCenterReady] = useState(false);
   const [teleportReady, setTeleportReady] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const userStore = useUserStore();
   const enterpriseStore = useEnterpriseStore();
@@ -94,6 +91,10 @@ export function Layout() {
   const isSoftStyle = useIsSoftStyle();
   const { isMobile } = useResponsive();
 
+  // 紧凑模式判断：软件模式 + 非知识库页面 + 非移动端
+  const isKnowledgePage = location.pathname.startsWith("/library");
+  const useCompactMode = isSoftStyle && !isKnowledgePage && !isMobile;
+
   // 多账号登录冲突检测
   useMultiAccountGuard();
 
@@ -102,7 +103,6 @@ export function Layout() {
 
   const activePath = location.pathname;
   const hasKnowledge = navigationStore.hasKnowledge;
-  const hasWorkBench = navigationStore.hasWorkBench;
   const includeKm = window.$vars?.includeKm ?? true;
 
   // Compute effective path for navigation matching
@@ -120,8 +120,12 @@ export function Layout() {
   const shouldShowBanner =
     !isSoftStyle && matches.some((match) => (match.handle as any)?.banner);
 
-  // Computed: show mine menu
-  const showMineMenu = userStore.is_login && ((hasKnowledge && checkVersion(VERSION_MODULE.KNOWLEDGE_BASE)) || (hasWorkBench && checkVersion(VERSION_MODULE.WORKBENCH)) || checkVersion(VERSION_MODULE.RECORDING));
+  // Computed: show mine menu (including document, agent, skill, recording)
+  const showMineMenu = userStore.is_login && (
+    (hasKnowledge && checkVersion(VERSION_MODULE.KNOWLEDGE_BASE)) ||
+    checkVersion(VERSION_MODULE.RECORDING) ||
+    checkVersion(VERSION_MODULE.AGENT)
+  );
 
   // Computed: navigations with is_internal filter
   const navigations = navigationStore.navigations
@@ -147,6 +151,29 @@ export function Layout() {
       eventBus.off(EVENT_NAMES.LOGIN_SUCCESS, handleLoginSuccess);
     };
   }, [handleLoginSuccess]);
+
+  // Fetch unread message count for compact mode
+  useEffect(() => {
+    // 只在紧凑模式下获取未读消息统计（正常模式由 MessageCenter 自己处理）
+    if (!useCompactMode || !userStore.is_login || !hasKnowledge) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await notificationsApi.stats({ scope: "unread" });
+        setUnreadCount(response.total);
+      } catch (error) {
+        console.error("获取未读消息统计失败:", error);
+      }
+    };
+
+    fetchUnreadCount();
+    const timer = setInterval(fetchUnreadCount, 60000);
+
+    return () => clearInterval(timer);
+  }, [useCompactMode, userStore.is_login, hasKnowledge]);
 
   // Initial load
   useEffect(() => {
@@ -337,11 +364,12 @@ export function Layout() {
   const getIconColor = (bool: boolean) =>
     bool ? "text-[#2563EB]" : "text-[#979799]";
   const getBlockColor = (bool: boolean) =>
-    bool ? "bg-[#EBF1FF] text-[#2563EB]" : "text-[#1D1E1F]";
+    bool ? "bg-[#E7EFFB] text-[#2563EB]" : "text-[#1D1E1F]";
 
   const handleShortcutClick = (shortcut: any) => {
     const routePath = shortcutsStore.getShortcutRoute(shortcut);
-    navigate(routePath);
+    const fullUrl = shortcut.type === "ai_link" ? shortcut.url : buildUrl(routePath);
+    window.open(fullUrl, "_blank");
     if (isMobile) setSiderVisible(false);
   };
 
@@ -366,7 +394,7 @@ export function Layout() {
     return (
       <div className="h-full flex flex-col relative">
         <header className="flex-none h-[70px] border-b sticky top-0 z-10 nav-bg">
-          <div className="flex items-center justify-between h-full w-11/12 lg:w-4/5 mx-auto">
+          <div className="flex items-center justify-between h-full w-11/12 lg:w-4/5 max-w-[1200px] mx-auto">
             <div className="flex-1 flex items-center gap-2 overflow-hidden relative">
               <a
                 href="/"
@@ -385,21 +413,30 @@ export function Layout() {
                     mode="horizontal"
                     selectedKeys={[effectivePath]}
                     className="header-nav border-none bg-transparent"
-                    items={navigations.map((item) => ({
-                      key: item.menu_path,
-                      label: item.name,
-                      onClick: () => {
-                        if (
-                          item.target === NAVIGATION_TARGET.BLANK ||
-                          (item.type === NAVIGATION_TYPE.EXTERNAL &&
-                            item.target !== NAVIGATION_TARGET.SELF)
-                        ) {
-                          handleNavigationClick(item);
-                        } else {
-                          navigate(item.jump_path);
-                        }
-                      },
-                    }))}
+                    items={[
+                      ...navigations.map((item) => ({
+                        key: item.menu_path,
+                        label: item.name,
+                        onClick: () => {
+                          if (
+                            item.target === NAVIGATION_TARGET.BLANK ||
+                            (item.type === NAVIGATION_TYPE.EXTERNAL &&
+                              item.target !== NAVIGATION_TARGET.SELF)
+                          ) {
+                            handleNavigationClick(item);
+                          } else {
+                            navigate(item.jump_path);
+                          }
+                        },
+                      })),
+                      ...(showMineMenu
+                        ? [{
+                            key: "/mine",
+                            label: t("module.mine"),
+                            onClick: () => navigate("/mine"),
+                          }]
+                        : []),
+                    ]}
                   />
                 </Suspense>
               </div>
@@ -422,9 +459,6 @@ export function Layout() {
             </div>
           </div>
 
-          <Suspense>
-            <Upgrade ref={upgradeRef} />
-          </Suspense>
         </header>
 
         <main
@@ -475,7 +509,7 @@ export function Layout() {
     <SidebarContext.Provider value={sidebarContextValue}>
       <div className="h-full flex relative flex-row">
         {/* Hover trigger area */}
-        {!showSider && !siderVisible && !isMobile && (
+        {!useCompactMode && !showSider && !siderVisible && !isMobile && (
           <div
             className="w-4 h-full absolute -left-2 top-0 z-[10] hover:bg-gray-100/50 transition-colors"
             onMouseEnter={() => handleSiderVisibility(true)}
@@ -493,40 +527,56 @@ export function Layout() {
         {/* Sidebar */}
         <div
           ref={siderRef}
-          className={`flex-none flex flex-col w-[240px] border-r bg-[#F5F7FA] transition-all duration-300 ease-linear overflow-hidden ${
-            isMobile ? "fixed top-0 bottom-0 z-[200]" : "absolute top-0 bottom-0 left-0 z-[200]"
+          className={`flex-none flex flex-col border-r bg-[#fff] transition-all duration-300 ease-linear overflow-hidden ${
+            useCompactMode ? "w-[54px]" : "w-[240px]"
           } ${
-            showSider
+            isMobile ? "fixed top-0 bottom-0 z-[200]" : useCompactMode ? "relative z-[10]" : "absolute top-0 bottom-0 left-0 z-[200]"
+          } ${
+            useCompactMode
               ? ""
-              : siderVisible
-                ? "shadow-xl"
-                : "-translate-x-full -ml-2"
+              : showSider
+                ? ""
+                : siderVisible
+                  ? "shadow-xl"
+                  : "-translate-x-full -ml-2"
           }`}
-          onMouseLeave={() => !isMobile && handleSiderVisibility(false)}
+          onMouseLeave={() => !useCompactMode && !isMobile && handleSiderVisibility(false)}
         >
-          <div className="px-3 py-4 flex items-center justify-between">
-            <h1
-              className="flex items-center gap-2 overflow-hidden"
-              title={enterpriseStore.display_name}
-            >
-              <img
-                className="max-w-[180px] max-h-8 rounded"
-                src={enterpriseStore.logo}
-                alt={enterpriseStore.display_name}
-              />
-            </h1>
-            <div
-              className="size-6 flex-center cursor-pointer"
-              onClick={handleToggle}
-            >
-              <SvgIcon name={ showSider ? "left-bar" : "right-bar" } />
+          {useCompactMode ? (
+            <div className="pt-4 pb-2 flex justify-center">
+              <Tooltip title={enterpriseStore.display_name} placement="right">
+                <img
+                  className="w-8 h-8 rounded"
+                  src={enterpriseStore.ico}
+                  alt={enterpriseStore.display_name}
+                />
+              </Tooltip>
             </div>
-          </div>
+          ) : (
+            <div className="px-3 py-4 flex items-center justify-between">
+              <h1
+                className="flex items-center gap-2 overflow-hidden"
+                title={enterpriseStore.display_name}
+              >
+                <img
+                  className="max-w-[180px] max-h-8 rounded"
+                  src={enterpriseStore.logo}
+                  alt={enterpriseStore.display_name}
+                />
+              </h1>
+              <div
+                className="size-6 flex-center cursor-pointer"
+                onClick={handleToggle}
+              >
+                <SvgIcon name={ showSider ? "left-bar" : "right-bar" } />
+              </div>
+            </div>
+          )}
 
-          <div className="px-3 flex-1 overflow-y-auto flex flex-col justify-between">
+          <div className={`flex-1 overflow-y-auto flex flex-col justify-between ${useCompactMode ? "" : "px-3"}`}>
             <div>
               {/* File Search - only for internal users */}
-              {includeKm && hasKnowledge && userStore.info.is_internal && (
+              {!useCompactMode && includeKm && hasKnowledge && userStore.info.is_internal && (
                 <Suspense
                   fallback={<Skeleton.Input active size="small" block />}
                 >
@@ -535,7 +585,7 @@ export function Layout() {
               )}
 
               {/* Navigation menu */}
-              <div className="flex flex-col gap-1 py-3">
+              <div className={`flex flex-col gap-1 py-3 ${useCompactMode ? "px-2" : ""}`}>
                 {navigations.map((item) => {
                   // External link that opens in new tab
                   if (
@@ -543,90 +593,114 @@ export function Layout() {
                     item.target !== NAVIGATION_TARGET.SELF
                   ) {
                     return (
-                      <a
+                      <Tooltip
                         key={item.navigation_id}
-                        href={item.jump_path}
-                        target={
-                          item.target === NAVIGATION_TARGET.BLANK
-                            ? "_blank"
-                            : "_self"
-                        }
-                        rel="noopener noreferrer"
-                        className={`h-9 pl-2 rounded-md flex items-center gap-2 cursor-pointer hover:bg-[#EBF1FF] ${getBlockColor(effectivePath.startsWith(item.menu_path))}`}
+                        title={useCompactMode ? item.name : ""}
+                        placement="right"
+                        getPopupContainer={() => document.body}
                       >
-                        <div
-                          className={`size-5 flex-center ${getIconColor(effectivePath.startsWith(item.menu_path))}`}
+                        <a
+                          href={item.jump_path}
+                          target={
+                            item.target === NAVIGATION_TARGET.BLANK
+                              ? "_blank"
+                              : "_self"
+                          }
+                          rel="noopener noreferrer"
+                          className={`h-9 rounded-md flex items-center gap-2 cursor-pointer hover:bg-[#EBF1FF] ${getBlockColor(effectivePath.startsWith(item.menu_path))} ${useCompactMode ? "justify-center" : "pl-2"}`}
                         >
-                          <img
-                            className="w-5 h-5"
-                            src={item.icon}
-                            alt={item.name}
-                          />
-                        </div>
-                        <p className="flex-1 text-sm truncate">{item.name}</p>
-                      </a>
+                          <div
+                            className={`size-5 flex-center ${getIconColor(effectivePath.startsWith(item.menu_path))}`}
+                          >
+                            <img
+                              className="w-5 h-5"
+                              src={item.icon}
+                              alt={item.name}
+                            />
+                          </div>
+                          {!useCompactMode && (
+                            <p className="flex-1 text-sm truncate">{item.name}</p>
+                          )}
+                        </a>
+                      </Tooltip>
                     );
                   }
 
                   // Router link
                   return (
-                    <Link
+                    <Tooltip
                       key={item.navigation_id}
-                      to={item.jump_path}
-                      target={
-                        item.target === NAVIGATION_TARGET.BLANK
-                          ? "_blank"
-                          : "_self"
-                      }
-                      onClick={(e) => {
-                        isMobile && setSiderVisible(false);
-                        // 如果当前路径已经匹配，强制刷新页面状态
-                        if (activePath === item.jump_path) {
-                          e.preventDefault();
-                          // 触发路由重置事件
-                          window.dispatchEvent(
-                            new CustomEvent("reset-route-state", {
-                              detail: { path: item.jump_path },
-                            }),
-                          );
-                          navigate(item.jump_path, { replace: true });
-                        }
-                      }}
-                      className={`h-9 pl-2 rounded-md flex items-center gap-2 cursor-pointer hover:bg-[#EBF1FF] relative group ${getBlockColor(effectivePath.startsWith(item.menu_path))}`}
+                      title={useCompactMode ? item.name : ""}
+                      placement="right"
+                      getPopupContainer={() => document.body}
                     >
-                      <div
-                        className={`size-5 flex-center overflow-hidden ${getIconColor(effectivePath.startsWith(item.menu_path))}`}
+                      <Link
+                        to={item.jump_path}
+                        target={
+                          item.target === NAVIGATION_TARGET.BLANK
+                            ? "_blank"
+                            : "_self"
+                        }
+                        onClick={(e) => {
+                          isMobile && setSiderVisible(false);
+                          // 如果当前路径已经匹配，强制刷新页面状态
+                          if (activePath === item.jump_path) {
+                            e.preventDefault();
+                            // 触发路由重置事件
+                            window.dispatchEvent(
+                              new CustomEvent("reset-route-state", {
+                                detail: { path: item.jump_path },
+                              }),
+                            );
+                            navigate(item.jump_path, { replace: true });
+                          }
+                        }}
+                        className={`h-9 rounded-md flex items-center gap-2 cursor-pointer hover:bg-[#EBF1FF] relative group ${getBlockColor(effectivePath.startsWith(item.menu_path))} ${useCompactMode ? "justify-center" : "pl-2"}`}
                       >
-                        <img
-                          className="w-5 h-5 -translate-y-16"
-                          src={item.icon}
-                          alt={item.name}
-                          style={{
-                            filter: `drop-shadow(${effectivePath.startsWith(item.menu_path) ? "#2563EB" : "#979799"} 0 64px)`,
-                          }}
-                        />
-                      </div>
-                      <p className="flex-1 text-sm truncate">{item.name}</p>
-                    </Link>
+                        <div
+                          className={`size-5 flex-center overflow-hidden ${getIconColor(effectivePath.startsWith(item.menu_path))}`}
+                        >
+                          <img
+                            className="w-5 h-5 -translate-y-16"
+                            src={item.icon}
+                            alt={item.name}
+                            style={{
+                              filter: `drop-shadow(${effectivePath.startsWith(item.menu_path) ? "#2563EB" : "#979799"} 0 64px)`,
+                            }}
+                          />
+                        </div>
+                        {!useCompactMode && (
+                          <p className="flex-1 text-sm truncate">{item.name}</p>
+                        )}
+                      </Link>
+                    </Tooltip>
                   );
                 })}
 
                 {/* Mine menu */}
                 {showMineMenu && (
-                  <Link
-                    to="/mine"
-                    onClick={(e) => {
-                      isMobile && setSiderVisible(false);
-                    }}
-                    className={`h-10 flex items-center gap-2 pl-2 rounded cursor-pointer hover:bg-[#EBF1FF] ${getBlockColor(effectivePath.startsWith("/mine"))}`}
+                  <Tooltip
+                    title={useCompactMode ? t("module.mine") : ""}
+                    placement="right"
+                    getPopupContainer={() => document.body}
                   >
-                    <div
-                      className={`size-5 flex-center ${getIconColor(effectivePath.startsWith("/mine"))}`}
+                    <Link
+                      to="/mine"
+                      onClick={(e) => {
+                        isMobile && setSiderVisible(false);
+                      }}
+                      className={`h-10 flex items-center gap-2 rounded cursor-pointer hover:bg-[#EBF1FF] ${getBlockColor(effectivePath.startsWith("/mine"))} ${useCompactMode ? "justify-center" : "pl-2"}`}
                     >
-                      <SvgIcon name="member" size="18" />
-                    </div>
-                    <p className="flex-1 text-sm">{t("module.mine")}</p>
-                  </Link>
+                      <div
+                        className={`size-5 flex-center ${getIconColor(effectivePath.startsWith("/mine"))}`}
+                      >
+                        <SvgIcon name="member" size="18" />
+                      </div>
+                      {!useCompactMode && (
+                        <p className="flex-1 text-sm">{t("module.mine")}</p>
+                      )}
+                    </Link>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -634,89 +708,129 @@ export function Layout() {
             {/* Shortcuts */}
             {shortcutsStore.shortcuts.length > 0 && (
               <div className="py-3 flex flex-col gap-1">
-                <div className="h-7 px-2 flex items-center text-sm text-[#9A9A9A]">
-                  {t("shortcut.title")}
-                </div>
-                {shortcutsStore.shortcuts.map((shortcut) => (
-                  <div
-                    key={shortcut.id}
-                    className="h-9 px-2 flex items-center gap-2 rounded cursor-pointer hover:bg-[#EBF1FF] group"
-                    onClick={() => handleShortcutClick(shortcut)}
-                  >
-                    <img
-                      src={shortcut.logo}
-                      className="size-5 rounded flex-center"
-                      alt={shortcut.name}
-                    />
-                    <p className="flex-1 text-sm text-[#1D1E1F] truncate">
-                      {shortcut.name}
-                    </p>
-                    <MoreDropdown
-                      size="20px"
-                      icon="more-h"
-                      iconSize={16}
-                      backgroundColor="#EDEEF0"
-                      triggerClassName="size-5 items-center justify-center group-hover:flex hidden"
-                      placement="bottomLeft"
-                      items={[
-                        {
-                          key: "new-tab",
-                          icon: "arrow-right-up",
-                          label: t("action.tab_open"),
-                        },
-                        {
-                          key: "remove",
-                          icon: "delete-mode",
-                          label: t("shortcut.remove"),
-                        },
-                      ]}
-                      onCommand={(key) =>
-                        handleShortcutCommand(key as string, shortcut)
-                      }
-                    />
+                {!useCompactMode && (
+                  <div className="h-7 px-2 flex items-center text-sm text-[#9A9A9A]">
+                    {t("shortcut.title")}
                   </div>
+                )}
+                {shortcutsStore.shortcuts.map((shortcut) => (
+                  <Tooltip
+                    key={shortcut.id}
+                    title={useCompactMode ? shortcut.name : ""}
+                    placement="right"
+                    getPopupContainer={() => document.body}
+                  >
+                    <div
+                      className={`h-9 flex items-center gap-2 rounded cursor-pointer hover:bg-[#EBF1FF] group ${useCompactMode ? "px-2 justify-center mx-2" : "px-2"}`}
+                      onClick={() => handleShortcutClick(shortcut)}
+                    >
+                      <img
+                        src={shortcut.logo}
+                        className="size-5 rounded flex-center"
+                        alt={shortcut.name}
+                      />
+                      {!useCompactMode && (
+                        <>
+                          <p className="flex-1 text-sm text-[#1D1E1F] truncate">
+                            {shortcut.name}
+                          </p>
+                          <MoreDropdown
+                            size="20px"
+                            icon="more-h"
+                            iconSize={16}
+                            backgroundColor="#EDEEF0"
+                            triggerClassName="size-5 items-center justify-center group-hover:flex hidden"
+                            placement="bottomLeft"
+                            items={[
+                              {
+                                key: "new-tab",
+                                icon: "arrow-right-up",
+                                label: t("action.tab_open"),
+                              },
+                              {
+                                key: "remove",
+                                icon: "delete-mode",
+                                label: t("shortcut.remove"),
+                              },
+                            ]}
+                            onCommand={(key) =>
+                              handleShortcutCommand(key as string, shortcut)
+                            }
+                          />
+                        </>
+                      )}
+                    </div>
+                  </Tooltip>
                 ))}
               </div>
             )}
           </div>
 
           {/* User section */}
-          <div className="flex-none p-4 flex items-center gap-1 relative">
+          <div className={`flex-none flex items-center gap-1 relative ${useCompactMode ? "p-2 flex-col" : "p-4"}`}>
             <div className="border-t absolute top-0 left-2 right-2" />
 
             {userStore.is_login ? (
-              <Suspense fallback={<Avatar size={34} />}>
-                <ProfilePopover
-                  placement="bottomLeft"
-                  onProfile={handleProfile}
-                >
-                  <div className="flex-1 overflow-hidden flex items-center gap-2 cursor-pointer">
-                    <Avatar
-                      size={34}
-                      src={userStore.info.avatar}
-                      className="border border-white"
-                    />
-                    <div className="flex-1 overflow-hidden">
-                      <div className="text-sm font-medium text-[#1D1E1F] truncate">
-                        {userStore.info.nickname || userStore.info.username}
+              <>
+                <Suspense fallback={<Avatar size={useCompactMode ? 32 : 34} />}>
+                  <ProfilePopover
+                    placement={useCompactMode ? "rightTop" : "bottomLeft"}
+                    onProfile={handleProfile}
+                    unreadCount={unreadCount}
+                    showMessageCenter={useCompactMode && hasKnowledge}
+                  >
+                    <Tooltip
+                      title=""
+                      placement="right"
+                      getPopupContainer={() => document.body}
+                    >
+                      <div className={`flex overflow-hidden items-center cursor-pointer ${useCompactMode ? "flex-col gap-1" : "flex-1  gap-2"}`}>
+                        <div className={useCompactMode ? "relative" : ""}>
+                          {/* 紧凑模式下在头像右上角显示红点 */}
+                          <Badge dot={useCompactMode && unreadCount > 0 && hasKnowledge}>
+                            <Avatar
+                              size={useCompactMode ? 32 : 34}
+                              src={userStore.info.avatar}
+                              className="border border-white"
+                            />
+                          </Badge>
+                        </div>
+                        {useCompactMode ? (
+                          <div className="text-xs text-[#1D1E1F] truncate max-w-[50px] text-center">
+                            {userStore.info.nickname || userStore.info.username}
+                          </div>
+                        ) : (
+                          <div className="flex-1 overflow-hidden">
+                            <div className="text-sm font-medium text-[#1D1E1F] truncate">
+                              {userStore.info.nickname || userStore.info.username}
+                            </div>
+                            <div className="text-xs text-[#999999] truncate">
+                              {enterpriseStore.display_name}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-[#999999] truncate">
-                        {enterpriseStore.display_name}
-                      </div>
-                    </div>
-                  </div>
-                </ProfilePopover>
-              </Suspense>
+                    </Tooltip>
+                  </ProfilePopover>
+                </Suspense>
+              </>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <Button type="primary" onClick={handleLogin}>
-                  {t("action.login")}
-                </Button>
-              </div>
+              <Tooltip
+                title={useCompactMode ? t("action.login") : ""}
+                placement="right"
+                getPopupContainer={() => document.body}
+              >
+                <Avatar
+                  size={useCompactMode ? 32 : 34}
+                  icon={<UserOutlined />}
+                  className="cursor-pointer"
+                  onClick={handleLogin}
+                />
+              </Tooltip>
             )}
 
-            {/* Message Center */}
-            {userStore.is_login && hasKnowledge && messageCenterReady && (
+            {/* Message Center - 只在非紧凑模式下显示 */}
+            {!useCompactMode && userStore.is_login && hasKnowledge && messageCenterReady && (
               <Suspense fallback={null}>
                 <MessageCenter />
               </Suspense>
@@ -728,7 +842,11 @@ export function Layout() {
         <main
           ref={mainRef}
           className="flex-1 relative overflow-y-auto flex flex-col transition-all duration-300"
-          style={{ marginLeft: showSider ? "240px" : "0" }}
+          style={{
+            marginLeft: useCompactMode
+              ? "0"
+              : showSider ? "240px" : "0"
+          }}
         >
           {navigations.length === 0 && !showMineMenu ? null : <Outlet />}
 
@@ -736,7 +854,7 @@ export function Layout() {
           {showProfile && (
             <div className="top-0 left-0 w-full h-full flex flex-col z-[101] bg-white absolute">
               <div className="flex-none h-17 px-6 flex items-center border-b">
-                {!showSider && (
+                {!useCompactMode && !showSider && (
                   <>
                     <Tooltip title={t("common.expand")}>
                       <div
@@ -787,11 +905,9 @@ export function Layout() {
           })()}
 
         {/* Recording Float - global recording status indicator */}
-        { !activePath.includes('/index') && (
-          <Suspense fallback={null}>
-            <RecordingFloat />
-          </Suspense>
-        )}
+        <Suspense fallback={null}>
+          <RecordingFloat />
+        </Suspense>
         
       </div>
     </SidebarContext.Provider>

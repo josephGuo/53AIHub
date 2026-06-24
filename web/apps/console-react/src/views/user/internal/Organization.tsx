@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { Spin } from "antd";
-import { t } from "@/locales";
 import {
   DepartmentTree,
   DepartmentTreeRef,

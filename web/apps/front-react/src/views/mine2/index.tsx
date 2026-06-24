@@ -11,13 +11,15 @@ import { type UploadItem } from "@/stores/modules/library";
 import { filesApi } from "@/api/modules/files";
 import { formatFile } from "@/api/modules/files/transform";
 import { buildUrl } from "@/utils/router";
-import { ExpandSidebarButton } from "@/components/Layout/ExpandSidebarButton";
+import Header from "@/components/Layout/Header";
 import { useRecordingStore } from "@/stores/modules/recording";
 import { useNavigationStore } from "@/stores/modules/navigation";
 import { t } from "@/locales";
 import { getFormatTimeStamp } from "@km/shared-utils";
 import { checkVersion } from "@/utils/version";
 import { VERSION_MODULE } from "@/constants/enterprise";
+import recordingApi from "@/api/modules/recording";
+import type { RecordingConfig } from "@/api/modules/recording/types";
 import type { PreviewFile, MineTabKey } from "./types";
 import type { MineAudioViewRef } from "./views/audio";
 import { MINE_TAB_LIST, AUDIO_ACCEPT, createCreateMenuItems, createImportMenuItems, AUDIO_EXT_REGEX, AUDIO_DOUBLE_EXT_REGEX } from "./constants";
@@ -46,7 +48,6 @@ export function MineView2() {
 
   // 版本权限判断
   const hasKnowledgeBase = navigationStore.hasKnowledge && checkVersion(VERSION_MODULE.KNOWLEDGE_BASE);
-  const hasWorkbench = navigationStore.hasWorkBench && checkVersion(VERSION_MODULE.WORKBENCH);
   const hasRecording = checkVersion(VERSION_MODULE.RECORDING);
 
   // Filter tab list based on version modules, navigation state and environment
@@ -57,10 +58,7 @@ export function MineView2() {
     if (!hasKnowledgeBase) {
       tabs = tabs.filter((tab) => !["fav", "visit"].includes(tab.value));
     }
-    // AI生成的和我上传的：WORKBENCH 权限 + 工作台开关
-    if (!hasWorkbench) {
-      tabs = tabs.filter((tab) => !["ai", "upload"].includes(tab.value));
-    }
+
     // 我的录音：RECORDING
     if (!hasRecording) {
       tabs = tabs.filter((tab) => tab.value !== "audio");
@@ -72,7 +70,7 @@ export function MineView2() {
     }
 
     return tabs;
-  }, [isOpLocalEnv, isPrivatePremEnv, hasKnowledgeBase, hasWorkbench, hasRecording]);
+  }, [isOpLocalEnv, isPrivatePremEnv, hasKnowledgeBase, hasRecording]);
 
   // 默认 tab 为过滤后的第一个
   const defaultTab = filteredTabList[0]?.value || "fav";
@@ -80,12 +78,12 @@ export function MineView2() {
   // Tab state
   const [activeTab, setActiveTab] = useState<MineTabKey>(defaultTab);
   const [keyword, setKeyword] = useState("");
-  const [debouncedKeyword, setDebouncedKeyword] = useState("");
 
   // Recording status
   const recordingStatus = useRecordingStore((s) => s.status);
   const hasActiveRecording = recordingStatus !== "idle";
   const prevRecordingStatusRef = useRef(recordingStatus);
+  const [recordingConfig, setRecordingConfig] = useState<RecordingConfig | null>(null);
 
   // Refresh list when recording stops (status changes to idle)
   useEffect(() => {
@@ -94,6 +92,11 @@ export function MineView2() {
     }
     prevRecordingStatusRef.current = recordingStatus;
   }, [recordingStatus]);
+
+  // 判断是否显示录音按钮
+  const showRecordingButton = useMemo(() => {
+    return !isOpLocalEnv && !isPrivatePremEnv && hasRecording && !!recordingConfig?.enabled;
+  }, [isOpLocalEnv, isPrivatePremEnv, hasRecording, recordingConfig]);
 
   // Personal space context
   const {
@@ -145,6 +148,21 @@ export function MineView2() {
     currentPath,
     onSuccess: () => setRefreshKey((prev) => prev + 1),
   });
+
+  // 加载录音配置
+  const loadRecordingConfig = useCallback(async () => {
+    try {
+      const config = await recordingApi.getConfig();
+      setRecordingConfig(config);
+    } catch (e) {
+      console.error("Failed to load recording config:", e);
+    }
+  }, []);
+
+  // 初始化加载录音配置
+  useEffect(() => {
+    loadRecordingConfig();
+  }, [loadRecordingConfig]);
 
   // URL tab sync
   useEffect(() => {
@@ -235,16 +253,6 @@ export function MineView2() {
     }
   }, [activeTab, fetchContext]);
 
-  // Keyword debounce
-  useEffect(() => {
-    if (!keyword) {
-      setDebouncedKeyword(keyword);
-      return;
-    }
-    const timer = setTimeout(() => setDebouncedKeyword(keyword), 300);
-    return () => clearTimeout(timer);
-  }, [keyword]);
-
   // Cache names callback
   const handleCacheNames = useCallback((files: any[], folders: any[]) => {
     existingFileNamesRef.current = files.map((item) => {
@@ -274,7 +282,6 @@ export function MineView2() {
     setActiveTab(tab);
     setSearchParams({ tab });
     setKeyword("");
-    setDebouncedKeyword("");
   }, [setSearchParams]);
 
   // Open preview
@@ -318,7 +325,7 @@ export function MineView2() {
   }, []);
 
   const handleUploadComplete = useCallback(() => {
-    message.success("上传完成");
+    message.success(t("mine.upload_complete"));
     setRefreshKey((prev) => prev + 1);
   }, []);
 
@@ -335,7 +342,7 @@ export function MineView2() {
   // Create folder - open modal
   const handleCreateFolder = useCallback(() => {
     const existingNames = existingFolderNamesRef.current;
-    const folderName = generateUniqueName("无标题文件夹", existingNames);
+    const folderName = generateUniqueName(t("mine.untitled_folder"), existingNames);
     setCreateFolderValue(folderName);
     setCreateFolderModalVisible(true);
   }, [generateUniqueName]);
@@ -345,7 +352,7 @@ export function MineView2() {
     try {
       const libId = await ensureLibraryId();
       const existingNames = existingFileNamesRef.current;
-      const baseName = generateUniqueName("无标题知识", existingNames);
+      const baseName = generateUniqueName(t("mine.untitled_knowledge"), existingNames);
       const fileName = `${baseName}.md`;
       const filePath = currentPath === "/" ? `/${fileName}` : `${currentPath}/${fileName}`;
 
@@ -357,7 +364,7 @@ export function MineView2() {
       });
 
       existingFileNamesRef.current.push(baseName);
-      message.success("已创建");
+      message.success(t("mine.created"));
 
       // 跳转到编辑页，标记为新建文件
       const newParams = new URLSearchParams(searchParams);
@@ -365,14 +372,14 @@ export function MineView2() {
       newParams.set("new", "true");
       setSearchParams(newParams);
     } catch (error) {
-      message.error("创建失败");
+      message.error(t("mine.create_failed"));
     }
   }, [ensureLibraryId, currentPath, generateUniqueName, searchParams, setSearchParams]);
 
   // Create folder confirm
   const handleCreateFolderConfirm = useCallback(async () => {
     const libraryId = await ensureLibraryId();
-    const name = createFolderValue.trim() || "无标题文件夹";
+    const name = createFolderValue.trim() || t("mine.untitled_folder");
     const folderPath = currentPath === "/" ? `/${name}` : `${currentPath}/${name}`;
 
     try {
@@ -384,11 +391,11 @@ export function MineView2() {
       });
 
       existingFolderNamesRef.current.push(name);
-      message.success("已创建");
+      message.success(t("mine.created"));
       setCreateFolderModalVisible(false);
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      message.error("创建失败");
+      message.error(t("mine.create_failed"));
     }
   }, [ensureLibraryId, currentPath, createFolderValue]);
 
@@ -455,7 +462,7 @@ export function MineView2() {
           resource_type: 2,
           resource_id: previewFile.id,
         });
-        message.success(newIsFav ? "已收藏" : "已取消收藏");
+        message.success(newIsFav ? t("mine.favorited") : t("mine.unfavorited"));
         previewModifiedRef.current = true;
         setPreviewFile((prev) => (prev ? { ...prev, isFavorite: newIsFav } : prev));
       } else if (cmd === "rename") {
@@ -471,17 +478,17 @@ export function MineView2() {
       } else if (cmd === "delete") {
         Modal.confirm({
           title: t("common.tip"),
-          content: previewFile.isfolder ? "确定删除此文件夹？" : t("status.file_del"),
+          content: previewFile.isfolder ? t("mine.delete_folder_confirm") : t("status.file_del"),
           okText: t("action.confirm"),
           cancelText: t("action.cancel"),
           onOk: async () => {
             try {
               await filesApi.delete(previewFile.id);
-              message.success("已删除");
+              message.success(t("action.delete_success"));
               previewModifiedRef.current = true;
               handleBackToList();
             } catch (error) {
-              message.error("删除失败");
+              message.error(t("mine.delete_failed"));
             }
           },
         });
@@ -557,11 +564,11 @@ export function MineView2() {
       setPreviewFile((prev) => (prev ? { ...prev, name: displayName } : prev));
 
       previewModifiedRef.current = true;
-      message.success("已重命名");
+      message.success(t("mine.rename_success"));
       setRenameModalVisible(false);
       setRenamingFile(null);
     } catch (error) {
-      message.error("重命名失败");
+      message.error(t("mine.rename_failed"));
     }
   }, [renamingFile, renameValue]);
 
@@ -589,16 +596,16 @@ export function MineView2() {
   const getComponent = () => {
     switch (activeTab) {
       case "visit":
-        return <VisitView keyword={debouncedKeyword} onPreview={handleOpenPreview} refreshKey={refreshKey} />;
+        return <VisitView keyword={keyword} onPreview={handleOpenPreview} refreshKey={refreshKey} />;
       case "ai":
-        return <AIGeneratedView keyword={debouncedKeyword} onPreview={handleOpenPreview} refreshKey={refreshKey} fileRefreshKey={fileRefreshKey} dirRefreshKey={dirRefreshKey} enableFavorite={hasKnowledgeBase} />;
+        return <AIGeneratedView keyword={keyword} onPreview={handleOpenPreview} refreshKey={refreshKey} fileRefreshKey={fileRefreshKey} dirRefreshKey={dirRefreshKey} enableFavorite={hasKnowledgeBase} />;
       case "upload":
         return (
           <UploadedView
             refreshKey={refreshKey}
             fileRefreshKey={fileRefreshKey}
             dirRefreshKey={dirRefreshKey}
-            keyword={debouncedKeyword}
+            keyword={keyword}
             onPreview={handleOpenPreview}
             contextReady={contextReady}
             onCacheNames={handleCacheNames}
@@ -609,7 +616,7 @@ export function MineView2() {
         return (
           <MineAudioView
             ref={audioViewRef}
-            keyword={debouncedKeyword}
+            keyword={keyword}
             refreshKey={refreshKey}
             fileRefreshKey={fileRefreshKey}
             dirRefreshKey={dirRefreshKey}
@@ -618,7 +625,7 @@ export function MineView2() {
           />
         );
       default:
-        return <FavView keyword={debouncedKeyword} onPreview={handleOpenPreview} refreshKey={refreshKey} />;
+        return <FavView keyword={keyword} onPreview={handleOpenPreview} refreshKey={refreshKey} />;
     }
   };
 
@@ -629,18 +636,14 @@ export function MineView2() {
         {activeTab === "upload" && contextInitializing && (
           <div className="flex flex-col items-center justify-center h-full">
             <Spin size="large" />
-            <p className="mt-4 text-[#9A9A9A]">个人空间正在初始化，请稍候...</p>
+            <p className="mt-4 text-[#9A9A9A]">{t("mine.space_init")}</p>
           </div>
         )}
 
         {(activeTab !== "upload" || !contextInitializing) && (
           <>
-            <div className="flex-none h-14">
-              <h2 className="p-5 flex items-center">
-                <ExpandSidebarButton />
-                <span className="ml-2">我的</span>
-              </h2>
-            </div>
+            <Header title={t("module.mine")} border={false}></Header>
+
             <div className="w-11/12 lg:w-4/5 max-w-[1200px] mx-auto py-5 relative h-[calc(100%-96px)] flex flex-col">
               <MineHeader
                 tabs={filteredTabList}
@@ -657,7 +660,7 @@ export function MineView2() {
                   importing: audioImport.importing,
                   hasActiveRecording,
                   onCreateFolder: handleCreateRecordingFolder,
-                  onStartRecording: () => useRecordingStore.getState().start(false),
+                  onStartRecording: showRecordingButton ? () => useRecordingStore.getState().start(false) : undefined,
                 } : undefined}
               />
 
@@ -725,7 +728,7 @@ export function MineView2() {
 
       {/* Rename Modal */}
       <Modal
-        title="重命名"
+        title={t("action.rename")}
         open={renameModalVisible}
         onOk={handleRenameConfirm}
         onCancel={() => {

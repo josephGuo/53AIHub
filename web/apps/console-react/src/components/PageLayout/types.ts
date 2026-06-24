@@ -7,14 +7,24 @@ export interface PageHeaderConfig {
   description?: React.ReactNode;
   /** 图标配置 */
   icon?: {
-    src: string;
+    /** 图片路径，使用 img 标签展示 */
+    src?: string;
+    /** SvgIcon 图标名称，使用 SvgIcon 组件展示 */
+    svgIcon?: string;
     bgColor?: string;
+    customStyle?: React.CSSProperties;
     className?: string;
+    /** SvgIcon 颜色，默认 white */
+    color?: string;
+    /** SvgIcon 尺寸，默认 32 */
+    size?: number;
   };
   /** 返回按钮 */
   back?: boolean;
-  /** 返回按钮点击回调 */
+  /** 返回按钮点击回调，传入时不再自动处理智能返回 */
   onBack?: () => void;
+  /** 智能返回的兜底路径，无历史记录时跳转此路径，默认 '/' */
+  fallbackPath?: string;
   /** 标题前缀 */
   titlePrefix?: React.ReactNode;
   /** 标题后缀 */

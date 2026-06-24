@@ -54,7 +54,7 @@ export function FilterSelect({
 
   return (
     <Dropdown menu={{ items }} trigger={['click']}>
-      <div className="border-none outline-none h-9 flex items-center px-5 gap-1.5 rounded-2xl bg-[#F6F7F8] text-xs text-[#1D1E1F] cursor-pointer">
+      <div className="border-none outline-none h-9 flex items-center px-5 gap-1.5 rounded-2xl bg-[#F6F7F8] text-xs text-primary cursor-pointer">
         {label}
         <DownOutlined style={{ fontSize: 14, color: '#9EA5B6' }} />
       </div>

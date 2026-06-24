@@ -1,5 +1,6 @@
 import { LeftOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { SvgIcon } from "@km/shared-components-react";
 import type { PageHeaderConfig } from "./types";
 
 interface PageHeaderProps {
@@ -30,7 +31,7 @@ export function PageHeader({ config, className = "" }: PageHeaderProps) {
   if (typeof config === "string") {
     return (
       <div className={`flex-none flex items-center gap-4 ${className}`}>
-        <h2 className="text-[26px] text-[#1D1E1F] font-semibold">{config}</h2>
+        <h2 className="text-[26px] text-primary font-semibold">{config}</h2>
       </div>
     );
   }
@@ -53,7 +54,7 @@ export function PageHeader({ config, className = "" }: PageHeaderProps) {
     } else {
       const state = window.history.state || {};
       const hasHistory = state.idx !== undefined ? state.idx > 0 : false;
-      navigate(hasHistory ? -1 : "/");
+      navigate(hasHistory ? -1 : (config.fallbackPath || "/"));
     }
   };
 
@@ -63,13 +64,22 @@ export function PageHeader({ config, className = "" }: PageHeaderProps) {
       <div className={`flex items-center gap-4 ${className}`}>
         <div
           className={`size-[60px] flex items-center justify-center rounded-lg ${icon.bgColor || "bg-[#5899FC]"}`}
+          style={icon.customStyle}
         >
-          <img className={icon.className || "size-8"} src={icon.src} alt="" />
+          {icon.svgIcon ? (
+            <SvgIcon
+              name={icon.svgIcon}
+              size={icon.size || 32}
+              color={icon.color || "white"}
+            />
+          ) : (
+            <img className={icon.className || "size-8"} src={icon.src} alt="" />
+          )}
         </div>
         <div className="flex flex-col gap-1">
-          <TitleText title={title} className="text-[22px] text-[#1D1E1F] font-bold" />
+          <TitleText title={title} className="text-[22px] text-primary font-bold" />
           {description && (
-            <DescText desc={description} className="text-sm text-[#999999]" />
+            <DescText desc={description} className="text-sm text-placeholder" />
           )}
         </div>
         {center}
@@ -83,13 +93,13 @@ export function PageHeader({ config, className = "" }: PageHeaderProps) {
   if (description) {
     return (
       <div className={`flex-none flex items-center gap-4 ${className}`}>
-        <div className="flex-1 flex items-center gap-3">
+        <div className="flex-1 flex items-center gap-2">
           {back && (
             <div
               className="w-7 h-7 flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded"
               onClick={handleBack}
             >
-              <LeftOutlined style={{ fontSize: 18 }} />
+              <LeftOutlined style={{ fontSize: 16 }} />
             </div>
           )}
           {titlePrefix}
@@ -117,7 +127,7 @@ export function PageHeader({ config, className = "" }: PageHeaderProps) {
           </div>
         )}
         {titlePrefix}
-        <TitleText title={title} className="text-[26px] text-[#1D1E1F] font-semibold" />
+        <TitleText title={title} className="text-[26px] text-primary font-semibold" />
         {titleSuffix}
       </div>
       <div className="flex-none flex justify-center">{center}</div>

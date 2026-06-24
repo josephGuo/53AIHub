@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button, Tag, Spin } from "antd";
 import {
-  InfoCircleFilled,
-  SettingOutlined,
-  ReloadOutlined,
-  WarningFilled,
+    InfoCircleFilled,
+    SettingOutlined,
+    ReloadOutlined,
+    WarningFilled,
 } from "@ant-design/icons";
 import { t } from "@/locales";
 import {
-  chunkSettingApi,
-  type ModelSetting,
+    chunkSettingApi,
+    type ModelSetting,
 } from "@/api/modules/chunk-setting";
 import channelApi from "@/api/modules/channel/index";
 import { MODEL_USE_TYPE } from "@/constants/platform/config";
@@ -92,12 +92,12 @@ export function VectorConfig() {
     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="bg-[#F5F8FF] p-4 rounded-xl flex items-start gap-3">
         <InfoCircleFilled
-          className="text-[#2563EB] mt-0.5"
+          className="text-brand mt-0.5"
           style={{ fontSize: 18 }}
         />
         <div className="flex-1">
           <div className="flex justify-between items-center">
-            <div className="text-base font-bold text-[#1D1E1F]">
+            <div className="text-base font-bold text-primary">
               {t("data_pipeline.vector_global_embedding")}
             </div>
             <Button type="link" loading={isLoading} onClick={handleRefresh}>
@@ -107,7 +107,7 @@ export function VectorConfig() {
               </span>
             </Button>
           </div>
-          <p className="text-sm text-[#999999] mt-1">
+          <p className="text-sm text-placeholder mt-1">
             {t("data_pipeline.vector_embedding_tip")}
           </p>
         </div>
@@ -132,14 +132,14 @@ export function VectorConfig() {
               {/* 正常状态 */}
               {(!testResult || testResult.success) && (
                 <div className="flex-1">
-                  <span className="font-bold text-sm text-[#999999]">
+                  <span className="font-bold text-sm text-placeholder">
                     <ModelView
                       channelId={vectorEmbedding?.channel_id ?? ""}
                       model={vectorEmbedding?.model_name ?? ""}
                       type="provider_name"
                     />
                   </span>
-                  <div className="text-sm text-[#1D1E1F] mt-1 font-medium">
+                  <div className="text-sm text-primary mt-1 font-medium">
                     <ModelView
                       channelId={vectorEmbedding?.channel_id ?? ""}
                       model={vectorEmbedding?.model_name ?? ""}
@@ -156,7 +156,7 @@ export function VectorConfig() {
                     <WarningFilled />
                     <span className="font-medium">模型配置异常</span>
                   </div>
-                  <div className="text-xs text-[#999999] mt-1 line-clamp-2">
+                  <div className="text-xs text-placeholder mt-1 line-clamp-2">
                     {testResult.message || "请检查模型配置是否正确"}
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export function VectorConfig() {
             </div>
           </div>
         ) : (
-          <div className="text-center text-sm text-[#999999]">
+          <div className="text-center text-sm text-placeholder">
             {t("data_pipeline.vector_no_config")}
           </div>
         )}
@@ -180,7 +180,7 @@ export function VectorConfig() {
 
       <div className="pt-4 flex justify-center">
         <div
-          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-[#545454] cursor-pointer hover:bg-blue-50 hover:text-[#2563EB] transition-all border border-transparent hover:border-blue-100"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-tertiary cursor-pointer hover:bg-blue-50 hover:text-brand transition-all border border-transparent hover:border-blue-100"
           onClick={handleGoToModelManagement}
         >
           <SettingOutlined style={{ color: "#545454" }} />

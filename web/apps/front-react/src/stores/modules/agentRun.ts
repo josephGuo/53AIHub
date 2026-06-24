@@ -410,27 +410,69 @@ export function eventsToMessage(events: AgentRun.Event[]): ChatMessage | null {
 
 // ============= 轮询等待 message_id =============
 
+/**
+ * 轮询获取最新 run 信息
+ *
+ * @param conversationId 会话 ID
+ * @param signal 可选的 AbortSignal，用于取消请求
+ * @param interval 轮询间隔（毫秒），默认 1000ms
+ * @param timeout 超时时间（毫秒），默认 10000ms（10秒）
+ * @returns AgentRun.Info 或 null（无运行中的 run）
+ */
 async function pollLatestRunForMessageId(
   conversationId: string,
+  signal?: AbortSignal,
   interval = 1000,
-  timeout = 30000
-): Promise<AgentRun.Info> {
+  timeout = 10000
+): Promise<AgentRun.Info | null> {
   const startTime = Date.now()
+
   while (Date.now() - startTime < timeout) {
+    // ✅ 检查是否已取消
+    if (signal?.aborted) {
+      throw new Error('Aborted')
+    }
+
     try {
       const run = await agentRunApi.latest(conversationId)
+
+      // ✅ 请求完成后再次检查取消状态
+      if (signal?.aborted) {
+        throw new Error('Aborted')
+      }
+
+      // 有有效的 message_id
       if (run.message_id && run.message_id !== 0) {
         return run
       }
+
+      // 状态不是运行中，直接返回
       if (!RUNNING_STATUSES.includes(run.status)) {
         return run
       }
+
+      // 等待后继续轮询
       await new Promise(resolve => setTimeout(resolve, interval))
     } catch (error: any) {
-      return { id: '', run_id: '', status: 'failed', message_id: 0, created_at: 0, updated_at: 0, conversation_id: conversationId,  }
+      // ✅ 取消错误向上抛出
+      if (error.message === 'Aborted' || error.name === 'AbortError') {
+        throw error
+      }
+
+      // ✅ 404 是正常情况，表示没有运行中的 run
+      if (error?.response?.status === 404) {
+        return null
+      }
+
+      // ✅ 其他错误记录并返回 null
+      console.warn('pollLatestRunForMessageId error:', error)
+      return null
     }
   }
-  throw new Error('Timeout waiting for message_id')
+
+  // ✅ 超时返回 null 而不是抛异常（更友好的处理方式）
+  console.warn('pollLatestRunForMessageId timeout after', timeout, 'ms')
+  return null
 }
 
 // ============= Zustand Store =============
@@ -469,35 +511,55 @@ export const useAgentRunStore = create<AgentRunState>((set, get) => ({
       // 立即通知外部开始恢复，设置 loading 状态
       callbacks.onStart?.()
 
-      let run = await pollLatestRunForMessageId(conversationId)
-      let isRunning = RUNNING_STATUSES.includes(run.status)
+      // ✅ pollLatestRunForMessageId 现在可能返回 null
+      const run = await pollLatestRunForMessageId(conversationId)
 
-      if (!isRunning) {
-        callbacks.onMessage({ isRunning: false, messageId: '' })
+      // ✅ 无运行中的 run，等待 onMessage 完成后返回
+      if (!run) {
+        await callbacks.onMessage?.({ isRunning: false, messageId: '' })
         return { run: null, isrunning: false }
       }
 
-      // 只有有 messageId 时才调用 onMessage
-      await callbacks.onMessage({ isRunning, messageId: run.message_id })
+      const isRunning = RUNNING_STATUSES.includes(run.status)
+
+      // ✅ 不在运行中，等待 onMessage 完成后返回
+      if (!isRunning) {
+        await callbacks.onMessage?.({ isRunning: false, messageId: '' })
+        return { run: null, isrunning: false }
+      }
+
+      // ✅ 只有有 messageId 时才调用 onMessage，等待完成
+      await callbacks.onMessage?.({ isRunning, messageId: run.message_id })
       set({ currentRun: run, events: [], lastSeq: 0 })
 
       try {
         const replayData = await agentRunApi.replay(run.run_id)
-        isRunning = RUNNING_STATUSES.includes(replayData.run.status)
+        const replayIsRunning = RUNNING_STATUSES.includes(replayData.run.status)
         if (replayData.events.length > 0) {
           set({ isReplaying: true, events: replayData.events })
           const maxSeq = Math.max(...replayData.events.map(e => e.seq))
           set({ lastSeq: maxSeq })
         }
         set({ isReplaying: false })
+
+        // ✅ 如果 replay 后状态变化，更新 isRunning
+        if (replayIsRunning) {
+          get().subscribe(run.run_id, get().lastSeq)
+        }
+        return { run, isrunning: replayIsRunning }
       } catch (replayError) {
-        message.warning('历史数据加载失败，尝试连接...')
+        // ✅ replay 失败但 run 仍在运行，尝试订阅
+        console.warn('Replay failed, attempting to subscribe:', replayError)
+        if (isRunning) {
+          get().subscribe(run.run_id, get().lastSeq)
+        }
+        return { run, isrunning: isRunning }
       }
-      if (isRunning) {
-        get().subscribe(run.run_id, get().lastSeq)
-      }
-      return { run, isrunning: isRunning }
     } catch (error: any) {
+      // ✅ Aborted 错误向上抛出
+      if (error.message === 'Aborted') {
+        throw error
+      }
       // 404 表示没有运行中的 run，是正常情况
       if (error?.response?.status !== 404) {
         console.error('Failed to recover run:', error)

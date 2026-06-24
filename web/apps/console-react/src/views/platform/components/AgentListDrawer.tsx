@@ -4,9 +4,8 @@ import {
   useImperativeHandle,
   useMemo
 } from "react";
-import { Drawer, Input, Button, Table, Switch, message, Modal } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
+import { Drawer, Button, Table, Switch, message, Modal } from "antd";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import { t } from "@/locales";
 import { useNavigate } from "react-router-dom";
 import { agentApi, AGENT_TYPE } from "@/api/modules/agent";
@@ -175,14 +174,14 @@ export const AgentListDrawer = forwardRef<
       if (data?.agent_id) {
         navigate({
           pathname: "/agent/create-v2",
-          search: `?type=${agent_type}&agent_id=${data.agent_id}&is_new=false`,
+          search: `?type=${agent_type}&agent_id=${data.agent_id}`,
         });
       } else {
         const channelType = data?.channel_type ?? originData.id;
         const title = data?.title ?? originData?.label ?? "";
         navigate({
           pathname: "/agent/create-v2",
-          search: `?type=${agent_type}&channel_type=${channelType}&is_new=true&title=${title}`,
+          search: `?type=${agent_type}&channel_type=${channelType}&title=${title}&from=platform`,
         });
       }
     },
@@ -262,9 +261,9 @@ export const AgentListDrawer = forwardRef<
             alt=""
           />
           <div className="flex-1 w-0 text-sm flex flex-col">
-            <div className="text-[#2563EB] truncate">{row.name || "--"}</div>
+            <div className="text-brand truncate">{row.name || "--"}</div>
             {row.description && (
-              <div className="text-xs text-[#808080] truncate">
+              <div className="text-xs text-placeholder truncate">
                 {row.description}
               </div>
             )}
@@ -279,7 +278,7 @@ export const AgentListDrawer = forwardRef<
       width: 140,
       ellipsis: true,
       render: (names: string[]) => (
-        <span className={names.length === 0 ? "text-[#999]" : ""}>
+        <span className={names.length === 0 ? "text-placeholder" : ""}>
           {names.join("、") || "--"}
         </span>
       ),
@@ -319,7 +318,7 @@ export const AgentListDrawer = forwardRef<
           <Button
             type="link"
             icon={<SvgIcon name="edit" />}
-            className="hover:!text-[#2563EB]"
+            className="hover:!text-brand"
             onClick={(e) => {
               e.stopPropagation();
               onAgentCreate(row);
@@ -328,7 +327,7 @@ export const AgentListDrawer = forwardRef<
           <Button
             type="link"
             icon={<SvgIcon name="delete" />}
-            className="hover:!text-[#FA5151]"
+            className="hover:!text-tag-red"
             onClick={(e) => {
               e.stopPropagation();
               onAgentDelete(row);
@@ -350,19 +349,14 @@ export const AgentListDrawer = forwardRef<
     >
       <div className="flex items-center justify-between gap-4 mb-4">
         <div>
-          <Input
-            prefix={<SearchOutlined />}
+          <Search
+            mode="expanded"
             placeholder={t("action_search")}
             value={filterForm.keyword}
-            onChange={(e) =>
-              setFilterForm((prev) => ({ ...prev, keyword: e.target.value }))
-            }
-            onPressEnter={refresh}
-            onClear={() => {
-              setFilterForm((prev) => ({ ...prev, keyword: "" }));
-              loadListData({ keyword: "" });
+            onDebouncedChange={(val) => {
+              setFilterForm((prev) => ({ ...prev, keyword: val }));
+              loadListData({ keyword: val });
             }}
-            allowClear
           />
         </div>
         <Button type="primary" onClick={() => handleTest({} as AgentData)}>

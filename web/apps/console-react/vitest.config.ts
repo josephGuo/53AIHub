@@ -47,9 +47,9 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src'),
       '@km/hub-ui-x-react': resolve(__dirname, '../../packages/hub-ui-x-react/packages'),
+      '@km/shared-business': resolve(__dirname, '../../packages/shared-business/src'),
       '@km/shared-components-react': resolve(__dirname, '../../packages/shared-components-react/src'),
       '@km/shared-utils': resolve(__dirname, '../../packages/shared-utils/src'),
-      '@km/shared-types': resolve(__dirname, '../../packages/shared-types/src'),
     },
   },
 })

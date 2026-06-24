@@ -8,7 +8,20 @@ import { AGENT_USAGES } from '@/constants/agent'
 
 interface RouterOptions {
   agent_id?: string | null
-  conversation_id?: number | null
+  conversation_id?: number | string | null
+}
+
+function isOpenClawConversationId(conversationId?: string | number | null) {
+  return typeof conversationId === 'string' && (
+    conversationId.startsWith('agent:') ||
+    conversationId.startsWith('agenthub_') ||
+    conversationId.startsWith('agenthub-') ||
+    conversationId.startsWith('hub53ai:new:')
+  )
+}
+
+function isConversationHistoryRoute() {
+  return pathIncludes('/chat') || pathIncludes('/index/agent')
 }
 
 export const useCurrentConversation = () => {
@@ -238,8 +251,18 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
     if (isHashRouter) {
       setRouterQuery(data, state.base_path)
     } else {
-      const url = `${state.base_path}?agent_id=${data.agent_id}${data.conversation_id ? `&conversation_id=${data.conversation_id}` : ''}`
-      if (pathIncludes('/chat')) {
+      const searchParams = new URLSearchParams(window.location.search)
+      searchParams.set('agent_id', String(data.agent_id))
+      if (data.conversation_id) {
+        searchParams.set('conversation_id', String(data.conversation_id))
+      } else {
+        searchParams.delete('conversation_id')
+      }
+      if (isOpenClawConversationId(data.conversation_id)) {
+        searchParams.set('type', 'openclaw')
+      }
+      const url = `${state.base_path}?${searchParams.toString()}`
+      if (isConversationHistoryRoute()) {
         window.history.replaceState(null, '', url)
       } else {
         // React Router navigation - use window.location for store context

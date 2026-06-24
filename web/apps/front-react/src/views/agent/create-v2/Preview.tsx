@@ -110,7 +110,7 @@ export const PreviewPanel = forwardRef<PreviewPanelRef>((_, ref) => {
     setConversationCreating(true);
     userFiles = userFiles || [];
     if (!agentFormStore.agent_id) {
-      message.warning(t("agent_not_found"));
+      message.warning(t("agent.not_found"));
       setConversationCreating(false);
       return;
     }

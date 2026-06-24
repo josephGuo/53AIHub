@@ -358,13 +358,19 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
         recordingId: jobId,
         startTime: recordingStartTime
       })
-    } catch (error) {
+    } catch (error: any) {
       // Start failed - clean up
       bridge.destroy()
       wakeLockService.release()
 
-      const errorMsg = handleMediaError(error)
-      message.error(`录音启动失败: ${errorMsg}`)
+      const errorMsg = error?.message || ''
+
+      if (errorMsg === '功能已被停用，请刷新页面后重试') {
+        message.warning(errorMsg)
+      } else {
+        const displayMsg = handleMediaError(error)
+        message.error(`录音启动失败: ${displayMsg}`)
+      }
     }
   },
 

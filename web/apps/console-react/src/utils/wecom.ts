@@ -4,7 +4,7 @@
  */
 import { loadScript, sleep } from '@km/shared-utils'
 import { wecomApi } from '@/api/modules/wecom'
-import { suite_id, getPublicPath } from '@/utils/config'
+import { suite_id } from '@/utils/config'
 
 const userAgent = navigator.userAgent.toLowerCase()
 const isInQw = /wxwork|micromessenger/im.test(userAgent)
@@ -37,7 +37,7 @@ const jssdk = {
     return sleep(2).then(() => {
       return Promise.all([
         loadScript('//res.wx.qq.com/open/js/jweixin-1.2.0.js'),
-        loadScript(getPublicPath(`/js/jwxwork-1.0.0.js`)),
+        loadScript('//open.work.weixin.qq.com/wwopen/js/jwxwork-1.0.0.js'),
       ])
     })
   },

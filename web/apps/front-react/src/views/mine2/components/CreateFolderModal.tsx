@@ -21,8 +21,9 @@ export function CreateFolderModal({
   onChange,
   onConfirm,
   onCancel,
-  title = '新建文件夹',
+  title,
 }: CreateFolderModalProps) {
+  const actualTitle = title || t('library.create_folder')
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     if (!INVALID_CHARS_REGEX.test(newValue)) {
@@ -33,7 +34,7 @@ export function CreateFolderModal({
   return (
     <Modal
       open={open}
-      title={title}
+      title={actualTitle}
       onOk={onConfirm}
       onCancel={onCancel}
       okText={t('action.confirm')}
@@ -43,7 +44,7 @@ export function CreateFolderModal({
         <Input
           value={value}
           onChange={handleChange}
-          placeholder="请输入文件夹名称（不能包含 / 或 \\）"
+          placeholder={t('mine.folder_name_placeholder')}
           autoFocus
           onPressEnter={onConfirm}
         />

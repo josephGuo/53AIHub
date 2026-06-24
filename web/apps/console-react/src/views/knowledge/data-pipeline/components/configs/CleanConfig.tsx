@@ -29,7 +29,7 @@ const CLEAN_RULES: CleanRule[] = [
     desc: t('data_pipeline.clean_rule_invalid_tags_desc'),
     enabled: true,
     preview_before:
-      '<span class="text-[#2563EB]">&lt;页眉&gt;</span>53AIHub<span class="text-[#2563EB]">&lt;页脚&gt;&lt;页脚&gt;&lt;页码&gt;</span>',
+      '<span class="text-brand">&lt;页眉&gt;</span>53AIHub<span class="text-brand">&lt;页脚&gt;&lt;页脚&gt;&lt;页码&gt;</span>',
     preview_after: '53AIHub',
   },
   {
@@ -37,7 +37,7 @@ const CLEAN_RULES: CleanRule[] = [
     name: t('data_pipeline.clean_rule_spell_check'),
     desc: t('data_pipeline.clean_rule_spell_check_desc'),
     enabled: true,
-    preview_before: '祝您身体<span class="text-[#2563EB] font-bold underline">键康</span>',
+    preview_before: '祝您身体<span class="text-brand font-bold underline">键康</span>',
     preview_after: '祝您身体健康',
   },
   {
@@ -54,7 +54,7 @@ const CLEAN_RULES: CleanRule[] = [
     name: t('data_pipeline.clean_rule_pronoun_replace'),
     desc: t('data_pipeline.clean_rule_pronoun_replace_desc'),
     enabled: false,
-    preview_before: '它能够提供多种高级特性，<span class="text-[#2563EB]">它</span>可以帮助你提升团队效率。',
+    preview_before: '它能够提供多种高级特性，<span class="text-brand">它</span>可以帮助你提升团队效率。',
     preview_after: '能提供多种高级特性，它可以帮助你提升团队效率。',
   },
 ]
@@ -113,7 +113,7 @@ export function CleanConfig({ config, onUpdateConfig }: CleanConfigProps) {
                               }}
                             />
                           </div>
-                          <span className="text-[10px] font-bold text-[#2563EB]">
+                          <span className="text-[10px] font-bold text-brand">
                             {rule.key === 'special_char' ? config.special_char_threshold : config.short_text_threshold}
                           </span>
                         </div>
@@ -141,7 +141,7 @@ export function CleanConfig({ config, onUpdateConfig }: CleanConfigProps) {
 
       <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100 space-y-8 mt-8">
         <div className="flex items-center gap-2 text-sm font-bold text-gray-700">
-          <ToolOutlined className="text-[#2563EB]" />
+          <ToolOutlined className="text-brand" />
           <span>{t('data_pipeline.clean_threshold_tune')}</span>
         </div>
 
@@ -149,7 +149,7 @@ export function CleanConfig({ config, onUpdateConfig }: CleanConfigProps) {
           <div className="space-y-3">
             <div className="flex justify-between">
               <label className="text-xs font-bold text-gray-400 uppercase">{t('data_pipeline.clean_special_char_threshold')}</label>
-              <span className="text-xs font-mono text-[#2563EB]">{config.special_char_threshold}</span>
+              <span className="text-xs font-mono text-brand">{config.special_char_threshold}</span>
             </div>
             <Slider
               value={config.special_char_threshold}
@@ -163,7 +163,7 @@ export function CleanConfig({ config, onUpdateConfig }: CleanConfigProps) {
           <div className="space-y-3">
             <div className="flex justify-between">
               <label className="text-xs font-bold text-gray-400 uppercase">{t('data_pipeline.clean_short_text_threshold')}</label>
-              <span className="text-xs font-mono text-[#2563EB]">{config.short_text_threshold}</span>
+              <span className="text-xs font-mono text-brand">{config.short_text_threshold}</span>
             </div>
             <Slider
               value={config.short_text_threshold}

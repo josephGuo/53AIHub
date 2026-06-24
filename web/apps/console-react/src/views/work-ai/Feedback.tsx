@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Table, Input, Select, Button, Tag, Spin, Tooltip } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
-import { t } from "@/locales";
-import { SvgIcon } from "@km/shared-components-react";
+import { Table, Select, Button, Tag, Spin, Tooltip } from "antd";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import feedbackApi from "@/api/modules/feedback";
 import { DateRangeFilter } from "@/components/Filter/date-range";
 import { UserFilter } from "@/components/Filter/user";
 import FeedbackConfigDialog from "@/views/search/feedback/FeedbackConfigDialog";
 import Detail, { DetailRef } from "@/views/search/components/detail";
 import {
-  SEARCH_TYPE,
-  type FeedbackDisplayItem,
+    SEARCH_TYPE,
+    type FeedbackDisplayItem,
 } from "@/api/modules/feedback/types";
 import { getLastTimeAsDay } from "@km/shared-utils";
 import { useEnterpriseStore } from "@/stores";
@@ -374,7 +372,7 @@ const WorkAIFeedback: React.FC<FeedbackProps> = ({ agentId }) => {
       render: (_: any, record: FeedbackDisplayItem, index: number) => (
         <Button
           type="link"
-          className="invisible group-hover:visible hover:!text-[#2563EB]"
+          className="invisible group-hover:visible hover:!text-brand"
           icon={<SvgIcon name="view" />}
           onClick={(e) => {
             e.stopPropagation();
@@ -421,7 +419,7 @@ const WorkAIFeedback: React.FC<FeedbackProps> = ({ agentId }) => {
               >
                 <SvgIcon name={item.svg} width="14px" />
               </div>
-              <span className="ml-2 mr-1 text-[#1D1E1F] text-sm">
+              <span className="ml-2 mr-1 text-primary text-sm">
                 {item.label}
               </span>
               <Tooltip title={item.tip} placement="top">
@@ -458,24 +456,16 @@ const WorkAIFeedback: React.FC<FeedbackProps> = ({ agentId }) => {
               }}
             />
           </div>
-          <Input
+          <Search
+            mode="expanded"
             value={detailedForm.question || ""}
-            onChange={(e) =>
-              setDetailedForm((prev) => ({
-                ...prev,
-                question: e.target.value || null,
-              }))
-            }
-            placeholder={t("search-record.search_question")}
-            style={{ width: 240 }}
-            allowClear
-            onPressEnter={() => handleFilterChange()}
-            prefix={<SearchOutlined />}
-            onClear={() => {
-              const newForm = { ...detailedForm, question: null };
+            onDebouncedChange={(val) => {
+              const newForm = { ...detailedForm, question: val || null };
               setDetailedForm(newForm);
               handleFilterChange(newForm, detailedDateValue);
             }}
+            placeholder={t("search-record.search_question")}
+            className="w-[240px]"
           />
           <Select
             value={detailedForm.feedback_type}

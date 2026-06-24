@@ -331,47 +331,47 @@ function VirtualListInner<T>(
 
       const { index, item, done } = task
 
-      // Check if item is still visible
-      const isStillVisible = visibleItems.some((v) => v.index === index)
-      if (isStillVisible) {
-        let isDone = false
+      // 入队时已由 useEffect 确认可见，直接处理，避免闭包导致 item 丢失
+      let isDone = false
 
-        await new Promise<void>((resolve) => {
-          const wrappedDone = () => {
-            if (!isDone) {
-              isDone = true
-              done()
-              processingItemsRef.current.delete(index)
-              resolve()
-            }
+      await new Promise<void>((resolve) => {
+        const wrappedDone = () => {
+          if (!isDone) {
+            isDone = true
+            done()
+            processingItemsRef.current.delete(index)
+            resolve()
           }
+        }
 
-          // Timeout fallback
-          const timeout = setTimeout(() => {
-            if (!isDone) {
-              console.warn(`VirtualList: item ${index} timeout, forcing done`)
-              wrappedDone()
-            }
-          }, 30000) // 30 seconds timeout
+        // Timeout fallback
+        const timeout = setTimeout(() => {
+          if (!isDone) {
+            console.warn(`VirtualList: item ${index} timeout, forcing done`)
+            wrappedDone()
+          }
+        }, 30000) // 30 seconds timeout
 
-          // Call onItemVisible - the callback should call wrappedDone when done
-          onItemVisible?.(index, item, wrappedDone)
+        // Call onItemVisible - the callback should call wrappedDone when done
+        onItemVisible?.(index, item, wrappedDone)
 
-          // Poll for isDone status
-          const checkInterval = setInterval(() => {
-            if (isDone) {
-              clearTimeout(timeout)
-              clearInterval(checkInterval)
-            }
-          }, 50)
-        })
-      } else {
-        processingItemsRef.current.delete(index)
-      }
+        // Poll for isDone status
+        const checkInterval = setInterval(() => {
+          if (isDone) {
+            clearTimeout(timeout)
+            clearInterval(checkInterval)
+          }
+        }, 50)
+      })
     }
 
     isExecutingRef.current = false
-  }, [visibleItems, onItemVisible])
+
+    // 修复：快速滚动时，旧闭包可能跳过可见项；队列剩余任务需重新处理
+    if (executionQueueRef.current.length > 0) {
+      processExecutionQueue()
+    }
+  }, [onItemVisible])
 
   // Handle item visible
   const handleItemVisible = useCallback((index: number, item: T, done: () => void) => {

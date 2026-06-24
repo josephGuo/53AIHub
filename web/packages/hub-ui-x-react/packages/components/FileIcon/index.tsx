@@ -8,7 +8,7 @@ interface FileIconProps {
 
 const FileIcon: React.FC<FileIconProps> = ({ name, mimeType = '' }) => {
   const fileExtension = useMemo(() => {
-    const ext = name.split('.').pop()?.toLowerCase();
+    const ext = name?.split('.').pop()?.toLowerCase();
     return ext || '';
   }, [name]);
 

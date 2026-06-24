@@ -171,7 +171,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
 
   // ==================== 计算属性 ====================
   const defaultAccept = useMemo(() => {
-    return ['md', 'txt', 'html', 'htm', 'pdf', 'pptx', 'docx', 'xls', 'xlsx', 'csv', 'xml', 'epub', 'mp3', 'wav', 'm4a', 'wma', 'aac', 'ogg', 'amr', 'flac', 'aiff']
+    return ['md', 'txt', 'html', 'htm', 'pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'xml', 'epub', 'mp3', 'wav', 'm4a', 'wma', 'aac', 'ogg', 'amr', 'flac', 'aiff']
   }, [])
 
   const acceptTypes = useMemo(() => {

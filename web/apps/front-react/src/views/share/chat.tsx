@@ -411,7 +411,7 @@ export function ShareChatView() {
         {/* Footer */}
         <div className="flex-none h-[80px] md:h-[122px] flex items-center justify-center relative">
           <div
-            className={`h-[62px] flex items-center gap-2 bg-[#2563EB] rounded-xl px-3 cursor-pointer hover:bg-[#1D5ECD] text-white ${
+            className={`h-10 flex items-center gap-2 bg-[#2563EB] rounded-xl px-3 cursor-pointer hover:bg-[#1D5ECD] text-white ${
               from === "agent" ? "" : "w-11/12 md:w-[400px]"
             }`}
             onClick={handleOpenAgent}
@@ -421,7 +421,7 @@ export function ShareChatView() {
                 <img
                   src={agent?.logo}
                   title={agent?.name}
-                  className="h-5 rounded-full"
+                  className="h-6 rounded-full"
                   alt=""
                 />
                 <span className="text-sm truncate max-w-80">

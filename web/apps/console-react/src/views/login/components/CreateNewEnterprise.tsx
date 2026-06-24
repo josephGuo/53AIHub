@@ -235,7 +235,7 @@ export function CreateNewEnterprise(props: CreateNewEnterpriseProps) {
             layout="vertical"
             onValuesChange={() => forceUpdate({})}
           >
-            <h4 className="text-3xl text-[#1D1E1F] font-bold text-center mb-10">
+            <h4 className="text-3xl text-primary font-bold text-center mb-10">
               {t("apply.create_title", { project: "KM" })}
             </h4>
 
@@ -380,11 +380,11 @@ export function CreateNewEnterprise(props: CreateNewEnterpriseProps) {
           <div className="h-[424px] p-10 box-border bg-[#EFF9FF] rounded-lg flex flex-col items-center justify-center text-center">
             <div className="flex items-center justify-center gap-2">
               <CheckCircleFilled style={{ color: "#4CBF65", fontSize: 28 }} />
-              <span className="text-[#1D1E1F] text-2xl font-bold">
+              <span className="text-primary text-2xl font-bold">
                 {t("apply.waiting_audit")}
               </span>
             </div>
-            <div className="text-[#666] text-sm mt-4">
+            <div className="text-tertiary text-sm mt-4">
               {t("apply_success_desc")}
             </div>
             <img

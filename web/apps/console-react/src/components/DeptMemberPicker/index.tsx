@@ -1,10 +1,9 @@
 import {
   CheckOutlined,
   CloseOutlined,
-  SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Modal, Input, Radio, Tree, Skeleton, Tooltip } from "antd";
-import { SvgIcon } from "@km/shared-components-react";
+import { Button, Modal, Radio, Tree, Skeleton, Tooltip } from "antd";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import type { TreeProps } from "antd";
 import {
   useEffect,
@@ -514,8 +513,8 @@ function DeptMemberPickerInner(
         <div
           className={`flex-1 w-0 text-sm truncate ${
             selectedValue.some((i) => i.value === node.value)
-              ? "text-[#3664EF]"
-              : "text-[#333]"
+              ? "text-brand"
+              : "text-primary"
           }`}
           title={node.label}
         >
@@ -557,8 +556,8 @@ function DeptMemberPickerInner(
         <div
           className={`flex-1 w-0 text-sm truncate ${
             selectedValue.some((i) => i.value === node.value)
-              ? "text-[#3664EF]"
-              : "text-[#333]"
+              ? "text-brand"
+              : "text-primary"
           }`}
           title={node.label}
         >
@@ -585,15 +584,15 @@ function DeptMemberPickerInner(
               <li
                 data-item="true"
                 key={item.value ?? item.did ?? index}
-                className="h-8 flex items-center gap-2 px-2 border border-[#E5E5E5] rounded text-[#666]"
+                className="h-8 flex items-center gap-2 px-2 border border-[#E5E5E5] rounded text-tertiary"
               >
                 {item.label || item.group_name || item.name}
               </li>
             ))}
             {/* 模拟 +n */}
-            <li className="h-8 flex items-center px-2 text-[#666]">+n</li>
+            <li className="h-8 flex items-center px-2 text-tertiary">+n</li>
             {/* 模拟 button */}
-            <li className="h-8 flex items-center">修改</li>
+            <li className="h-8 px-4 flex items-center">修改</li>
           </ul>
         )}
 
@@ -604,7 +603,7 @@ function DeptMemberPickerInner(
             {displayItems.slice(0, visibleCount ?? 3).map((item, index) => (
               <li
                 key={item.value ?? index}
-                className="h-8 flex items-center gap-2 px-2 box-border border border-[#E5E5E5] rounded text-[#666]"
+                className="h-8 flex items-center gap-2 px-2 box-border border border-[#E5E5E5] rounded text-tertiary"
               >
                 <SvgIcon
                   name="user-group"
@@ -617,7 +616,7 @@ function DeptMemberPickerInner(
             ))}
             {displayItems.length > (visibleCount ?? 3) && (
               <Tooltip title={displayItems.slice(visibleCount ?? 3).map(i => i.label || i.group_name || i.name || '').join('、')}>
-                <li className="h-8 flex items-center px-2 border border-[#E5E5E5] rounded text-[#666]">
+                <li className="h-8 flex items-center px-2 border border-[#E5E5E5] rounded text-tertiary">
                   +{displayItems.length - (visibleCount ?? 3)}
                 </li>
               </Tooltip>
@@ -631,7 +630,7 @@ function DeptMemberPickerInner(
             {displayItems.slice(0, visibleCount ?? 3).map((item, index) => (
               <li
                 key={item.value ?? item.did ?? index}
-                className="h-8 flex items-center gap-2 px-2 border border-[#E5E5E5] rounded text-[#666]"
+                className="h-8 flex items-center gap-2 px-2 border border-[#E5E5E5] rounded text-tertiary"
               >
                 <SvgIcon
                   name="department"
@@ -644,7 +643,7 @@ function DeptMemberPickerInner(
             ))}
             {displayItems.length > (visibleCount ?? 3) && (
               <Tooltip title={displayItems.slice(visibleCount ?? 3).map(i => i.name || '').join('、')}>
-                <li className="h-8 flex items-center px-2 border border-[#E5E5E5] rounded text-[#666]">
+                <li className="h-8 flex items-center px-2 border border-[#E5E5E5] rounded text-tertiary">
                   +{displayItems.length - (visibleCount ?? 3)}
                 </li>
               </Tooltip>
@@ -682,12 +681,11 @@ function DeptMemberPickerInner(
           <div className="flex h-[400px]">
             {/* 左侧选择区域 */}
             <div className="flex-1 w-0 pr-4 box-border flex flex-col border-r border-[#E5E5E5]">
-              <Input
+              <Search
+                mode="expanded"
                 value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
+                onDebouncedChange={setKeyword}
                 className="w-full"
-                prefix={<SearchOutlined />}
-                allowClear
                 placeholder={
                   isGroupMode
                     ? t("internal_user.group.search_placeholder_v2")
@@ -789,7 +787,7 @@ function DeptMemberPickerInner(
                       )}
                       <span className="text-sm">{item.label}</span>
                       <CloseOutlined
-                        className="cursor-pointer text-[#C4C4C4] hover:text-[#999] text-xs ml-1"
+                        className="cursor-pointer text-[#C4C4C4] hover:text-placeholder text-xs ml-1"
                         onClick={() => handleRemove(item)}
                       />
                     </li>

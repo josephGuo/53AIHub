@@ -55,7 +55,7 @@ export function LimitConfig({ value, onChange }: LimitConfigProps) {
     <>
       <Form.Item label={t('dialogue_frequency')}>
         <div className="w-full">
-          <div className="text-[#182B50] text-opacity-60">
+          <div className="text-dark text-opacity-60">
             <Switch
               checked={requestLimit.frequency.enable}
               onChange={(checked) => updateLimit(['frequency', 'enable'], checked)}
@@ -65,7 +65,7 @@ export function LimitConfig({ value, onChange }: LimitConfigProps) {
           </div>
           {requestLimit.frequency.enable && (
             <div>
-              <div className="flex items-center whitespace-nowrap text-[#182B50] mt-4">
+              <div className="flex items-center whitespace-nowrap text-dark mt-4">
                 {t('limit')}
                 <InputNumber
                   value={requestLimit.frequency.interval}
@@ -84,7 +84,7 @@ export function LimitConfig({ value, onChange }: LimitConfigProps) {
                 />
                 {t('unit_messages')}
               </div>
-              <div className="flex items-center whitespace-nowrap text-[#182B50] mt-4">
+              <div className="flex items-center whitespace-nowrap text-dark mt-4">
                 {t('over_message')}
                 <Input.TextArea
                   value={requestLimit.frequency.over_message}
@@ -101,7 +101,7 @@ export function LimitConfig({ value, onChange }: LimitConfigProps) {
 
       <Form.Item label={t('dialogue_total')}>
         <div className="w-full">
-          <div className="text-[#182B50] text-opacity-60">
+          <div className="text-dark text-opacity-60">
             <Switch
               checked={requestLimit.total.enable}
               onChange={(checked) => updateLimit(['total', 'enable'], checked)}
@@ -112,14 +112,14 @@ export function LimitConfig({ value, onChange }: LimitConfigProps) {
           {requestLimit.total.enable && (
             <>
               {/* 为了让对话频率跟对话总量宽度一样，复制上面一份 */}
-              <div className="h-[1px] flex overflow-hidden items-center whitespace-nowrap text-[#182B50] invisible">
+              <div className="h-[1px] flex overflow-hidden items-center whitespace-nowrap text-dark invisible">
                 {t('limit')}
                 <InputNumber min={1} controls={false} className="mx-2 w-7" />
                 {t('second')}, {t('send')}
                 <InputNumber min={1} controls={false} className="mx-2 w-7" />
                 {t('unit_messages')}
               </div>
-              <div className="flex items-center whitespace-nowrap text-[#182B50] mt-4">
+              <div className="flex items-center whitespace-nowrap text-dark mt-4">
                 {t('limit_every_dialogue')}
                 <InputNumber
                   value={requestLimit.total.limit}
@@ -130,7 +130,7 @@ export function LimitConfig({ value, onChange }: LimitConfigProps) {
                 />
                 {t('unit_messages_v2')}
               </div>
-              <div className="flex items-center whitespace-nowrap text-[#182B50] mt-4">
+              <div className="flex items-center whitespace-nowrap text-dark mt-4">
                 {t('over_message')}
                 <Input.TextArea
                   value={requestLimit.total.over_message}

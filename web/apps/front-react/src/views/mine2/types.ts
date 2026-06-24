@@ -41,6 +41,14 @@ export interface FetchParams {
 }
 
 /**
+ * 录音配置（用于控制轮询行为）
+ */
+export interface RecordingConfigForPreview {
+  enabled: boolean
+  parser_platform: string
+}
+
+/**
  * 预览文件信息
  */
 export interface PreviewFile {
@@ -56,6 +64,8 @@ export interface PreviewFile {
   isFavorite?: boolean
   isfolder?: boolean
   rawData?: unknown
+  /** 录音配置，仅在录音tab中使用 */
+  recordingConfig?: RecordingConfigForPreview
 }
 
 /**

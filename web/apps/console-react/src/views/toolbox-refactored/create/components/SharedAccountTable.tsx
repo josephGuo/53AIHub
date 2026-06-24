@@ -87,13 +87,13 @@ function SharedAccountTableInternal({
             <Button
               type="link"
               icon={<SvgIcon name="edit" />}
-              className="text-[#606266] hover:!text-[#2563EB]"
+              className="text-secondary hover:!text-brand"
               onClick={(e) => handleEdit(e, record)}
             />
             <Button
               type="link"
               icon={<SvgIcon name="delete" />}
-              className="text-[#606266] hover:!text-[#FA5151]"
+              className="text-secondary hover:!text-tag-red"
               onClick={(e) => handleDelete(e, record)}
             />
           </div>

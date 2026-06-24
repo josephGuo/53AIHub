@@ -5,12 +5,12 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Modal, Input, Tree, Radio, Empty, Button } from "antd";
+import { Modal, Tree, Radio, Empty, Button } from "antd";
 import {
-  SearchOutlined,
   CheckOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
 import type { TreeDataNode } from "antd";
 import { departmentApi, getRootDepartmentData } from "@/api/modules/department";
 import { t } from "@/locales";
@@ -350,7 +350,7 @@ export const DeptMemberPicker = forwardRef<
 
         <Modal
           open={visible}
-          title={t("action_select")}
+          title={t("action.select")}
           onCancel={close}
           footer={null}
           width={650}
@@ -359,8 +359,8 @@ export const DeptMemberPicker = forwardRef<
         >
           <div className="picker-content">
             <div className="picker-left">
-              <Input
-                prefix={<SearchOutlined />}
+              <Search
+                mode="expanded"
                 placeholder={
                   type === "user"
                     ? t("internal_user.organization.user_search_placeholder")
@@ -369,8 +369,7 @@ export const DeptMemberPicker = forwardRef<
                       )
                 }
                 value={keyword}
-                onChange={(e) => handleKeywordChange(e.target.value)}
-                allowClear
+                onDebouncedChange={handleKeywordChange}
               />
 
               {showGroup && (
@@ -473,9 +472,9 @@ export const DeptMemberPicker = forwardRef<
           </div>
 
           <div className="footer-buttons">
-            <Button onClick={close}>{t("action_cancel")}</Button>
+            <Button onClick={close}>{t("action.cancel")}</Button>
             <Button type="primary" onClick={handleConfirm}>
-              {t("action_confirm")}
+              {t("action.confirm")}
             </Button>
           </div>
         </Modal>

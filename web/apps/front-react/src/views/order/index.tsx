@@ -5,7 +5,6 @@ import {
   Tag,
   Button,
   Select,
-  Input,
   DatePicker,
   Space,
   Modal,
@@ -13,11 +12,12 @@ import {
   Tooltip,
 } from "antd";
 import {
-  SearchOutlined,
   CloseOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
+import { Search } from "@km/shared-components-react";
+import { getSimpleDateFormatString } from "@km/shared-utils";
 import type { ColumnsType } from "antd/es/table";
 import { useUserStore } from "@/stores/modules/user";
 import { useIsSoftStyle } from "@/stores/modules/enterprise";
@@ -75,7 +75,7 @@ interface OrderItem {
   amount: number;
   currency: string;
   pay_type: number;
-  created_time: string;
+  created_time: number;
   service_id: string | number;
 }
 
@@ -188,7 +188,7 @@ export function OrderView() {
         width: 160,
         render: (time) => (
           <span className={!time ? "text-[#9B9B9B]" : ""}>
-            {time?.slice(0, 16) || "--"}
+            {time ? getSimpleDateFormatString({ date: time }) : "--"}
           </span>
         ),
       },
@@ -238,17 +238,18 @@ export function OrderView() {
   const loadList = async () => {
     setLoading(true);
     try {
-      const res = await ordersApi.list({
+      const params = {
         ...searchParams,
         start_time: searchParams.date?.[0],
         end_time: searchParams.date?.[1],
-      });
+      };
+      const res = await ordersApi.list(params);
       const orders = (res as any).data?.orders || (res as any).orders || [];
       const total = (res as any).data?.total || (res as any).total || 0;
       setTableData(
         orders.map((item: any) => ({
           ...item,
-          created_time: item.created_time || "",
+          created_time: item.created_time ?? 0,
         })),
       );
       setTableTotal(total);
@@ -257,11 +258,6 @@ export function OrderView() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSearch = () => {
-    setSearchParams((prev) => ({ ...prev, offset: 0 }));
-    setTimeout(loadList, 0);
   };
 
   const handleAlipay = async (record: OrderItem) => {
@@ -316,7 +312,7 @@ export function OrderView() {
 
   useEffect(() => {
     loadList();
-  }, []);
+  }, [searchParams]);
 
   return (
     <div
@@ -343,9 +339,9 @@ export function OrderView() {
             onChange={(dates) => {
               setSearchParams((prev) => ({
                 ...prev,
+                offset: 0,
                 date: dates ? [dates[0]!.valueOf(), dates[1]!.valueOf()] : null,
               }));
-              setTimeout(loadList, 0);
             }}
           />
           <Select
@@ -353,8 +349,7 @@ export function OrderView() {
             options={subscriptionList}
             value={searchParams.subscription}
             onChange={(value) => {
-              setSearchParams((prev) => ({ ...prev, subscription: value }));
-              setTimeout(loadList, 0);
+              setSearchParams((prev) => ({ ...prev, offset: 0, subscription: value }));
             }}
             prefix={
               <span className="text-sm text-gray-500">
@@ -367,8 +362,7 @@ export function OrderView() {
             options={payTypeList}
             value={searchParams.pay_type}
             onChange={(value) => {
-              setSearchParams((prev) => ({ ...prev, pay_type: value }));
-              setTimeout(loadList, 0);
+              setSearchParams((prev) => ({ ...prev, offset: 0, pay_type: value }));
             }}
             prefix={
               <span className="text-sm text-gray-500">
@@ -376,16 +370,14 @@ export function OrderView() {
               </span>
             }
           />
-          <Input
+          <Search
+            mode="expanded"
             className="w-[160px]"
             placeholder={t("order.search_placeholder")}
-            prefix={<SearchOutlined />}
             value={searchParams.keyword}
-            onChange={(e) =>
-              setSearchParams((prev) => ({ ...prev, keyword: e.target.value }))
-            }
-            onPressEnter={handleSearch}
-            allowClear
+            onDebouncedChange={(val) => {
+              setSearchParams((prev) => ({ ...prev, offset: 0, keyword: val }));
+            }}
           />
         </div>
 
@@ -406,7 +398,6 @@ export function OrderView() {
                 offset: (page - 1) * pageSize,
                 limit: pageSize,
               }));
-              setTimeout(loadList, 0);
             },
           }}
           onRow={(record) => ({

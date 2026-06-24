@@ -27,7 +27,7 @@ export { copyToClip, copyImageToClip } from './copy.js'
 export { isUrl, joinUrl, isInternalNetwork } from './url.js'
 
 // 文件工具
-export { isOfficeFile, isKKFileViewSupported, getOfficeFileType, downloadFile, downloadImage, downloadSvgAsImage, formatFileSize } from './file.js'
+export { isOfficeFile, isKKFileViewSupported, getOfficeFileType, downloadFile, downloadImage, downloadSvgAsImage, formatFileSize, formatFileInfo, getFileIconPath, type FormatFileInfoResult } from './file.js'
 
 // 防抖
 export { debounce } from './debounce.js'
@@ -104,7 +104,7 @@ export {
 } from './object.js'
 
 // 字符串工具
-export { JSONParse } from './string.js'
+export { JSONParse, safeParseJson } from './string.js'
 
 // 多语言 CSV 解析（source.csv → vue-i18n messages）
 export { parseCSV, csvToMessages } from './csv-to-messages.js'

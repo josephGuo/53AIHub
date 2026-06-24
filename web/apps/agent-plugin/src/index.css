@@ -32,6 +32,7 @@ body {
 }
 .ant-drawer-header .ant-drawer-title {
   flex: 1;
+  overflow: hidden;
 }
 .ant-btn-icon {
   display: flex;

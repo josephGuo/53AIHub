@@ -18,6 +18,8 @@ interface ImageUploadProps {
   allowTypeList?: string[]
   size?: number
   className?: string
+  fixedNumber?: number[]
+  previewWidth?: number
 }
 
 export const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(
@@ -32,6 +34,8 @@ export const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(
     allowTypeList = ['jpg', 'png', 'jpeg'],
     size = 50,
     className = '',
+    fixedNumber = [1, 1],
+    previewWidth = 160,
   }, ref) {
     const cropperRef = useRef<CropperDialogRef>(null)
 
@@ -50,37 +54,41 @@ export const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(
     }))
 
     return (
-      <div
-        className={`image-upload ${disabled ? 'disabled' : ''} ${className}`}
-        style={{ width: size, height: size }}
-        onClick={handleSelectFile}
-      >
-        {showText ? (
-          <span className="upload-text">{text}</span>
-        ) : (
-          <>
-            {value ? (
-              <img className="upload-image" src={value} alt="upload" />
-            ) : (
-              <div className="upload-placeholder">
-                <PlusOutlined style={{ color: '#9A9A9A', fontSize: 16 }} />
-              </div>
-            )}
-            {!disabled && value && (
-              <div className="upload-mask">
-                <span>{text}</span>
-              </div>
-            )}
-          </>
-        )}
+      <>
+        <div
+          className={`image-upload ${disabled ? 'disabled' : ''} ${className}`}
+          style={{ width: size, height: size }}
+          onClick={handleSelectFile}
+        >
+          {showText ? (
+            <span className="upload-text">{text}</span>
+          ) : (
+            <>
+              {value ? (
+                <img className="upload-image" src={value} alt="upload" />
+              ) : (
+                <div className="upload-placeholder">
+                  <PlusOutlined style={{ color: '#9A9A9A', fontSize: 16 }} />
+                </div>
+              )}
+              {!disabled && value && (
+                <div className="upload-mask">
+                  <span>{text}</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         <CropperDialog
           ref={cropperRef}
           cropperDisabled={cropperDisabled}
           allowTypeList={allowTypeList}
+          fixedNumber={fixedNumber}
+          previewWidth={previewWidth}
           onConfirm={handleConfirm}
         />
-      </div>
+      </>
     )
   }
 )

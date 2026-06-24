@@ -226,6 +226,12 @@ export interface ImportAudioResponse {
   duplicate_files: string[]
 }
 
+/** 录音配置 */
+export interface RecordingConfig {
+  enabled: boolean
+  parser_platform: string
+}
+
 // ============= 错误码 =============
 
 /** 录音相关错误码 */

@@ -7,29 +7,49 @@ import type { MenuProps } from 'antd'
 import { SvgIcon } from '@km/shared-components-react'
 import { StarRating } from '@/components/StarRating'
 import { useSkillsStore } from '@/stores/modules/skills'
+import { useIsSoftStyle } from '@/stores/modules/enterprise'
 import { skillApi } from '@/api/modules/skill'
 import { calculateAverageScore } from '@/api/modules/skill/transform'
 import type { Skill } from '@/api/modules/skill/types'
+import { t } from '@/locales'
+import { checkPermission } from "@/utils/permission"
 
 interface SkillCardProps {
   skill: Skill
   type: 'explore' | 'my'
+  groupId?: number
   onAdd?: (id: string) => void
+  onOpenEnvSettings?: () => void
 }
 
-const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onAdd }) => {
+const SkillCard: React.FC<SkillCardProps> = ({ skill, type, groupId, onAdd, onOpenEnvSettings }) => {
   const navigate = useNavigate()
   const skillsStore = useSkillsStore()
+  const isSoftStyle = useIsSoftStyle()
 
   const isEnabled = skill.binding_status === 'enabled'
+
+  const groupNames = useMemo(() => {
+    // 如果选择了特定分组，只显示该分组名
+    if (groupId && groupId !== 0) {
+      const group = skillsStore.categorys.find(c => c.group_id === groupId)
+      return group?.group_name ? [group.group_name] : []
+    }
+    // 如果选择"全部"，显示技能所属的所有分组名
+    return skillsStore.categorys
+      .filter(c => skill.group_ids?.includes(c.group_id))
+      .map(c => c.group_name)
+  }, [groupId, skill.group_ids, skillsStore.categorys])
 
   const rating = useMemo(() => calculateAverageScore(skill), [skill])
 
   const handleClick = () => {
-    navigate({
-      pathname: '/skill-detail',
-      search: `?id=${skill.id}&type=${type}`
-    })
+    const params = new URLSearchParams()
+    params.set('type', type)
+    if (groupId && groupId > 0) {
+      params.set('group_id', String(groupId))
+    }
+    navigate(`/skills/${skill.id}?${params.toString()}`)
   }
 
   const handleToggle = async (checked: boolean) => {
@@ -37,55 +57,68 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onAdd }) => {
     const bindingId = skill.binding_id
 
     if (!bindingId) {
-      message.error('技能绑定ID不存在')
+      message.error(t('skill.binding_id_not_found'))
       return
     }
 
     try {
       await skillApi.updateMySkillStatus(bindingId, { status: newStatus })
-      await skillsStore.loadMySkillList(true, true) // silent=true 不触发骨架屏
+      await skillsStore.loadMySkillList(true, true)
       await skillsStore.loadSkillList({ isRefresh: true })
     } catch (error) {
       skill.binding_status = checked ? 'disabled' : 'enabled'
-      message.error('状态更新失败，请重试')
+      message.error(`${t('action.operation_failed')}，${t('common.try_again')}`)
     }
   }
 
   const handleAdd = async () => {
     if (skill.added) return
-
-    try {
-      await skillApi.addToMy(skill.id)
-      await skillsStore.loadSkillList({ isRefresh: true })
-      await skillsStore.loadMySkillList(true)
-      message.success('添加成功')
-      onAdd?.(skill.id)
-    } catch (error) {
-      message.error('添加失败，请重试')
-    }
+    checkPermission({
+      groupIds: skill?.group_ids || [],
+      onClick: async () => {
+        try {
+          await skillApi.addToMy(skill.id)
+          await skillsStore.loadSkillList({ isRefresh: true, group_id: groupId || undefined })
+          await skillsStore.loadMySkillList(true)
+          message.success(t('action.add_success'))
+          onAdd?.(skill.id)
+        } catch (error) {
+          message.error(`${t('action.operation_failed')}，${t('common.try_again')}`)
+        }
+      }
+    })
   }
 
   const handleUse = () => {
+    if (!isSoftStyle) {
+      message.warning(t('skill.soft_mode_only'))
+      return
+    }
     if (!isEnabled) {
-      message.warning('请先启用技能再使用')
+      message.warning(t('skill.enable_first'))
       return
     }
 
     navigate({
-      pathname: '/index',
+      pathname: '/index/chat',
       search: `?skill_id=${skill.id}&type=${type}`
     })
+  }
+
+  const handleOpenEnvSettings = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onOpenEnvSettings?.()
   }
 
   const handleCommand = async (command: string) => {
     if (command === 'delete') {
       Modal.confirm({
-        title: '提示',
-        content: `确认删除 ${skill.display_name} 技能吗？`,
+        title: t('common.tip'),
+        content: t('action.delete_confirm'),
         okType: 'danger',
         onOk: async () => {
           await skillApi.deleteMySkill(skill.binding_id)
-          message.success('删除成功')
+          message.success(t('status.delete_success'))
           await skillsStore.loadMySkillList(true)
           await skillsStore.loadSkillList({ isRefresh: true })
         }
@@ -99,7 +132,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onAdd }) => {
       label: (
         <div className="flex items-center text-red-500">
           <DeleteOutlined className="mr-2" />
-          删除
+          {t('action.delete')}
         </div>
       )
     }
@@ -109,24 +142,24 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onAdd }) => {
   const isGrayscale = type === 'my' && !isEnabled
 
   return (
-    <Tooltip title={isDisabled ? '当前技能已禁用，请联系管理员' : ''} placement="top">
+    <Tooltip title={isDisabled ? t('skill.disabled_by_admin') : ''} placement="top">
       <div
-        className={`bg-white border border-[#E9EEF7] rounded-xl p-5 hover:shadow-lg transition-all duration-300 group cursor-pointer flex flex-col h-full relative ${isDisabled ? 'cursor-not-allowed' : ''}`}
+        className={`bg-white border border-[#E6E6E6] rounded-lg p-5 hover:shadow-lg transition-all duration-300 group cursor-pointer flex flex-col h-full relative ${isDisabled ? 'cursor-not-allowed' : ''}`}
         onClick={handleClick}
       >
-        <div className="flex items-start gap-4 mb-4">
-          <div
-            className={`w-12 h-12 bg-[#F0F2F5] rounded-lg flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
-          >
-            <SvgIcon name="skill" size={24} color="#2563EB" />
-          </div>
+        <div className="flex items-start gap-3">
+          <img
+            className="flex-none size-12 rounded-lg object-cover"
+            src={skill.logo}
+            alt={skill.display_name}
+          />
 
-          <div className="flex-1 h-full flex flex-col justify-between min-w-0">
-            <div className="flex items-center justify-between mb-0.5">
-              <div
-                className={`flex items-center gap-2 min-w-0 transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
-              >
-                <h3 className="text-base font-bold text-gray-900 truncate">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 flex items-center gap-2 overflow-hidden">
+                <h3
+                  className={`text-base font-medium text-gray-900 truncate transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
+                >
                   {skill.display_name}
                 </h3>
                 <Tag className="shrink-0 text-xs rounded-3xl truncate max-w-[80px]" title={skill.version}>{skill.version}</Tag>
@@ -141,39 +174,41 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onAdd }) => {
                 />
               )}
             </div>
-            <p
-              className={`text-xs text-placeholder max-w-full truncate transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
-            >
-              {skill.skill_name}
-            </p>
+            {/* 多分组 */}
+            {groupNames.length > 0 && groupNames.map((name, index) => (
+              <span
+                key={index}
+                className="h-5 inline-flex items-center px-2 text-xs text-theme bg-[#EBF1FF] rounded-sm mr-1"
+              >
+                {name}
+              </span>
+            ))}
           </div>
         </div>
 
         <p
-          className={`text-sm text-placeholder line-clamp-2 mb-5 flex-1 leading-relaxed transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
+          className={`text-sm text-placeholder line-clamp-2 my-2 flex-1 leading-relaxed transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
         >
           {skill.description}
         </p>
 
         {type === 'explore' && (
           <div
-            className={`flex items-center justify-between pt-5 border-t border-[#E6E8EB] transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
+            className={`flex items-center justify-between transition-all ${isGrayscale ? 'grayscale opacity-60' : ''}`}
           >
             <div className="flex items-center">
               <StarRating value={rating} gap="sm" />
             </div>
 
             <Button
-              type="primary"
               disabled={skill.added}
-              size="small"
-              className={`!px-4 rounded ${skill.added ? 'opacity-60' : ''}`}
+              className={`${skill.added ? 'opacity-60' : ''}`}
               onClick={(e) => {
                 e.stopPropagation()
                 handleAdd()
               }}
             >
-              {skill.added ? '已添加' : '添加'}
+              {skill.added ? t('action.add_success') : t('action.add')}
             </Button>
           </div>
         )}
@@ -188,7 +223,17 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onAdd }) => {
               }}
               className="flex-1"
             >
-              工作台使用
+              {t('skill.workbench_use')}
+            </Button>
+
+            <Button
+              disabled={isDisabled}
+              onClick={handleOpenEnvSettings}
+              className="!p-2"
+              aria-label="环境变量设置"
+              title="环境变量设置"
+            >
+              <SvgIcon name="env" size={16} color="#1D1E1F" />
             </Button>
 
             <div onClick={(e) => e.stopPropagation()}>
@@ -208,6 +253,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onAdd }) => {
             </div>
           </div>
         )}
+
       </div>
     </Tooltip>
   )

@@ -19,9 +19,194 @@ export const AGENT_TYPES = {
   N8N_WORKFLOW: 'n8n_workflow',
   TENCENT: 'tencent',
   OPENCLAW: 'openclaw',
+  QCLAW: 'qclaw',
+  CODEX: 'codex',
+  MANUS: 'manus',
 } as const
 
 export type AgentPlatformType = (typeof AGENT_TYPES)[keyof typeof AGENT_TYPES]
+
+export const OPENCLAW_COMPATIBLE_AGENT_TYPES = [
+  AGENT_TYPES.OPENCLAW,
+  AGENT_TYPES.QCLAW,
+  AGENT_TYPES.CODEX,
+  AGENT_TYPES.MANUS,
+] as const
+
+export type OpenClawCompatibleAgentType = (typeof OPENCLAW_COMPATIBLE_AGENT_TYPES)[number]
+
+export const OPENCLAW_COMPATIBLE_CREATABLE_AGENT_TYPES = [
+  AGENT_TYPES.OPENCLAW,
+  AGENT_TYPES.QCLAW,
+] as const
+
+export const OPENCLAW_WS_CHANNEL_TYPE = 1014
+export const QCLAW_WS_CHANNEL_TYPE = 1015
+export const CODEX_WS_CHANNEL_TYPE = 1016
+export const MANUS_WS_CHANNEL_TYPE = 1017
+export const OPENCLAW_WS_MODEL = 'openclaw-ws'
+
+export const OPENCLAW_COMPATIBLE_CHANNEL_TYPES: Record<OpenClawCompatibleAgentType, number> = {
+  [AGENT_TYPES.OPENCLAW]: OPENCLAW_WS_CHANNEL_TYPE,
+  [AGENT_TYPES.QCLAW]: QCLAW_WS_CHANNEL_TYPE,
+  [AGENT_TYPES.CODEX]: CODEX_WS_CHANNEL_TYPE,
+  [AGENT_TYPES.MANUS]: MANUS_WS_CHANNEL_TYPE,
+}
+
+export interface OpenClawCompatibleAgentMetadata {
+  agentType: OpenClawCompatibleAgentType
+  label: string
+  hostKind: OpenClawCompatibleAgentType
+  channelType: number
+  iconFileName: string
+  runnerCommand?: string
+}
+
+export const OPENCLAW_COMPATIBLE_AGENT_METADATA: Record<OpenClawCompatibleAgentType, OpenClawCompatibleAgentMetadata> = {
+  [AGENT_TYPES.OPENCLAW]: {
+    agentType: AGENT_TYPES.OPENCLAW,
+    label: 'OpenClaw',
+    hostKind: AGENT_TYPES.OPENCLAW,
+    channelType: OPENCLAW_WS_CHANNEL_TYPE,
+    iconFileName: 'openclaw.png',
+  },
+  [AGENT_TYPES.QCLAW]: {
+    agentType: AGENT_TYPES.QCLAW,
+    label: 'QClaw',
+    hostKind: AGENT_TYPES.QCLAW,
+    channelType: QCLAW_WS_CHANNEL_TYPE,
+    iconFileName: 'qclaw.png',
+  },
+  [AGENT_TYPES.CODEX]: {
+    agentType: AGENT_TYPES.CODEX,
+    label: 'Codex',
+    hostKind: AGENT_TYPES.CODEX,
+    channelType: CODEX_WS_CHANNEL_TYPE,
+    iconFileName: 'codex.png',
+    runnerCommand: 'codex-app-server',
+  },
+  [AGENT_TYPES.MANUS]: {
+    agentType: AGENT_TYPES.MANUS,
+    label: 'Manus',
+    hostKind: AGENT_TYPES.MANUS,
+    channelType: MANUS_WS_CHANNEL_TYPE,
+    iconFileName: 'manus.png',
+  },
+}
+
+export function isOpenClawCompatibleAgentType(agentType?: unknown): agentType is OpenClawCompatibleAgentType {
+  return OPENCLAW_COMPATIBLE_AGENT_TYPES.includes(agentType as OpenClawCompatibleAgentType)
+}
+
+function normalizeOpenClawCompatibleAgentType(agentType?: unknown): OpenClawCompatibleAgentType | undefined {
+  const normalized = String(agentType || '').trim().toLowerCase()
+  if (isOpenClawCompatibleAgentType(normalized)) {
+    return normalized
+  }
+  return undefined
+}
+
+export function getOpenClawCompatibleAgentMetadata(agentType?: unknown): OpenClawCompatibleAgentMetadata {
+  const normalized = normalizeOpenClawCompatibleAgentType(agentType)
+  if (isOpenClawCompatibleAgentType(normalized)) {
+    return OPENCLAW_COMPATIBLE_AGENT_METADATA[normalized]
+  }
+  return OPENCLAW_COMPATIBLE_AGENT_METADATA[AGENT_TYPES.OPENCLAW]
+}
+
+export function getOpenClawCompatibleChannelType(agentType?: unknown): number {
+  return getOpenClawCompatibleAgentMetadata(agentType).channelType
+}
+
+export function isOpenClawCompatibleChannelType(channelType?: unknown): boolean {
+  const normalizedChannelType = Number(channelType)
+  return Object.values(OPENCLAW_COMPATIBLE_CHANNEL_TYPES).includes(normalizedChannelType)
+}
+
+export function resolveOpenClawCompatibleAgentTypeFromChannelType(
+  channelType?: unknown,
+): OpenClawCompatibleAgentType | undefined {
+  const normalizedChannelType = Number(channelType)
+  const entry = Object.entries(OPENCLAW_COMPATIBLE_CHANNEL_TYPES)
+    .find(([, value]) => value === normalizedChannelType)
+  return entry?.[0] as OpenClawCompatibleAgentType | undefined
+}
+
+export function getOpenClawCompatibleAgentIconPath(
+  agentType?: unknown,
+  getPublicPath?: (path: string) => string,
+): string {
+  const metadata = getOpenClawCompatibleAgentMetadata(agentType)
+  const relativePath = `/images/agent/${metadata.iconFileName}`
+  return getPublicPath ? getPublicPath(relativePath) : relativePath
+}
+
+export function resolveOpenClawCompatibleAgentLogo(logo?: unknown, agentType?: unknown): string {
+  const metadata = getOpenClawCompatibleAgentMetadata(agentType)
+  const bundledLogo = getOpenClawCompatibleAgentIconPath(metadata.agentType)
+  const rawLogo = typeof logo === 'string' ? logo.trim() : ''
+  if (!rawLogo) return bundledLogo
+
+  const builtInAgentIconPattern = /\/api\/images\/agent\/(openclaw|qclaw|codex|manus)\.png(?:[?#].*)?$/i
+  if (builtInAgentIconPattern.test(rawLogo)) {
+    return bundledLogo
+  }
+
+  return rawLogo
+}
+
+export interface OpenClawCompatibleAgentRecord {
+  channel_type?: unknown
+  model?: unknown
+  custom_config?: Record<string, any> | null
+}
+
+export function resolveOpenClawCompatibleAgentTypeFromRecord(
+  record?: OpenClawCompatibleAgentRecord | null,
+): OpenClawCompatibleAgentType | undefined {
+  if (!record) return undefined
+
+  const customConfig = record.custom_config || {}
+  const explicitAgentType = normalizeOpenClawCompatibleAgentType(customConfig.agent_type)
+  if (explicitAgentType) return explicitAgentType
+
+  const hostKind = normalizeOpenClawCompatibleAgentType(customConfig.hostKind)
+    || normalizeOpenClawCompatibleAgentType(customConfig.host_kind)
+  if (hostKind) return hostKind
+
+  const channelType = Number(record.channel_type)
+  const model = typeof record.model === 'string' ? record.model.trim().toLowerCase() : ''
+  const channelAgentType = resolveOpenClawCompatibleAgentTypeFromChannelType(channelType)
+  if (channelAgentType) {
+    return channelAgentType
+  }
+
+  if (model === OPENCLAW_WS_MODEL) {
+    return AGENT_TYPES.OPENCLAW
+  }
+
+  return undefined
+}
+
+export function normalizeOpenClawCompatibleCustomConfig(
+  customConfig: Record<string, any> | null | undefined,
+  agentType?: unknown,
+): Record<string, any> {
+  const metadata = getOpenClawCompatibleAgentMetadata(agentType)
+  const normalizedConfig = {
+    ...(customConfig || {}),
+    agent_type: metadata.agentType,
+    hostKind: metadata.hostKind,
+  }
+
+  const runnerCommand = normalizedConfig.runnerCommand
+  const runnerCommandBlank = runnerCommand == null || String(runnerCommand).trim() === ''
+  if (metadata.runnerCommand && runnerCommandBlank) {
+    normalizedConfig.runnerCommand = metadata.runnerCommand
+  }
+
+  return normalizedConfig
+}
 
 export const BACKEND_AGENT_TYPE = {
   AGENT: 0,

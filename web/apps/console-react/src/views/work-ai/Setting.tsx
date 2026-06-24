@@ -1,9 +1,9 @@
 import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
+    useState,
+    useEffect,
+    useRef,
+    useCallback,
+    useMemo,
 } from "react";
 import { Input, Button, Divider, Spin, message } from "antd";
 import { RightOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -27,7 +27,7 @@ import SpecifiedFiles from "@/components/Chat/SpecifiedFiles";
 import Quotation from "@/views/search/components/Quotation";
 import Chunk, { ChunkRef } from "@/views/search/components/Chunk";
 import ThinkKnowledge, {
-  ThinkKnowledgeRef,
+    ThinkKnowledgeRef,
 } from "@/views/search/components/ThinkKnowledge";
 import Sender from "@/components/Chat/Sender";
 import ResourcePicker from "@/components/ResourcePicker/index";
@@ -668,14 +668,14 @@ const WorkAISetting: React.FC<SettingProps> = ({
           {/* 认知大脑 */}
           <div className="bg-white rounded-lg border border-[#EDEDED] p-4">
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-lg bg-[#E9EFFF] flex items-center justify-center text-[#2563EB]">
+              <div className="size-10 rounded-lg bg-[#E9EFFF] flex items-center justify-center text-brand">
                 <SvgIcon name="combine" size="20" />
               </div>
               <div className="flex-1">
-                <div className="text-[15px] text-[#1D1E1F] font-semibold">
+                <div className="text-[15px] text-primary font-semibold">
                   {t("work_ai.cognitive_brain")}
                 </div>
-                <div className="text-sm text-[#9A9A9A]">
+                <div className="text-sm text-disabled">
                   {t("work_ai.cognitive_brain_desc")}
                 </div>
               </div>
@@ -684,10 +684,10 @@ const WorkAISetting: React.FC<SettingProps> = ({
             {/* 工作流可视化 */}
             <div className="mt-4 border border-[#EDEDED] rounded-lg bg-[#FBFCFF] h-[190px] p-5 flex items-center gap-1">
               <div className="w-[107px] h-full rounded-lg border border-t-[#EDEDED] border-t-[4px] bg-white flex items-center justify-center flex-col gap-4">
-                <div className="size-12 rounded-full border border-[#EDEDED] flex items-center justify-center text-[#9B9B9B]">
+                <div className="size-12 rounded-full border border-[#EDEDED] flex items-center justify-center text-disabled">
                   <SvgIcon name="people-right" size="24" />
                 </div>
-                <div className="text-sm text-[#4F5052]">
+                <div className="text-sm text-secondary">
                   {t("work_ai.user_input")}
                 </div>
               </div>
@@ -696,11 +696,11 @@ const WorkAISetting: React.FC<SettingProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     <SvgIcon name="optimise" size="16" />
-                    <div className="text-sm text-[#2563EB] font-semibold">
+                    <div className="text-sm text-brand font-semibold">
                       {t("work_ai.planning_reasoning")}
                     </div>
                   </div>
-                  <div className="text-sm text-[#9B9B9B] px-2 py-1 rounded bg-[#F2F6FF]">
+                  <div className="text-sm text-disabled px-2 py-1 rounded bg-[#F2F6FF]">
                     <ModelView
                       channelId={form.settings.fast_reasoning_config.channel_id}
                       model={form.settings.fast_reasoning_config.model_name}
@@ -712,15 +712,15 @@ const WorkAISetting: React.FC<SettingProps> = ({
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <div className="py-4 rounded bg-[#F8F9FA] flex items-center justify-center flex-col gap-2 text-[#4F5052]">
+                  <div className="py-4 rounded bg-[#F8F9FA] flex items-center justify-center flex-col gap-2 text-secondary">
                     <SvgIcon name="round" size="16" />
                     {t("work_ai.planning")}
                   </div>
-                  <div className="py-4 rounded bg-[#F8F9FA] flex items-center justify-center flex-col gap-2 text-[#4F5052]">
+                  <div className="py-4 rounded bg-[#F8F9FA] flex items-center justify-center flex-col gap-2 text-secondary">
                     <SvgIcon name="brain" size="16" />
                     {t("work_ai.reasoning")}
                   </div>
-                  <div className="py-4 rounded bg-[#F8F9FA] flex items-center justify-center flex-col gap-2 text-[#4F5052]">
+                  <div className="py-4 rounded bg-[#F8F9FA] flex items-center justify-center flex-col gap-2 text-secondary">
                     <SvgIcon name="refresh_v2" size="16" />
                     {t("work_ai.reflection")}
                   </div>
@@ -728,7 +728,7 @@ const WorkAISetting: React.FC<SettingProps> = ({
               </div>
               <RightOutlined style={{ fontSize: 24, color: "#D3D9E6" }} />
               <div className="h-full flex items-center justify-center flex-col gap-2 text-sm">
-                <div className="w-[100px] h-8 rounded-lg bg-[#F5F8FF] border border-[#DDE7FF] text-[#2563EB] flex items-center justify-center gap-1.5">
+                <div className="w-[100px] h-8 rounded-lg bg-[#F5F8FF] border border-[#DDE7FF] text-brand flex items-center justify-center gap-1.5">
                   <SvgIcon className="flex-none" name="brower" size="16" />
                   Browser
                 </div>
@@ -747,7 +747,7 @@ const WorkAISetting: React.FC<SettingProps> = ({
             {/* 模型选择 */}
             <div className="mt-4 grid grid-cols-2 gap-4">
               <div className="">
-                <div className="text-sm text-[#4F5052] mb-2">
+                <div className="text-sm text-secondary mb-2">
                   {t("work_ai.planning_reasoning_model")}
                 </div>
                 <ModelSelectPopover
@@ -771,12 +771,12 @@ const WorkAISetting: React.FC<SettingProps> = ({
                     }));
                   }}
                 />
-                <div className="text-xs text-[#9A9A9A] mt-2">
+                <div className="text-xs text-disabled mt-2">
                   {t("work_ai.planning_reasoning_model_desc")}
                 </div>
               </div>
               <div className="">
-                <div className="text-sm text-[#4F5052] mb-2">
+                <div className="text-sm text-secondary mb-2">
                   {t("work_ai.skill_execution_model")}
                 </div>
                 <ModelSelectPopover
@@ -800,7 +800,7 @@ const WorkAISetting: React.FC<SettingProps> = ({
                     }));
                   }}
                 />
-                <div className="text-xs text-[#9A9A9A] mt-2">
+                <div className="text-xs text-disabled mt-2">
                   {t("work_ai.skill_execution_model_desc")}
                 </div>
               </div>
@@ -810,14 +810,14 @@ const WorkAISetting: React.FC<SettingProps> = ({
           {/* 元指令 */}
           <div className="bg-white rounded-lg border border-[#EDEDED] p-4">
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-lg bg-[#FEE2E2] flex items-center justify-center text-[#2563EB]">
+              <div className="size-10 rounded-lg bg-[#FEE2E2] flex items-center justify-center text-brand">
                 <SvgIcon name="prompt_v3" size="20" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[15px] text-[#1D1E1F] font-semibold">
+                <div className="text-[15px] text-primary font-semibold">
                   {t("work_ai.meta_instruction")}
                 </div>
-                <div className="text-sm text-[#9A9A9A]">
+                <div className="text-sm text-disabled">
                   {t("work_ai.meta_instruction_desc")}
                 </div>
               </div>
@@ -838,14 +838,14 @@ const WorkAISetting: React.FC<SettingProps> = ({
           {/* 主动欢迎语 */}
           <div className="bg-white rounded-lg border border-[#EDEDED] p-4">
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-lg bg-[#E0EAFF] flex items-center justify-center text-[#2563EB]">
+              <div className="size-10 rounded-lg bg-[#E0EAFF] flex items-center justify-center text-brand">
                 <SvgIcon name="info_v2" size="20" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[15px] text-[#1D1E1F] font-semibold">
+                <div className="text-[15px] text-primary font-semibold">
                   {t("work_ai.active_welcome")}
                 </div>
-                <div className="text-sm text-[#9A9A9A]">
+                <div className="text-sm text-disabled">
                   {t("work_ai.opening_statement")}
                 </div>
               </div>
@@ -872,14 +872,14 @@ const WorkAISetting: React.FC<SettingProps> = ({
           {/* 技能配置 */}
           <div className="bg-white rounded-lg border border-[#EDEDED] p-4">
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-lg bg-[#FFF0F0] flex items-center justify-center text-[#FA5151]">
+              <div className="size-10 rounded-lg bg-[#FFF0F0] flex items-center justify-center text-tag-red">
                 <SvgIcon name="terminal" size="20" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[15px] text-[#1D1E1F] font-semibold">
+                <div className="text-[15px] text-primary font-semibold">
                   {t("work_ai.skill_config")}
                 </div>
-                <div className="text-sm text-[#9A9A9A]">
+                <div className="text-sm text-disabled">
                   配置"技能管理" 菜单中的预设的技能
                 </div>
               </div>
@@ -895,12 +895,12 @@ const WorkAISetting: React.FC<SettingProps> = ({
                       <div className="size-8 bg-[#F0F2F5] rounded flex items-center justify-center shrink-0">
                         <SvgIcon name="lightning" size="18" color="#2563EB" />
                       </div>
-                      <div className="text-sm text-[#1D1E1F] truncate">
+                      <div className="text-sm text-primary truncate">
                         {item.display_name || item.skill_name}
                       </div>
                     </div>
                     <Button
-                      className="invisible group-hover:visible hover:!text-[#FA5151]"
+                      className="invisible group-hover:visible hover:!text-tag-red"
                       icon={<DeleteOutlined />}
                       type="link"
                       onClick={() => handleSkillRemove(item)}
@@ -932,7 +932,7 @@ const WorkAISetting: React.FC<SettingProps> = ({
         <div className="flex-none w-1/3 min-w-[430px] h-full overflow-hidden">
           <div className="bg-white rounded-lg border border-[#EDEDED] py-4 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4 px-4">
-              <div className="text-sm text-[#1D1E1F] font-semibold">
+              <div className="text-sm text-primary font-semibold">
                 效果预览
               </div>
             </div>
@@ -973,7 +973,7 @@ const WorkAISetting: React.FC<SettingProps> = ({
                             }
                             contentBefore={
                               message.skill?.display_name ? (
-                                <span className="bg-[#e6e9f2] rounded py-1 px-2 text-sm">
+                                <span className="bg-[#e6e9f2] rounded py-1 px-2 text-sm mr-2">
                                   {message.skill.display_name ?? ""}
                                 </span>
                               ) : null
@@ -1057,7 +1057,7 @@ const WorkAISetting: React.FC<SettingProps> = ({
                                       <SvgIcon
                                         name="file"
                                         size="16"
-                                        className="text-[#666]"
+                                        className="text-tertiary"
                                       />
                                       <span className="text-sm text-[#555454] truncate">
                                         {file.file_name || `文件 ${file.id}`}
@@ -1078,7 +1078,7 @@ const WorkAISetting: React.FC<SettingProps> = ({
                             {!message.loading &&
                               agentInfo?.settings?.answer_remarks_config
                                 ?.enable && (
-                                <div className="text-sm text-[#999999] break-words my-2">
+                                <div className="text-sm text-placeholder break-words my-2">
                                   {
                                     agentInfo.settings.answer_remarks_config
                                       .content

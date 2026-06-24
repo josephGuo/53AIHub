@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import groupApi from '@/api/modules/group'
 import promptApi from '@/api/modules/prompt'
 import { GROUP_TYPE } from '@/constants/group'
+import { api_host } from '@/utils/config'
 
 interface PromptState {
   categorys: Category.State[]
@@ -24,7 +25,8 @@ export const usePromptStore = create<PromptState>((set, get) => ({
         } catch {
           item.custom_config_obj = {}
         }
-        return item
+        item.logo = item.logo || `${ api_host }/api/images/prompt/logo.png`
+        return item 
       })
       set({ promptList })
       return promptList

@@ -155,7 +155,7 @@ export function MarkdownViewer({ url, content }: MarkdownViewerProps) {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <Spin />
-        <span className="ml-2 text-[#4F5052]">加载中...</span>
+        <span className="ml-2 text-secondary">加载中...</span>
       </div>
     )
   }
@@ -164,8 +164,8 @@ export function MarkdownViewer({ url, content }: MarkdownViewerProps) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center text-center p-8">
         <WarningOutlined className="text-6xl text-red-500 mb-4" />
-        <h3 className="text-lg font-medium text-[#1D1E1F] mb-2">文件加载失败</h3>
-        <p className="text-[#9B9B9B] mb-4">{error}</p>
+        <h3 className="text-lg font-medium text-primary mb-2">文件加载失败</h3>
+        <p className="text-disabled mb-4">{error}</p>
         <Button type="primary" icon={<ReloadOutlined />} onClick={handleRetry}>
           重试
         </Button>

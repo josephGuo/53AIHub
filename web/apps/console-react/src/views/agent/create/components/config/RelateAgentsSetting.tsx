@@ -1,9 +1,9 @@
 import {
-  useState,
-  useMemo,
-  forwardRef,
-  useImperativeHandle,
-  useRef,
+    useState,
+    useMemo,
+    forwardRef,
+    useImperativeHandle,
+    useRef,
 } from "react";
 import { Modal, Form, Button, Image } from "antd";
 import { SvgIcon } from "@km/shared-components-react";
@@ -128,7 +128,7 @@ export const RelateAgentsSetting = forwardRef<
       className="el-dialog--footer-center"
       footer={
         <>
-          <Button className="text-[#1D1E1F]" type="default" onClick={close}>
+          <Button className="text-primary" type="default" onClick={close}>
             {t("action_cancel")}
           </Button>
           <Button type="primary" onClick={handleSave}>
@@ -149,7 +149,7 @@ export const RelateAgentsSetting = forwardRef<
                 fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
                 preview={false}
               />
-              <p className="flex-1 text-sm text-[#1D1E1F] truncate">
+              <p className="flex-1 text-sm text-primary truncate">
                 {agent.name}
               </p>
             </div>
@@ -172,7 +172,7 @@ export const RelateAgentsSetting = forwardRef<
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-1">
                       <div
-                        className={`flex-1 text-sm text-[#1D1E1F] ${
+                        className={`flex-1 text-sm text-primary ${
                           field.id === "input" || field.required
                             ? "required-label"
                             : ""
@@ -181,7 +181,7 @@ export const RelateAgentsSetting = forwardRef<
                         {field.label}
                       </div>
                       <span
-                        className="text-[#2563EB] cursor-pointer"
+                        className="text-brand cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelectVariable(index);
@@ -215,7 +215,7 @@ export const RelateAgentsSetting = forwardRef<
             <div
               className={`flex-1 h-8 flex items-center gap-2 px-3 border rounded cursor-pointer ${
                 agent.execution_rule === "auto"
-                  ? "border-[#2563EB] text-[#2563EB]"
+                  ? "border-[#2563EB] text-brand"
                   : ""
               }`}
               onClick={() => handleExecutionRule("auto")}
@@ -232,7 +232,7 @@ export const RelateAgentsSetting = forwardRef<
             <div
               className={`flex-1 h-8 flex items-center gap-2 px-3 border rounded cursor-pointer ${
                 agent.execution_rule === "manual"
-                  ? "border-[#2563EB] text-[#2563EB]"
+                  ? "border-[#2563EB] text-brand"
                   : ""
               }`}
               onClick={() => handleExecutionRule("manual")}

@@ -44,7 +44,14 @@ const MESSAGE_TYPE = {
   mention_comment: "mention_comment",
 } as const;
 
-export function MessageCenter() {
+interface MessageCenterProps {
+  externalOpen?: boolean;
+  onExternalClose?: () => void;
+  anchor?: React.ReactNode;
+  children?: React.ReactNode;
+}
+
+export function MessageCenter({ externalOpen, onExternalClose, anchor, children }: MessageCenterProps = {}) {
   const navigate = useNavigate();
   const userStore = useUserStore();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -130,7 +137,7 @@ export function MessageCenter() {
     if (!resource) return;
 
     if (resourceType === RESOURCE_TYPE.space) {
-      navigate(`/space/${resource.id}`);
+      navigate(`/knowledge/${resource.id}`);
     } else if (resourceType === RESOURCE_TYPE.library) {
       navigate(`/library/${resource.id}`);
     } else if (resourceType === RESOURCE_TYPE.file) {
@@ -334,15 +341,13 @@ export function MessageCenter() {
     }
   };
 
-  // 处理打开
-  const handleBellClick = () => {
-    fetchMessages(true);
-    setIsOpen(true);
-  };
-
   // 处理关闭
   const handleClose = () => {
-    setIsOpen(false);
+    if (externalOpen !== undefined) {
+      onExternalClose?.();
+    } else {
+      setIsOpen(false);
+    }
   };
 
   // 渲染待处理消息内容
@@ -386,7 +391,8 @@ export function MessageCenter() {
           >
             <Image
               src={notification.content_parsed.resource.icon}
-              className="w-4 h-4"
+              width={16}
+              height={16}
               preview={false}
             />
             <span className="text-xs text-[#4F5052]">
@@ -497,7 +503,8 @@ export function MessageCenter() {
         >
           <Image
             src={notification.content_parsed.resource.icon}
-            className="w-4 h-4"
+            width={16}
+            height={16}
             preview={false}
           />
           <span className="text-xs text-[#4F5052]">
@@ -649,24 +656,42 @@ export function MessageCenter() {
     </div>
   );
 
+  const isPopoverOpen = externalOpen !== undefined ? externalOpen : isOpen;
+
   return (
     <Popover
-      open={isOpen}
+      open={isPopoverOpen}
       content={content}
-      trigger="click"
+      trigger={externalOpen !== undefined ? [] : "click"}
       placement="rightBottom"
+      getPopupContainer={externalOpen !== undefined ? () => document.body : undefined}
       classNames={{ root: "message-popover" }}
       styles={{ root: { width: 425 } }}
+      onOpenChange={(visible) => {
+        if (externalOpen !== undefined) {
+          // 外部控制模式
+          if (!visible) {
+            onExternalClose?.();
+          }
+        } else {
+          // 内部控制模式 - 同步 isOpen 状态
+          setIsOpen(visible);
+          if (visible) {
+            fetchMessages(true);
+          }
+        }
+      }}
     >
-      <div
-        className="flex items-center justify-center size-6 rounded cursor-pointer hover:bg-[#EDEDED] relative"
-        onClick={handleBellClick}
-      >
-        <SvgIcon name="remind" size="18" className="text-[#4F5052]" />
-        {unreadCount > 0 && (
-          <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full" />
-        )}
-      </div>
+      {children ?? anchor ?? (externalOpen === undefined ? (
+        <div
+          className="flex items-center justify-center size-6 rounded cursor-pointer hover:bg-[#EDEDED] relative"
+        >
+          <SvgIcon name="remind" size="18" className="text-[#4F5052]" />
+          {unreadCount > 0 && (
+            <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full" />
+          )}
+        </div>
+      ) : null)}
     </Popover>
   );
 }

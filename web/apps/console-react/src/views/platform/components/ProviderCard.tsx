@@ -62,11 +62,11 @@ export function ProviderCard({
           src={getPublicPath(`/images/platform/${provider.icon}.png`)}
           alt=""
         />
-        <div className="text-[#1B2B51] font-semibold line-clamp-2">
+        <div className="text-dark font-semibold line-clamp-2">
           {provider.label}
         </div>
       </div>
-      <div className="text-xs text-[#4F5052] px-5 box-border">
+      <div className="text-xs text-secondary px-5 box-border">
         {t("connecting_agent_total", { total: provider.agentTotal })}
       </div>
       <div className="flex-1 w-full flex items-center justify-center">
@@ -76,7 +76,7 @@ export function ProviderCard({
         {!provider.auth ? (
           <>
             <Button
-              className="flex-1 h-[46px] text-[#3664EF] !border-none !outline-none rounded-none"
+              className="flex-1 h-[46px] text-brand !border-none !outline-none rounded-none"
               type="link"
               size="default"
               onClick={handleAuthorize}
@@ -105,7 +105,7 @@ export function ProviderCard({
             </Button>
             <Divider type="vertical" className="!h-full !mx-1" />
             <Button
-              className="flex-1 h-[46px] text-[#919499] !border-none !outline-none rounded-none"
+              className="flex-1 h-[46px] text-hint !border-none !outline-none rounded-none"
               type="link"
               size="default"
               onClick={handleDelete}
@@ -115,7 +115,7 @@ export function ProviderCard({
           </>
         ) : (
           <Button
-            className="flex-1 h-[46px] bg-[#F3F6FE] text-[#3664EF] !border-none !outline-none rounded-none"
+            className="flex-1 h-[46px] bg-[#F3F6FE] text-brand !border-none !outline-none rounded-none"
             type="default"
             size="default"
             onClick={handleAuthorize}

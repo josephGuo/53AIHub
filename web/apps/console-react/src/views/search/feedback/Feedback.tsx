@@ -1,16 +1,15 @@
-import { Table, Input, Button, Tag, Tooltip, Select, Spin } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Table, Button, Tag, Tooltip, Select, Spin } from "antd";
 import { useEffect, useState, useRef } from "react";
 import { t } from "@/locales";
 import { feedbackApi } from "@/api/modules/feedback";
 import {
-  type FeedbackDisplayItem,
-  SEARCH_TYPE,
+    type FeedbackDisplayItem,
+    SEARCH_TYPE,
 } from "@/api/modules/feedback/types";
-import { SvgIcon } from "@km/shared-components-react";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import Detail, { DetailRef } from "../components/detail";
 import FeedbackConfigDialog, {
-  FeedbackConfigDialogRef,
+    FeedbackConfigDialogRef,
 } from "./FeedbackConfigDialog";
 import { DateRangeFilter } from "@/components/Filter/date-range";
 import { UserFilter } from "@/components/Filter/user";
@@ -271,7 +270,7 @@ export function Feedback({ agentId }: FeedbackProps) {
       render: (_: any, __: FeedbackDisplayItem, index: number) => (
         <Button
           type="link"
-          className="invisible group-hover:visible hover:!text-[#2563EB]"
+          className="invisible group-hover:visible hover:!text-brand"
           icon={<SvgIcon name="view" />}
           onClick={(e) => {
             e.stopPropagation();
@@ -338,7 +337,7 @@ export function Feedback({ agentId }: FeedbackProps) {
               >
                 <SvgIcon name={item.svg} width="14px" />
               </div>
-              <span className="ml-2 mr-1 text-[#1D1E1F] text-sm">
+              <span className="ml-2 mr-1 text-primary text-sm">
                 {item.label}
               </span>
               <Tooltip title={item.tip}>
@@ -375,21 +374,13 @@ export function Feedback({ agentId }: FeedbackProps) {
               }}
             />
           </div>
-          <Input
+          <Search
+            mode="expanded"
             value={detailedForm.question || ""}
             placeholder={t("search-record.search_question")}
-            style={{ width: 240 }}
-            allowClear
-            onChange={(e) => {
-              setDetailedForm((prev) => ({
-                ...prev,
-                question: e.target.value || null,
-              }));
-            }}
-            onPressEnter={() => handleFilterChange()}
-            prefix={<SearchOutlined />}
-            onClear={() => {
-              const newForm = { ...detailedForm, question: null };
+            className="w-[240px]"
+            onDebouncedChange={(val) => {
+              const newForm = { ...detailedForm, question: val || null };
               setDetailedForm(newForm);
               handleFilterChange(newForm, detailedDate);
             }}
@@ -425,7 +416,6 @@ export function Feedback({ agentId }: FeedbackProps) {
               setDetailedForm(newForm);
               handleFilterChange(newForm);
             }}
-            multiple
             isCleared={isCleared}
           />
           <Select

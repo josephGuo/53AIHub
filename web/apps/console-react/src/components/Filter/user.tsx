@@ -49,7 +49,7 @@ export function UserFilter({
       multiple={multiple}
       defaultFirstValue={defaultFirstValue}
       trigger={
-        <div className="border border-[rgb(217, 217, 217)] rounded-md h-8 min-w-44 flex items-center px-3 gap-1.5 text-xs text-[#1D1E1F] overflow-hidden cursor-pointer">
+        <div className="border border-[rgb(217, 217, 217)] rounded-md h-8 min-w-44 flex items-center px-3 gap-1.5 text-xs text-primary overflow-hidden cursor-pointer">
           <p className="flex-1 text-sm text-primary truncate">{label}</p>
           <DownOutlined style={{ fontSize: 12, color: '#9EA5B6' }} />
         </div>

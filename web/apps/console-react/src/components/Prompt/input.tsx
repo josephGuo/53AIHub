@@ -548,12 +548,12 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
           }}
         />
         {showToken && (
-          <div className="px-2 py-px text-right text-[#182B50] text-opacity-60 text-xs">
+          <div className="px-2 py-px text-right text-dark text-opacity-60 text-xs">
             {token} {t("tokens") || "tokens"}
           </div>
         )}
         {showCount && maxLength !== undefined && (
-          <div className="px-2 py-px text-right text-[#182B50] text-opacity-60 text-xs">
+          <div className="px-2 py-px text-right text-dark text-opacity-60 text-xs">
             {value.length}/{maxLength}
           </div>
         )}

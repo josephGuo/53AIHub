@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, Button } from 'antd'
+import { Modal } from 'antd'
 import { DeptMemberPicker } from '../DeptMemberPicker'
 import { RolePopover } from './RolePopover'
 import { PERMISSION_TYPE, SUBJECT_TYPE, type PermissionType, type SubjectType } from './constant'
@@ -114,6 +114,7 @@ export function MemberSelector({ trigger, onConfirm }: MemberSelectorProps) {
               <p className="member-name">{item.label}</p>
               <RolePopover
                 value={item.permission}
+                none
                 onChange={(permission) => handlePermissionChange(index, permission)}
               />
             </div>

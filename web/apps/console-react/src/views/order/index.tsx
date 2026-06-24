@@ -1,19 +1,17 @@
 import {
   Table,
   Select,
-  Input,
   Button,
   Tag,
   Tooltip,
   Modal,
   message,
 } from "antd";
-import { SearchOutlined, CheckCircleOutlined } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
+import { CheckCircleOutlined } from "@ant-design/icons";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import { useEffect, useState, useRef } from "react";
 import { t } from "@/locales";
 import { DateRangeFilter } from "@/components/Filter";
-import { Layout } from "@/components/Layout";
 import { orderApi } from "@/api/modules/order";
 import { ORDER_STATUS, ORDER_STATUS_LABEL_MAP } from "@/constants/order";
 import {
@@ -188,7 +186,7 @@ export function OrderPage() {
       ellipsis: true,
       width: 140,
       render: (name: string, row: OrderItem) => (
-        <span className={name ? "" : "text-[#9B9B9B]"}>
+        <span className={name ? "" : "text-disabled"}>
           {name}*{row.duration}
           {t(row.time_unit)}
         </span>
@@ -201,7 +199,7 @@ export function OrderPage() {
       ellipsis: true,
       width: 120,
       render: (amount: number, row: OrderItem) => (
-        <span className={amount ? "" : "text-[#9B9B9B]"}>
+        <span className={amount ? "" : "text-disabled"}>
           {row.currency || "CNY"}&nbsp;{((+amount || 0) / 100).toFixed(2)}
         </span>
       ),
@@ -238,7 +236,7 @@ export function OrderPage() {
       width: 160,
       ellipsis: true,
       render: (_: unknown, row: OrderItem) => (
-        <span className={row.created_time ? "" : "text-[#9B9B9B]"}>
+        <span className={row.created_time ? "" : "text-disabled"}>
           {row.created_time?.slice(0, 16) || "--"}
         </span>
       ),
@@ -250,7 +248,7 @@ export function OrderPage() {
       width: 140,
       ellipsis: true,
       render: (nickname: string) => (
-        <span className={nickname ? "" : "text-[#9B9B9B]"}>
+        <span className={nickname ? "" : "text-disabled"}>
           {nickname || "--"}
         </span>
       ),
@@ -279,7 +277,7 @@ export function OrderPage() {
               <Tooltip title={t("action_confirm_payment")} placement="top">
                 <Button
                   type="link"
-                  className="hover:!text-[#2563EB]"
+                  className="hover:!text-brand"
                   icon={<CheckCircleOutlined />}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -290,7 +288,7 @@ export function OrderPage() {
               <Tooltip title={t("action_edit")} placement="top">
                 <Button
                   type="link"
-                  className="hover:!text-[#2563EB]"
+                  className="hover:!text-brand"
                   icon={<SvgIcon name="edit" />}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -301,7 +299,7 @@ export function OrderPage() {
               <Tooltip title={t("action_delete")} placement="top">
                 <Button
                   type="link"
-                  className="hover:!text-[#FA5151]"
+                  className="hover:!text-tag-red"
                   icon={<SvgIcon name="delete" />}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -312,14 +310,14 @@ export function OrderPage() {
             </div>
           );
         }
-        return <span className="text-[#9B9B9B]"> -- </span>;
+        return <span className="text-disabled"> -- </span>;
       },
     },
   ];
 
   return (
-    <Layout className="py-6 px-2">
-      <div className="flex-1 flex flex-col bg-white box-border max-h-[calc(100vh-100px)] overflow-auto">
+    <>
+      <div className="flex-1 flex flex-col bg-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Select
@@ -373,28 +371,15 @@ export function OrderPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Input
+            <Search
+              mode="expanded"
               value={keyword}
-              style={{ maxWidth: 268 }}
-              allowClear
-              prefix={<SearchOutlined />}
+              className="max-w-[268px]"
               placeholder={t("module.operation_order_search_placeholder")}
-              onChange={(e) => {
-                const newKeyword = e.target.value;
-                setKeyword(newKeyword);
-                // 当清空时立即触发刷新
-                if (newKeyword === "" && keyword !== "") {
-                  filterFormRef.current.keyword = "";
-                  filterFormRef.current.offset = 0;
-                  loadList();
-                }
-              }}
-              onBlur={() => {
-                filterFormRef.current.keyword = keyword;
-                refresh();
-              }}
-              onPressEnter={() => {
-                filterFormRef.current.keyword = keyword;
+              onDebouncedChange={(val) => {
+                setKeyword(val);
+                filterFormRef.current.keyword = val;
+                filterFormRef.current.offset = 0;
                 refresh();
               }}
             />
@@ -453,7 +438,7 @@ export function OrderPage() {
         </div>
       </div>
       <AddDialog ref={addRef} onSuccess={loadList} />
-    </Layout>
+    </>
   );
 }
 

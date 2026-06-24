@@ -130,7 +130,7 @@ export function AgentInfo({ className, form }: AgentInfoProps) {
             }
           />
         </Form.Item>
-        <div className="w-full text-sm text-[#9A9A9A] -mt-3">
+        <div className="w-full text-sm text-disabled -mt-3">
           {t("module.agent_sort_desc")}
         </div>
       </div>

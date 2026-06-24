@@ -1,25 +1,47 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+// ==================== 导入区域 ====================
+// React 核心
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { Checkbox, Tooltip, message } from "antd";
+
+// Ant Design UI
+import { Checkbox, Tooltip, message, Spin } from "antd";
 import { Dropdown } from "@km/shared-components-react";
 import type { MenuProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
+
+// 共享组件
 import { SvgIcon } from "@km/shared-components-react";
+import { BubbleList, BubbleUser, BubbleAssistant } from "@km/hub-ui-x-react";
+import { ProcessFlowHeader, ChatConfigProvider, type KnowledgePanelData } from "@km/shared-business";
+import { cacheManager as cache, CacheMode, eventBus } from "@km/shared-utils";
+
+// 内部 Stores
 import { useConversationStore } from "./conversation";
+import { useAgentRunStore } from "@/stores/modules/agentRun";
 import { useUserStore } from "@/stores/modules/user";
 import { useNavigationStore } from "@/stores/modules/navigation";
 import { useLibraryStore } from "@/stores/modules/library";
 import { useSpaceStore } from "@/stores/modules/space";
+import { useEnterpriseStore } from "@/stores/modules/enterprise";
+
+// 内部 Composables
 import { useChatFeedback } from "@/composables/useChatFeedback";
 import { useChatMessages } from "@/composables/useChatMessages";
 import { useChatSend } from "@/composables/useChatSend";
 import { useChatShare } from "@/composables/useChatShare";
-import { t } from "@/locales";
-import { cacheManager as cache, CacheMode, eventBus } from "@km/shared-utils";
-import { checkPermission } from "@/utils/permission";
+import { useRagStats } from "@/composables/useRagStats";
+import { convertReplayEventToSSE, processStreamDataItem } from "@/composables/useChatStream";
+
+// 内部 API
+import { TERMINAL_EVENTS } from "@/api/modules/agentRun/types";
+import { agentRunApi } from "@/api/modules/agentRun";
+import agentsApi from "@/api/modules/agents/index";
+import { transformAgentInfo } from "@/api/modules/agents/transform";
+
+// 内部组件
 import Header from "@/components/Layout/Header";
 import { Sender } from "@/components/Chat/Sender";
-import { BubbleList, BubbleUser, BubbleAssistant } from "@km/hub-ui-x-react";
 import { FeedbackPanel } from "@/components/Chat/FeedbackPanel";
 import { ShareHeader } from "@/components/Chat/ShareHeader";
 import { ThinkKnowledge } from "@/components/Chat/ThinkKnowledge";
@@ -27,20 +49,26 @@ import { Quotation } from "@/components/Chat/Quotation";
 import { Chunk } from "@/components/Chat/Chunk";
 import { Graph } from "@/components/Chat/Graph";
 import { MessageMenu } from "@/components/Chat/MessageMenu";
-import { ProcessFlowHeader } from "@/components/Chat/ProcessFlow";
 import { SpecifiedFiles } from "@/components/Chat/SpecifiedFiles";
 import { ModelView } from "@/components/Model/view";
 import { KnowledgeSourceSelector } from "@/components/KnowledgeSource";
 import type { KnowledgeSourceState } from "@/components/KnowledgeSource";
 import AddAnswerAsMd from "@/components/Chat/AddAnswerAsMd";
-import agentsApi from "@/api/modules/agents/index";
-import { transformAgentInfo } from "@/api/modules/agents/transform";
+import ChatHistory from "./history";
+
+// 工具与常量
+import { buildUrl } from "@/utils/router";
+import { checkPermission, checkLoginStatus } from "@/utils/permission";
+import { t } from "@/locales";
 import { AGENT_USAGES } from "@/constants/agent";
 import { EVENT_NAMES } from "@/constants/events";
-import ChatHistory from "./history";
-import { GroupList } from "./components";
+
+// 样式
 import "./chat.css";
 
+// ==================== 类型定义 ====================
+
+/** 智能体信息 */
 interface AgentInfo {
   agent_id: string;
   name: string;
@@ -65,6 +93,7 @@ interface AgentInfo {
   };
 }
 
+/** 模型项 */
 interface ModelItem {
   id: number;
   name: string;
@@ -77,50 +106,80 @@ interface ModelItem {
   type: string;
 }
 
+// ==================== 组件定义 ====================
+
 export function KnowledgeChatView() {
+  // ==================== Router Hooks ====================
   const location = useLocation();
   const { space_id } = useParams<{ space_id: string }>();
-  const senderRef = useRef<any>(null);
-  const chunkRef = useRef<any>(null);
-  const thinkKnowledgeRef = useRef<any>(null);
-  const chunkSourceRef = useRef<any>(null);
-  const graphRef = useRef<any>(null);
-  const graphSourceRef = useRef<any>(null);
-  const addAnswerAsMdRef = useRef<any>(null);
 
+  // ==================== Store Hooks ====================
   const convStore = useConversationStore();
+  const agentRunStore = useAgentRunStore();
+  const agentRunEvents = useAgentRunStore(state => state.events);
+  const agentRunCurrentRun = useAgentRunStore(state => state.currentRun);
   const userStore = useUserStore();
   const navigationStore = useNavigationStore();
   const libraryStore = useLibraryStore();
   const spaceStore = useSpaceStore();
+  const locale = useEnterpriseStore((state) => state.language);
 
+  // ==================== Refs ====================
+  /** 发送框组件引用 */
+  const senderRef = useRef<any>(null);
+  /** Chunk 弹窗引用 */
+  const chunkRef = useRef<any>(null);
+  /** 思考知识库侧边栏引用 */
+  const thinkKnowledgeRef = useRef<any>(null);
+  const chunkSourceRef = useRef<any>(null);
+  const graphRef = useRef<any>(null);
+  const graphSourceRef = useRef<any>(null);
+  /** 添加回答为MD弹窗引用 */
+  const addAnswerAsMdRef = useRef<any>(null);
+  /** 加载会话请求ID（用于取消过期请求） */
+  const loadConversationRequestId = useRef(0);
+  /** 是否已获取 latest_run（流式输出开始时只请求一次） */
+  const latestRunFetchedRef = useRef(false);
+  /** 当前 Graph 消息引用（用于 @view 事件） */
+  const currentGraphMessage = useRef<any>(null);
+
+  // ==================== State ====================
+  /** 是否显示历史记录侧边栏 */
   const [showHistory, setShowHistory] = useState(false);
+  /** 是否显示思考知识库侧边栏 */
   const [showThinkKnowledge, setShowThinkKnowledge] = useState(false);
+  /** 智能体信息 */
   const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null);
+  /** 智能体可用模型列表 */
   const [agentModels, setAgentModels] = useState<ModelItem[]>([]);
+  /** 当前选中的模型 */
   const [model, setModel] = useState("");
+  /** 当前选择的知识库 */
   const [library, setLibrary] = useState({
     name: t("library.all_libraries"),
     value: ["all"],
     isSpace: false,
   });
+  /** 知识源选择状态 */
   const [knowledgeSource, setKnowledgeSource] = useState<KnowledgeSourceState>({
     mode: 'all',
     allKnowledge: true,
     knowledgeGraph: false,
     networkSearch: false,
-    selectedFiles: []
+    selectedFiles: [],
+    selectedLibraries: [],
+    selectedSpaces: []
   });
+  /** 是否正在流式输出 */
   const [isStreaming, setIsStreaming] = useState(false);
-  const [senderIsSimpleMode, setSenderIsSimpleMode] = useState(true);
-  const [isFocusInput, setIsFocusInput] = useState(false);
+  /** 是否正在初始化 */
   const [isInitializing, setIsInitializing] = useState(true);
-  const [hasConversationId, setHasConversationId] = useState(false);
-  const currentGraphMessage = useRef<any>(null);
 
+  // ==================== 派生状态 ====================
+  /** 是否在知识库模式 */
   const isInLibrary = location.pathname.includes("/library/");
 
-  // 使用自定义 hooks
+  // ==================== Custom Hooks ====================
   const {
     loadFeedbackConfig,
     handleClickFeedbackBtn: handleClickFeedbackBtnBase,
@@ -142,8 +201,8 @@ export function KnowledgeChatView() {
     updateMessageList,
   } = useChatMessages({ limit: 10 });
 
-  const { sendMessage: sendMessageBase, handleStop: handleStopBase } =
-    useChatSend();
+  const { sendMessage: sendMessageBase, handleStop: handleStopBase } = useChatSend();
+  const { formatRagStats } = useRagStats();
 
   const {
     state: shareState,
@@ -154,24 +213,26 @@ export function KnowledgeChatView() {
     handleCreateShare: handleCreateShareBase,
   } = useChatShare();
 
-  // 当前对话
+  // ==================== useMemo ====================
+  /** 当前对话 */
   const currentConv = useMemo(
     () => convStore.currentConversation(),
     [convStore.conversations, convStore.current_conversationid],
   );
 
-  // 当前模型
+  /** 当前模型 */
   const currentModel = useMemo(() => {
     return agentModels.find((item) => item.value === model);
   }, [agentModels, model]);
 
-  // 消息列表
+  /** 消息列表 */
   const messageList = useMemo(
     () => messageState.messageList,
     [messageState.messageList],
   );
 
-  // 辅助函数：按 ID 更新消息
+  // ==================== 辅助函数 ====================
+  /** 按 ID 更新消息 */
   const updateMessageById = useCallback(
     (id: string, updater: (msg: any) => any) => {
       updateMessageList((list) =>
@@ -181,7 +242,7 @@ export function KnowledgeChatView() {
     [updateMessageList],
   );
 
-  // 辅助函数：批量更新多个消息（用于关闭其他消息的反馈面板）
+  /** 批量更新消息列表（用于关闭其他消息的反馈面板） */
   const updateMessages = useCallback(
     (updater: (list: any[]) => any[]) => {
       updateMessageList(updater);
@@ -189,7 +250,8 @@ export function KnowledgeChatView() {
     [updateMessageList],
   );
 
-  // 加载更多消息
+  // ==================== 数据加载 ====================
+  /** 加载更多消息 */
   const handleLoadListMore = useCallback(
     async (done: () => void): Promise<void> => {
       const { id } = currentConv;
@@ -199,27 +261,109 @@ export function KnowledgeChatView() {
     [currentConv, handleLoadListMoreBase],
   );
 
-  // 加载消息列表
+  /** 加载消息列表 */
   const loadMessageList = useCallback(
-    async (conversationId?: string | number) => {
+    async (conversationId?: string | number, options?: { isRunning?: boolean; runningMessageId?: string | number }) => {
       const id = conversationId || currentConv.id;
       if (!id) return;
-      await loadMessageListBase(id);
+      await loadMessageListBase(id, options);
     },
     [currentConv, loadMessageListBase],
   );
 
-  const handleChangeLibrary = useCallback(
-    (item: any) => {
-      setLibrary(item);
-      cache.set(
-        "library_" + userStore.info.eid,
-        item,
-        60 * 24 * 7,
-        CacheMode.LOCAL_STORAGE,
+  /** 加载模型列表 */
+  const loadModels = useCallback(async (agent: any) => {
+    const res = await agentsApi.models.list(agent.agent_id);
+    const deepConfig = agent.settings?.deep_thinking_config || { temperature: 0.5 };
+    const fastConfig = agent.settings?.fast_reasoning_config || { temperature: 0.5 };
+    const deepValue = `${deepConfig.channel_id}_${deepConfig.channel_type}_${deepConfig.model_name}`;
+
+    const models = res.agent_models
+      .map((item: any) => {
+        const value = `${item.channel_id}_${item.channel_type}_${item.model}`;
+        const isDeepThinking = value === deepValue;
+        return {
+          ...item,
+          type: isDeepThinking ? "deep_reasoning" : "fast_reasoning",
+          icon: isDeepThinking ? "star-link" : "lightning",
+          name: isDeepThinking ? t("chat.deep_thinking") : t("chat.fast_response"),
+          temperature: isDeepThinking ? deepConfig.temperature : fastConfig.temperature,
+          value,
+        };
+      })
+      .filter((item: any, index: number, self: any[]) =>
+        index === self.findIndex((t: any) => t.type === item.type)
       );
+
+    if (models.length) setModel((models[0] as any).value);
+    setAgentModels(models);
+  }, []);
+
+  /** 加载智能体 */
+  const loadAgent = useCallback(async () => {
+    const res = await agentsApi.list({
+      agent_usages: String(AGENT_USAGES.KM_AI_SEARCH),
+    });
+    const agent = res.agents[0] ? transformAgentInfo(res.agents[0]) : null;
+    setAgentInfo(agent);
+    if (agent) {
+      loadModels(agent);
+      convStore.setAgentId(agent.agent_id);
+      // 更新知识图谱默认状态
+      const graphDefaultEnable = agent.settings?.graph_search_setting?.default_enable ?? false;
+      setKnowledgeSource(prev => ({
+        ...prev,
+        knowledgeGraph: graphDefaultEnable
+      }));
+    }
+    return agent;
+  }, [loadModels, convStore]);
+
+  /** 加载会话消息并恢复运行中的 run
+   * @returns Promise<boolean> 是否成功加载（用于判断是否需要等待）
+   */
+  const loadConversation = useCallback(
+    async (conversation_id: string): Promise<boolean> => {
+      const requestId = ++loadConversationRequestId.current;
+
+      // 使用 Promise 包装 recover，等待 onMessage 完成
+      return new Promise((resolve) => {
+        // 检查请求是否已过期
+        if (requestId !== loadConversationRequestId.current) {
+          resolve(false);
+          return;
+        }
+
+        agentRunStore.recover(conversation_id, {
+          onStart: () => {
+            // 竞态检查：确保仍是最新请求
+            if (requestId !== loadConversationRequestId.current) return;
+            setIsStreaming(true);
+          },
+          onMessage: async ({ isRunning, messageId }) => {
+            // 竞态检查：确保仍是最新请求
+            if (requestId !== loadConversationRequestId.current) return;
+            setIsStreaming(isRunning);
+            await loadMessageList(conversation_id, { isRunning, runningMessageId: messageId });
+          }
+        }).then(({ run, isrunning }) => {
+          // 竞态检查
+          if (requestId !== loadConversationRequestId.current) {
+            resolve(false);
+            return;
+          }
+          resolve(true);
+        }).catch((error) => {
+          // 404 是正常情况（没有运行中的 run）
+          if (error?.response?.status !== 404) {
+            console.error('Failed to recover run:', error);
+          }
+          // 即使出错也返回 true，因为会话可能存在（只是没有运行中的 run）
+          resolve(requestId === loadConversationRequestId.current);
+        });
+      });
     },
-    [userStore.info.eid],
+    [loadMessageList, agentRunStore],
   );
 
   // 创建会话
@@ -246,25 +390,44 @@ export function KnowledgeChatView() {
 
   // 发送消息
   const sendMessage = useCallback(
-    async (question: string, links: any[] = []) => {
+    async (question: string, links: any[] = [], files: any[] = [], overrideOptions?: { networkSearch?: boolean; knowledgeGraph?: boolean }) => {
       if (isStreaming) return;
       setShowHistory(false);
       setShowThinkKnowledge(false);
-      setSenderIsSimpleMode(false);
-      setIsFocusInput(true);
 
       setIsStreaming(true);
+      latestRunFetchedRef.current = false;
 
       const agent_id = agentInfo?.agent_id;
       // 创建会话并获取 conversation_id
       let conversation_id = currentConv.id;
       if (!conversation_id) {
         conversation_id = await createConversation(agent_id || 0, question);
-        setHasConversationId(true); // 新创建会话后标记有会话ID
       }
 
       const completion_params = agentInfo?.configs?.completion_params;
       const modelId = currentModel?.id || "";
+
+      // 优先使用传入的参数（重新生成场景），否则使用当前状态
+      const useNetworkSearch = overrideOptions?.networkSearch ?? knowledgeSource.networkSearch;
+      const useKnowledgeGraph = overrideOptions?.knowledgeGraph ?? knowledgeSource.knowledgeGraph;
+
+      // 构建 links：优先使用传入的 links，否则使用 knowledgeSource
+      const sendLinks = links.length > 0 ? links : [
+        ...(knowledgeSource.selectedSpaces || []).map(space => ({
+          id: space.id,
+          name: space.name,
+          icon: space.icon,
+          isspace: true,
+        })),
+        ...(knowledgeSource.selectedLibraries || []).map(lib => ({
+          id: lib.id,
+          name: lib.name,
+          icon: lib.icon,
+          islibrary: true,
+        })),
+        ...(knowledgeSource.selectedFiles || []),
+      ];
 
       try {
         await sendMessageBase({
@@ -277,22 +440,42 @@ export function KnowledgeChatView() {
             temperature: currentModel?.temperature,
           },
           messageList: messageState.messageList,
-          // 优先使用传入的 links（来自 @ 符号选择），否则使用 knowledgeSource
-          links: links.length > 0 ? links : (knowledgeSource.mode === 'files' ? knowledgeSource.selectedFiles : []),
-          networkSearch: knowledgeSource.networkSearch,
-          knowledgeGraph: knowledgeSource.knowledgeGraph,
+          links: sendLinks,
+          files,
+          networkSearch: useNetworkSearch,
+          knowledgeGraph: useKnowledgeGraph,
           library: isInLibrary
             ? library
             : (knowledgeSource.mode === 'all' && knowledgeSource.allKnowledge
               ? library
               : { name: '', value: [], isSpace: false }),
           agentInfo,
-          onMessageListChange: updateMessageList,
+          onMessageListChange: (updater, newMessage) => {
+            updateMessageList(updater);
+            // 流式输出开始时请求 latest_run（只请求一次）
+            if (!latestRunFetchedRef.current && isNaN(Number(newMessage?.id))) {
+              latestRunFetchedRef.current = true;
+              agentRunApi.latest(String(conversation_id))
+                .then(res => {
+                  const run = res.data || res;
+                  if (run) {
+                    run.message_id = newMessage.id;
+                    agentRunStore.setCurrentRun(run);
+                    convStore.updateConversationLatestRun(String(conversation_id), run);
+                  }
+                })
+                .catch(() => {
+                  // 404 或网络错误，静默处理
+                });
+            }
+          },
         });
       } catch (err: any) {
         console.log(err);
       } finally {
         setIsStreaming(false);
+        // 通知侧边栏刷新快捷方式列表（更新 last_message_time）
+        eventBus.emit(EVENT_NAMES.SHORTCUT_UPDATED);
       }
     },
     [
@@ -306,13 +489,14 @@ export function KnowledgeChatView() {
       knowledgeSource,
       library,
       updateMessageList,
+      agentRunStore,
     ],
   );
 
   // 发送消息入口
   const handleSend = useCallback(
     (data: any) => {
-      const { textContent, atList } = data;
+      const { textContent, atList, files = [], networkSearch: overrideNetworkSearch, knowledgeGraph: overrideKnowledgeGraph } = data;
       checkPermission({
         checkInternal: true,
         onClick: () => {
@@ -320,7 +504,10 @@ export function KnowledgeChatView() {
           if (!agentInfo || !agentInfo.agent_id) {
             message.warning(t("index.ai_search_setup_tip"));
           } else {
-            sendMessage(textContent, atList || []);
+            sendMessage(textContent, atList || [], files, {
+              networkSearch: overrideNetworkSearch,
+              knowledgeGraph: overrideKnowledgeGraph,
+            });
           }
         },
       });
@@ -329,19 +516,29 @@ export function KnowledgeChatView() {
   );
 
   // 停止生成
-  const handleStop = useCallback(() => {
-    handleStopBase();
-    setIsStreaming(false);
-  }, [handleStopBase]);
+  // 停止生成
+  const handleStop = useCallback(async () => {
+    setIsStreaming(false)
 
-  // 聊天框展开
-  const handleChatExpand = useCallback(
-    (bool: boolean) => {
-      if (!senderIsSimpleMode) return;
-      setIsFocusInput(bool);
-    },
-    [senderIsSimpleMode],
-  );
+    // 立即更新当前消息的 loading 状态
+    const currentRun = agentRunStore.currentRun
+    if (currentRun?.message_id) {
+      updateMessageList((list) => {
+        const targetIndex = list.findIndex((m: any) => m.id === currentRun.message_id)
+        if (targetIndex === -1) return list
+
+        const newList = [...list]
+        newList[targetIndex] = { ...newList[targetIndex], loading: false }
+        return newList
+      })
+    }
+
+    // 同时调用两个停止方法：
+    // 1. handleStopBase() 中止 completions 流式响应（本地）
+    // 2. agentRunStore.cancel() 取消后端 run（远程）
+    handleStopBase()
+    await agentRunStore.cancel()
+  }, [agentRunStore, handleStopBase, updateMessageList])
 
   // 重新生成回答
   const handleRegenerate = useCallback(
@@ -353,10 +550,12 @@ export function KnowledgeChatView() {
   );
 
   const handleShowErrorDetails = useCallback((msg: any) => {
-    if (!msg.showErrorDetails) {
-      msg.showErrorDetails = true;
-    }
-  }, []);
+    updateMessageList((list) =>
+      list.map((item) =>
+        item.id === msg.id ? { ...item, showErrorDetails: true } : item,
+      ),
+    );
+  }, [updateMessageList]);
 
   // 点赞/点踩
   const handleClickFeedbackBtn = useCallback(
@@ -437,86 +636,93 @@ export function KnowledgeChatView() {
     }, 0);
   }, []);
 
+  // 前台场景：知识面板打开回调（统一处理 ProcessFlow 中的点击事件）
+  const handleOpenKnowledgePanel = useCallback((msg: any) => (data: KnowledgePanelData) => {
+    // knowledge_search: 打开知识检索结果侧边栏
+    if (data.type === 'knowledge_search') {
+      setShowThinkKnowledge(true);
+      setTimeout(() => {
+        thinkKnowledgeRef.current?.updateResults(
+          msg.rag_stats?.files_search || [],
+          msg.rag_stats?.type,
+        );
+      }, 0);
+      return true;
+    }
+    // source_click: 打开侧边栏并选中对应文件
+    if (data.type === 'source_click' && data.source) {
+      setShowThinkKnowledge(true);
+      setTimeout(() => {
+        thinkKnowledgeRef.current?.updateResults(
+          msg.rag_stats?.files_search || [],
+          msg.rag_stats?.type,
+        );
+        setTimeout(() => {
+          thinkKnowledgeRef.current?.selectItem(data.source);
+        }, 0);
+      }, 0);
+      return true;
+    }
+    // scope_narrowing: 跳转到知识库首页（新页面）
+    if (data.type === 'scope_narrowing' && data.source?.library_id) {
+      const libraryId = data.source.library_id;
+      const url = buildUrl(`/library/${libraryId}`);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return true;
+    }
+    return false;
+  }, []);
+
+  // ==================== 会话操作 ====================
+  /** 新建会话 */
   const handleNewChat = useCallback(() => {
+    if (!checkLoginStatus()) return;
     convStore.setCurrentState("", true);
     setShowHistory(false);
     setShowThinkKnowledge(false);
     clearMessageList();
-    setHasConversationId(false); // 重置会话ID状态
-    if (isInLibrary) return;
-    setIsFocusInput(false);
-    setSenderIsSimpleMode(true);
-  }, [convStore, clearMessageList, isInLibrary]);
+    agentRunStore.disconnect();
+    setIsStreaming(false);
+  }, [convStore, clearMessageList, agentRunStore]);
 
+  /** 选择会话 */
   const onSelectConversation = useCallback(
-    (conversation_id: string) => {
+    async (conversation_id: string) => {
+      agentRunStore.disconnect();
       convStore.setCurrentState(conversation_id);
       setShowHistory(false);
       setShowThinkKnowledge(false);
-      setHasConversationId(true); // 设置有会话ID
-      setIsFocusInput(true);
-      setSenderIsSimpleMode(false);
-      loadMessageList(conversation_id);
+      await loadConversation(conversation_id);
     },
-    [convStore, loadMessageList],
+    [convStore, agentRunStore, loadConversation],
   );
 
+  /** 切换知识库 */
+  const handleChangeLibrary = useCallback(
+    (item: any) => {
+      setLibrary(item);
+      cache.set(
+        "library_" + userStore.info.eid,
+        item,
+        60 * 24 * 7,
+        CacheMode.LOCAL_STORAGE,
+      );
+    },
+    [userStore.info.eid],
+  );
+
+  /** 切换模型 */
   const handleChangeModel = useCallback((modelValue: string) => {
     setModel(modelValue);
   }, []);
 
-  // 加载模型列表
-  const loadModels = useCallback(async (agent: any) => {
-    const res = await agentsApi.models.list(agent.agent_id);
-    const deepConfig = agent.settings?.deep_thinking_config || { temperature: 0.5 };
-    const fastConfig = agent.settings?.fast_reasoning_config || { temperature: 0.5 };
-    const deepValue = `${deepConfig.channel_id}_${deepConfig.channel_type}_${deepConfig.model_name}`;
-
-    const models = res.agent_models
-      .map((item: any) => {
-        const value = `${item.channel_id}_${item.channel_type}_${item.model}`;
-        const isDeepThinking = value === deepValue;
-        return {
-          ...item,
-          type: isDeepThinking ? "deep_reasoning" : "fast_reasoning",
-          icon: isDeepThinking ? "star-link" : "lightning",
-          name: isDeepThinking ? t("chat.deep_thinking") : t("chat.fast_response"),
-          temperature: isDeepThinking ? deepConfig.temperature : fastConfig.temperature,
-          value,
-        };
-      })
-      .filter((item: any, index: number, self: any[]) =>
-        index === self.findIndex((t: any) => t.type === item.type)
-      );
-
-    if (models.length) setModel((models[0] as any).value);
-    setAgentModels(models);
-  }, []);
-
-  // 加载智能体
-  const loadAgent = useCallback(async () => {
-    const res = await agentsApi.list({
-      agent_usages: String(AGENT_USAGES.KM_AI_SEARCH),
-    });
-    const agent = res.agents[0] ? transformAgentInfo(res.agents[0]) : null;
-    setAgentInfo(agent);
-    if (agent) {
-      loadModels(agent);
-      convStore.setAgentId(agent.agent_id);
-      // 更新知识图谱默认状态
-      const graphDefaultEnable = agent.settings?.graph_search_setting?.default_enable ?? false;
-      setKnowledgeSource(prev => ({
-        ...prev,
-        knowledgeGraph: graphDefaultEnable
-      }));
-    }
-    return agent;
-  }, [loadModels, convStore]);
-
+  // ==================== 分享操作 ====================
+  /** 全选消息 */
   const handleSelectAll = useCallback(() => {
     handleSelectAllBase(messageList);
   }, [handleSelectAllBase, messageList]);
 
+  /** 创建分享 */
   const handleCreateShare = useCallback(() => {
     handleCreateShareBase(
       convStore.current_conversationid as string,
@@ -525,6 +731,7 @@ export function KnowledgeChatView() {
     );
   }, [handleCreateShareBase, convStore.current_conversationid, currentConv]);
 
+  /** 添加回答为 Markdown */
   const handleAddAsMd = useCallback((msg: any) => {
     addAnswerAsMdRef.current?.open({
       answer: msg.answer,
@@ -532,85 +739,160 @@ export function KnowledgeChatView() {
     });
   }, []);
 
-  // 初始化
-  const initChat = useCallback(async () => {
+  // ==================== 初始化 ====================
+  /** 初始化聊天
+   *
+   * 优化策略：
+   * 1. 核心数据（agent、会话）优先加载，阻塞初始化
+   * 2. 非核心数据（反馈配置）并行加载，不阻塞
+   * 3. 确保 loadMessageList 完成后才结束初始化
+   */
+  const initChat = useCallback(async (signal?: AbortSignal) => {
     setIsInitializing(true);
 
-    // 解析 URL 参数
-    const conversation_id = new URLSearchParams(location.search).get("conversation_id") as string;
-    const hasConvId = !!conversation_id;
-    setHasConversationId(hasConvId);
+    try {
+      // ===== 1. 并行加载非核心数据（不阻塞） =====
+      loadFeedbackConfig();  // 反馈配置，延迟加载
 
-    // 非知识库模式：有 conversation_id 时立即设置输入框状态
-    if (!isInLibrary && hasConvId) {
-      setIsFocusInput(true);
-      setSenderIsSimpleMode(false);
-    }
+      // ===== 2. 加载智能体（核心，阻塞） =====
+      const agent = await loadAgent();
 
-    // 并行加载：agent 和 feedback 配置
-    loadFeedbackConfig(); // 非阻塞
-    const agentPromise = loadAgent(); // 不等待
+      if (signal?.aborted) return;
 
-    convStore.setBasePath(location.pathname);
+      // 如果没有智能体，提前结束
+      if (!agent?.agent_id) {
+        setIsInitializing(false);
+        return;
+      }
 
-    // 知识库模式设置
-    if (isInLibrary) {
-      setLibrary({
-        name: libraryStore.library?.name || t("library.this_library_content"),
-        value: [libraryStore.library?.id as string],
-        isSpace: false,
-      });
-      setKnowledgeSource(prev => ({ ...prev, allKnowledge: false }));
-      spaceStore.loadSpaceList(); // 非阻塞
-      setIsFocusInput(true);
-      setSenderIsSimpleMode(false);
-    } else {
-      // 缓存读取不阻塞
-      cache.get<{ name: string; value: string[] }>(
-        "library_" + userStore.info.eid,
-        CacheMode.LOCAL_STORAGE
-      ).then(cachedLibrary => {
-        if (cachedLibrary) setLibrary(cachedLibrary);
-      });
-    }
+      convStore.setBasePath(location.pathname);
 
-    // 等待 agent 加载完成
-    const agent = await agentPromise;
+      // 知识库模式设置
+      if (isInLibrary) {
+        setLibrary({
+          name: libraryStore.library?.name || t("library.this_library_content"),
+          value: [libraryStore.library?.id as string],
+          isSpace: false,
+        });
+        setKnowledgeSource(prev => ({ ...prev, allKnowledge: false }));
+        spaceStore.loadSpaceList();  // 非阻塞
+      } else {
+        cache.get<{ name: string; value: string[] }>(
+          "library_" + userStore.info.eid,
+          CacheMode.LOCAL_STORAGE
+        ).then(cachedLibrary => {
+          if (cachedLibrary) setLibrary(cachedLibrary);
+        });
+      }
 
-    if (agent?.agent_id) {
-      // 并行：加载模型列表和会话列表
-      await Promise.all([
+      // ===== 3. 加载会话（核心，阻塞） =====
+      const conversation_id = new URLSearchParams(location.search).get("conversation_id") as string;
+
+      const conversations = await Promise.all([
         loadModels(agent),
-        convStore.loadConversations()
-      ]);
+        convStore.loadConversations(signal)
+      ]).then(([, convs]) => convs);
+
+      if (signal?.aborted) return;
 
       if (conversation_id) {
         convStore.setCurrentState(conversation_id, false);
+        // 等待消息加载完成
+        const loaded = await loadConversation(conversation_id);
+        if (!loaded) {
+          // 如果加载失败（可能是 404），尝试加载历史会话
+          if (conversations.length > 0) {
+            convStore.setCurrentState(String(conversations[0].id), true);
+            await loadConversation(String(conversations[0].id));
+          }
+        }
+      } else if (conversations.length > 0) {
+        const latestConversation = conversations[0];
+        convStore.setCurrentState(String(latestConversation.id), true);
+        // 等待消息加载完成
+        await loadConversation(String(latestConversation.id));
       }
-      // 加载消息列表（非阻塞，让用户先看到界面）
-      loadMessageList(conversation_id);
+
+    } catch (error) {
+      if (signal?.aborted) return;
+      console.error("Failed to initialize knowledge chat:", error);
+    } finally {
+      if (!signal?.aborted) {
+        setIsInitializing(false);
+      }
     }
+  }, [loadAgent, loadConversation, convStore, location.pathname, location.search, isInLibrary, libraryStore, spaceStore, userStore.info.eid]);
 
-    setIsInitializing(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]); // 只在 URL 参数变化时重新初始化，其他依赖通过闭包访问
-
+  // ==================== useEffect ====================
+  // 组件挂载时初始化
   useEffect(() => {
-    convStore.clearCurrentState();
-    initChat();
+    const abortController = new AbortController();
+
+    initChat(abortController.signal);
 
     const query = new URLSearchParams(location.search).get("query");
     if (query) {
       setTimeout(() => senderRef.current?.insertText(query), 100);
     }
 
-    eventBus.on(EVENT_NAMES.LOGIN_SUCCESS, initChat);
+    const handleLoginSuccess = () => {
+      initChat(abortController.signal);
+    };
+    eventBus.on(EVENT_NAMES.LOGIN_SUCCESS, handleLoginSuccess);
 
     return () => {
-      eventBus.off(EVENT_NAMES.LOGIN_SUCCESS, initChat);
+      abortController.abort();
+      eventBus.off(EVENT_NAMES.LOGIN_SUCCESS, handleLoginSuccess);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 仅在组件挂载时初始化，导航切换会话由 onSelectConversation 处理
+  }, []);
+
+  // 监听实时 SSE 事件并更新消息
+  useEffect(() => {
+    const events = agentRunEvents;
+    const lastEvent = events[events.length - 1];
+    const currentRun = agentRunCurrentRun;
+    const messageId = currentRun?.message_id;
+
+    if (!events.length || !messageId) return;
+
+    const isTerminalEvent = TERMINAL_EVENTS.includes(lastEvent.type || lastEvent.event_type);
+    if (isTerminalEvent) {
+      setIsStreaming(false);
+      eventBus.emit(EVENT_NAMES.SHORTCUT_UPDATED);
+    }
+
+    if (events.length > 0 && messageId) {
+      updateMessageList((list) => {
+        const targetIndex = list.findIndex((m: any) => m.id === messageId);
+        if (targetIndex === -1) return list;
+
+        const message = {
+          ...list[targetIndex],
+          process_records: [],
+          skillRunItems: [],
+          outputFiles: [],
+          rag_temp: {},
+          rag_stats: undefined,
+          answer: '',
+          reasoning_content: '',
+          loading: !isTerminalEvent
+        };
+
+        for (const event of events) {
+          const sseData = convertReplayEventToSSE(event as any, messageId);
+          if (sseData) {
+            processStreamDataItem(sseData, message, formatRagStats);
+          } else if (event.type === 'message.completed' || event.event_type === 'message.completed') {
+            message.answer = event.payload.answer;
+          }
+        }
+
+        const newList = [...list];
+        newList[targetIndex] = message;
+        return newList;
+      });
+    }
+  }, [agentRunEvents, agentRunCurrentRun, updateMessageList, formatRagStats]);
 
   // 监听路由重置事件
   useEffect(() => {
@@ -620,11 +902,6 @@ export function KnowledgeChatView() {
         setShowHistory(false);
         setShowThinkKnowledge(false);
         clearMessageList();
-        setHasConversationId(false);
-        if (!isInLibrary) {
-          setIsFocusInput(false);
-          setSenderIsSimpleMode(true);
-        }
       }
     };
 
@@ -632,30 +909,85 @@ export function KnowledgeChatView() {
     return () => {
       window.removeEventListener("reset-route-state", handleResetRouteState);
     };
-  }, [convStore, clearMessageList, isInLibrary]);
+  }, [convStore, clearMessageList]);
 
-  // 同步 knowledgeSource.selectedFiles 到 Sender 的 links 显示
+  // 组件卸载时清理
   useEffect(() => {
-    if (knowledgeSource.mode === 'files' && knowledgeSource.selectedFiles.length > 0) {
-      const links = knowledgeSource.selectedFiles.map((file) => ({
-        id: file.id,
-        name: file.name,
-        icon: file.icon,
-        ui: { active: true },
-        upload_file_id: file.upload_file_id,
-        file_size: file.file_size,
-        file_mime: file.file_mime,
-        library_id: file.library_id,
-        isfolder: file.isfolder,
-      }));
+    return () => {
+      convStore.clearCurrentState();
+      agentRunStore.disconnect();
+    };
+  }, []);
+
+  // 同步 knowledgeSource 到 Sender 的 links 显示
+  useEffect(() => {
+    const links: any[] = [];
+
+    // 添加空间
+    if (knowledgeSource.selectedSpaces && knowledgeSource.selectedSpaces.length > 0) {
+      knowledgeSource.selectedSpaces.forEach((space) => {
+        links.push({
+          id: space.id,
+          name: space.name,
+          icon: space.icon,
+          ui: { active: true },
+          source: 'knowledge',
+          isspace: true,
+          islibrary: false,
+          isfolder: false,
+        });
+      });
+    }
+
+    // 添加知识库
+    if (knowledgeSource.selectedLibraries && knowledgeSource.selectedLibraries.length > 0) {
+      knowledgeSource.selectedLibraries.forEach((lib) => {
+        links.push({
+          id: lib.id,
+          name: lib.name,
+          icon: lib.icon,
+          ui: { active: true },
+          source: 'knowledge',
+          islibrary: true,
+          isspace: false,
+          isfolder: false,
+          upload_file_id: null,
+          file_size: null,
+          file_mime: null,
+          library_id: null,
+        });
+      });
+    }
+
+    // 添加文件
+    if (knowledgeSource.selectedFiles && knowledgeSource.selectedFiles.length > 0) {
+      knowledgeSource.selectedFiles.forEach((file) => {
+        links.push({
+          id: file.id,
+          name: file.name,
+          icon: file.icon,
+          ui: { active: true },
+          source: 'knowledge',
+          upload_file_id: file.upload_file_id,
+          file_size: file.file_size,
+          file_mime: file.file_mime,
+          library_id: file.library_id,
+          isfolder: file.isfolder,
+          islibrary: false,
+          isspace: false,
+        });
+      });
+    }
+
+    if (links.length > 0) {
       senderRef.current?.setLinks(links);
     } else {
-      // 当切换到其他模式或没有选中文件时，清除 links
       senderRef.current?.clearLinks();
     }
-  }, [knowledgeSource.mode, knowledgeSource.selectedFiles]);
+  }, [knowledgeSource.selectedFiles, knowledgeSource.selectedLibraries, knowledgeSource.selectedSpaces]);
 
-  // 模型选择下拉菜单
+  // ==================== 渲染数据 ====================
+  /** 模型选择下拉菜单 */
   const modelMenuItems: MenuProps["items"] = useMemo(() => {
     return agentModels.map((item) => ({
       key: item.value,
@@ -676,15 +1008,13 @@ export function KnowledgeChatView() {
     }));
   }, [agentModels, model]);
 
-  // Placeholder（直接计算，无需 useMemo）
-  const placeholder = isFocusInput
-    ? knowledgeSource.networkSearch
-      ? t("index.chat_placeholder")
-      : t("index.chat_placeholder_library", { name: library.name })
-    : t("index.search_in_space");
+  /** 输入框占位符 */
+  const placeholder = knowledgeSource.networkSearch
+    ? t("index.chat_placeholder")
+    : t("index.chat_placeholder_library", { name: library.name });
 
-  // 是否为空状态（无消息且非流式输出）
-  const isEmpty = !messageList.length && !isStreaming;
+  /** 是否为空状态 */
+  const isEmpty = !messageList.length && !isStreaming && !isInitializing;
 
   return (
     <div className="w-full h-full overflow-hidden flex">
@@ -713,31 +1043,18 @@ export function KnowledgeChatView() {
           <Header
             back={false}
             title={currentConv?.title || ""}
+            expandSidebar={false}
             border={false}
-            beforePrefix={
-              <>
-                {!libraryStore.siderVisible && (
-                  <>
-                    <Tooltip title={t("action.expand")}>
-                      <div
-                        className="size-5 flex-center cursor-pointer"
-                        onClick={() => libraryStore.toggleSider?.()}
-                      >
-                        <SvgIcon name="double-right" />
-                      </div>
-                    </Tooltip>
-                    <div className="h-4 border-l mx-2" />
-                  </>
-                )}
-              </>
-            }
             titlePrefix={
               !showHistory ? (
                 <>
                   <div className="flex-none flex items-center gap-3">
                     <div
                       className="size-7 cursor-pointer rounded flex items-center justify-center hover:bg-[#F5F5F7]"
-                      onClick={() => setShowHistory(true)}
+                      onClick={() => {
+                        if (!checkLoginStatus()) return;
+                        setShowHistory(true);
+                      }}
                     >
                       <SvgIcon name="history" />
                     </div>
@@ -757,13 +1074,14 @@ export function KnowledgeChatView() {
 
         {/* 消息区域 */}
         <div className={`flex-1 py-5 flex flex-col ${
-          messageList.length && isFocusInput
-            ? 'overflow-hidden'
-            : isInLibrary
-              ? 'items-center justify-center'
-              : 'overflow-y-auto'
+          messageList.length
+            ? 'overflow-hidden' : 'items-center justify-center'
         }`}>
-          {messageList.length > 0 && isFocusInput ? (
+          {isInitializing ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Spin size="large" />
+            </div>
+          ) : messageList.length > 0 ? (
             <BubbleList
               autoScroll={true}
               className="flex-1"
@@ -795,7 +1113,6 @@ export function KnowledgeChatView() {
                         header={
                           <SpecifiedFiles
                             files={msg.specified_files}
-                            type="no_jump"
                           />
                         }
                         menu={
@@ -843,13 +1160,17 @@ export function KnowledgeChatView() {
                           "--hubx-color-bg-message": "transparent",
                         }}
                         header={
-                          <ProcessFlowHeader
-                            processRecords={msg.process_records}
-                            streaming={msg.loading}
-                            hasContent={!!(msg.answer || msg.content)}
-                            onOpenKnow={() => handleOpenKnow(msg)}
-                            onSourceClick={handleSourceClick(msg)}
-                          />
+                          <ChatConfigProvider
+                            lang={locale}
+                            onOpenKnowledgePanel={handleOpenKnowledgePanel(msg)}
+                          >
+                            <ProcessFlowHeader
+                              processRecords={msg.process_records}
+                              streaming={msg.loading}
+                              hasContent={!!(msg.answer || msg.content)}
+                              getKnowledgeSearchFiles={() => msg.rag_stats?.files_search || []}
+                            />
+                          </ChatConfigProvider>
                         }
                         footer={
                           <>
@@ -865,7 +1186,6 @@ export function KnowledgeChatView() {
                               )}
                             {msg.rag_stats?.file_quotations?.length > 0 && (
                               <Quotation
-                                type={msg.rag_stats.type}
                                 files={msg.rag_stats.file_quotations}
                               />
                             )}
@@ -947,7 +1267,7 @@ export function KnowledgeChatView() {
           ) : null}
 
           {/* 输入区域 */}
-          {!isShareMode && (
+          {!isShareMode && !isInitializing && (
             <div className="flex-none w-4/5 max-w-[1200px] mx-auto">
               {isEmpty && (
                 <h2 className="text-2xl font-medium text-center">
@@ -955,7 +1275,6 @@ export function KnowledgeChatView() {
                 </h2>
               )}
               {isEmpty &&
-                isFocusInput &&
                 agentInfo?.settings?.opening_statement && (
                   <h3 className="text-base text-[#666666] text-center mt-3 whitespace-pre-wrap max-h-52 overflow-y-auto">
                     {agentInfo.settings.opening_statement}
@@ -965,7 +1284,6 @@ export function KnowledgeChatView() {
               <Sender
                 className="mt-9"
                 ref={senderRef}
-                simpleMode={senderIsSimpleMode}
                 showAt={
                   userStore.is_login &&
                   navigationStore.hasKnowledge &&
@@ -977,32 +1295,83 @@ export function KnowledgeChatView() {
                 library={isInLibrary ? libraryStore.library : undefined}
                 onSend={handleSend}
                 onStop={handleStop}
-                onExpand={handleChatExpand}
                 onRemoveLink={(link) => {
+                  // 判断此 link 是否由 knowledgeSource 管理
+                  const isInKnowledgeSource =
+                    (link.isspace && knowledgeSource.selectedSpaces?.some(s => s.id === link.id)) ||
+                    (link.islibrary && knowledgeSource.selectedLibraries?.some(l => l.id === link.id)) ||
+                    (!link.isspace && !link.islibrary && knowledgeSource.selectedFiles.some(f => f.id === link.id));
+
+                  // 如果不是 knowledgeSource 管理的链接（例如通过 @ 添加的），
+                  // 不操作 knowledgeSource，让 Sender 内部自行管理删除
+                  if (!isInKnowledgeSource) return;
+
                   setKnowledgeSource(prev => {
-                    const newFiles = prev.selectedFiles.filter(f => f.id !== link.id);
-                    // 删除最后一个文件时重置为全部知识模式
-                    if (newFiles.length === 0) {
+                    // 根据 link 的类型标识判断要删除的是哪种资源
+                    const linkType = link.isspace ? 'space' : (link.islibrary ? 'library' : 'file');
+                    const newFiles = linkType === 'file'
+                      ? prev.selectedFiles.filter(f => f.id !== link.id)
+                      : prev.selectedFiles;
+                    const newLibraries = linkType === 'library'
+                      ? (prev.selectedLibraries || []).filter(l => l.id !== link.id)
+                      : prev.selectedLibraries || [];
+                    const newSpaces = linkType === 'space'
+                      ? (prev.selectedSpaces || []).filter(s => s.id !== link.id)
+                      : prev.selectedSpaces || [];
+
+                    // 删除最后一个项目时重置为全部知识模式
+                    if (newFiles.length === 0 && newLibraries.length === 0 && newSpaces.length === 0) {
                       return {
                         ...prev,
-                        mode: 'all',
+                        mode: 'all' as const,
                         allKnowledge: true,
-                        selectedFiles: []
-                      };
+                        selectedFiles: [],
+                        selectedLibraries: [],
+                        selectedSpaces: []
+                      } as KnowledgeSourceState;
                     }
                     return {
                       ...prev,
-                      selectedFiles: newFiles
+                      selectedFiles: newFiles,
+                      selectedLibraries: newLibraries,
+                      selectedSpaces: newSpaces
                     };
                   });
                 }}
-                inputBefore={
-                  <img
-                    className={`size-5 ${isFocusInput ? "mt-0" : "mt-4 opacity-50"}`}
-                    src="/images/library/star.png"
-                    alt=""
-                  />
-                }
+                onSelectFiles={(files, libraries, spaces) => {
+                  setKnowledgeSource(prev => {
+                    // 存储完整信息，确保 useEffect 构建的 links 不会丢失数据
+                    const newFiles = files.map(f => ({
+                      id: String(f.id),
+                      name: f.name,
+                      icon: f.icon,
+                      library_id: f.library_id,
+                      isfolder: f.isfolder,
+                      upload_file_id: f.upload_file_id,
+                      file_size: f.upload_file?.size,
+                      file_mime: f.upload_file?.mime_type || f.file_mime,
+                    }));
+                    const newLibraries = (libraries || []).map(l => ({
+                      id: String(l.id),
+                      name: l.name,
+                      icon: l.icon,
+                    }));
+                    const newSpaces = (spaces || []).map(s => ({
+                      id: String(s.id),
+                      name: s.name,
+                      icon: s.icon,
+                    }));
+
+                    return {
+                      ...prev,
+                      mode: 'files' as const,
+                      allKnowledge: false,
+                      selectedFiles: newFiles,
+                      selectedLibraries: newLibraries,
+                      selectedSpaces: newSpaces,
+                    };
+                  });
+                }}
                 extras={
                   <div className="flex items-center gap-2 mt-3">
                     {/* 模型选择 */}
@@ -1038,6 +1407,8 @@ export function KnowledgeChatView() {
                         onChange={setKnowledgeSource}
                         library={library}
                         disabled={!userStore.info.is_internal}
+                        allowSelectLibrary={true}
+                        allowSelectSpace={true}
                         agentInfo={agentInfo}
                       />
                     )}
@@ -1046,15 +1417,12 @@ export function KnowledgeChatView() {
               />
 
               {/* AI 生成提示 */}
-              {isFocusInput && (
-                <div className="text-xs text-[#999999] text-center mt-5">
-                  {t("common.ai_generated")}
-                </div>
-              )}
+              <div className="text-xs text-[#999999] text-center mt-5">
+                {t("common.ai_generated")}
+              </div>
 
               {/* 推荐问题 */}
-              {isFocusInput &&
-                isEmpty &&
+              {isEmpty &&
                 agentInfo?.settings?.suggested_questions && (
                   <div className="grid grid-cols-2 gap-4 mt-10">
                     {agentInfo.settings.suggested_questions.map((item) => (
@@ -1073,22 +1441,6 @@ export function KnowledgeChatView() {
                     ))}
                   </div>
                 )}
-            </div>
-          )}
-
-          {/* 空间列表（非知识库模式，无会话ID时才显示） */}
-          {!messageList.length && !isInLibrary && !hasConversationId && (
-            <div className="w-11/12 lg:w-4/5 max-w-[1200px] mx-auto mt-16">
-              <h3 className="text-2xl text-[#1D1E1F] mb-2">
-                {t("module.space")}
-              </h3>
-              {isInitializing ? (
-                <div className="flex items-center justify-center py-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB]"></div>
-                </div>
-              ) : (
-                <GroupList stickyOffset={-20} spaceId={space_id} />
-              )}
             </div>
           )}
 

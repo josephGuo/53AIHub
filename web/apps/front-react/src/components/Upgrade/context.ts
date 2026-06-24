@@ -2,31 +2,45 @@ import { createContext, useContext } from 'react'
 import { PAYMENT_TYPE, type PaymentType } from '@/constants/payment'
 
 export interface SubscriptionOption {
-  group_id: string
+  group_id: number
   group_name: string
-  logo: string
-  month_info: {
-    currency_symbol: string
-    amount: number
-    time_unit: string
-    currency: string
-  }
-  year_info: {
-    currency_symbol: string
-    amount: number
-    time_unit: string
-    currency: string
-  }
-  credit_month_info: {
-    amount: number
-  }
+  logo_url: string
+  logo?: string
+  is_default?: boolean
+  sort?: number
   ai_enabled?: boolean
   agents?: { name: string; logo: string }[]
+  relations?: any[]
+  year_info: {
+    amount: string
+    currency: string
+    currency_symbol: string
+    relation_id: number
+    time_unit: string
+    type: number
+  }
+  month_info: {
+    amount: string
+    currency: string
+    currency_symbol: string
+    relation_id: number
+    time_unit: string
+    type: number
+  }
+  credit_month_info: {
+    amount: string
+    currency: string
+    currency_symbol: string
+    relation_id: number
+    time_unit: string
+    type: number
+  }
+  [key: string]: any
 }
 
 interface SubscriptionContextValue {
   activeSubscriptionInfo: SubscriptionOption | null
-  activeTimeInfo: { currency_symbol?: string; amount?: number; currency?: string; time_unit?: string } | null
+  activeTimeInfo: { currency_symbol?: string; amount?: string; currency?: string; time_unit?: string } | null
   activePayment: PaymentType
 }
 

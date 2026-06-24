@@ -1,7 +1,6 @@
 import { useState, useCallback, forwardRef, useImperativeHandle } from "react";
-import { Drawer, Input, Button, Table, message, Modal } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
-import { SvgIcon } from "@km/shared-components-react";
+import { Drawer, Button, Table, message, Modal } from "antd";
+import { SvgIcon, Search } from "@km/shared-components-react";
 import { t } from "@/locales";
 import { providerApi } from "@/api/modules/provider";
 import { PROVIDER_VALUES } from "@/constants/platform/config";
@@ -191,7 +190,7 @@ export const AuthListDrawer = forwardRef<
           <Button
             type="link"
             icon={<SvgIcon name="edit" />}
-            className="hover:!text-[#2563EB]"
+            className="hover:!text-brand"
             onClick={(e) => {
               e.stopPropagation();
               handleEditProvider(row);
@@ -200,7 +199,7 @@ export const AuthListDrawer = forwardRef<
           <Button
             type="link"
             icon={<SvgIcon name="delete" />}
-            className="hover:!text-[#FA5151]"
+            className="hover:!text-tag-red"
             onClick={(e) => {
               e.stopPropagation();
               handleDeleteProvider(row);
@@ -223,17 +222,14 @@ export const AuthListDrawer = forwardRef<
       >
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
-            <Input
-              prefix={<SearchOutlined />}
+            <Search
+              mode="expanded"
               placeholder={t("action_search")}
               value={filterForm.name}
-              onChange={(e) => setFilterForm({ name: e.target.value })}
-              onPressEnter={refresh}
-              onClear={() => {
-                setFilterForm({ name: "" });
-                loadList({ name: "" });
+              onDebouncedChange={(val) => {
+                setFilterForm({ name: val });
+                loadList({ name: val });
               }}
-              allowClear
             />
           </div>
           <Button type="primary" onClick={handleAddProvider}>

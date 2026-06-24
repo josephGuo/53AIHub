@@ -516,11 +516,10 @@ export function LibraryMainView() {
                   来自{" "}
                   {libraryStore.space && (
                     <a
-                      href={`#/space/${libraryStore.space?.id}`}
                       className="text-[#999999] hover:text-[#2563EB]"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigate(`/space/${libraryStore.space?.id}`, {
+                        navigate(`/knowledge/${libraryStore.space?.id}`, {
                           replace: true,
                         });
                       }}

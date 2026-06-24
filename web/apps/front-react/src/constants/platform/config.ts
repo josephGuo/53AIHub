@@ -21,6 +21,9 @@ const AGENT_TYPE = {
   N8N_WORKFLOW: 'n8n_workflow',
   TENCENT: 'tencent',
   OPENCLAW: 'openclaw',
+  QCLAW: 'qclaw',
+  CODEX: 'codex',
+  MANUS: 'manus',
 } as const
 
 const BACKEND_AGENT_TYPE = {
@@ -31,6 +34,7 @@ const BACKEND_AGENT_TYPE = {
 const AGENT_MODES = {
   CHAT: 'chat',
   COMPLETION: 'completion',
+  ASSISTANT: 'assistant',
 } as const
 
 // 统一的平台配置
@@ -258,13 +262,35 @@ const PLATFORM_CONFIG = {
     channelValue: 1014,
     category: 'model_platform',
     auth: false,
-    label: 'Openclaw',
+    label: 'OpenClaw',
     agents: [
       {
         id: AGENT_TYPE.OPENCLAW,
         name: AGENT_TYPE.OPENCLAW,
-        mode: AGENT_MODES.CHAT,
-        label: 'Openclaw',
+        channelValue: 1014,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'OpenClaw',
+      },
+      {
+        id: AGENT_TYPE.QCLAW,
+        name: AGENT_TYPE.QCLAW,
+        channelValue: 1015,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'QClaw',
+      },
+      {
+        id: AGENT_TYPE.CODEX,
+        name: AGENT_TYPE.CODEX,
+        channelValue: 1016,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'Codex',
+      },
+      {
+        id: AGENT_TYPE.MANUS,
+        name: AGENT_TYPE.MANUS,
+        channelValue: 1017,
+        mode: AGENT_MODES.ASSISTANT,
+        label: 'Manus',
       },
     ],
   },
@@ -290,6 +316,9 @@ export const AGENT_TYPES = AGENT_TYPE
 
 export const CHANNEL_TYPE_VALUE_MAP = new Map([
   ...Object.entries(PLATFORM_CONFIG).map(([key, value]) => [key, value.channelValue] as const),
+  ...Object.values(PLATFORM_CONFIG).flatMap(config =>
+    config.agents.map(agent => [agent.name, ('channelValue' in agent ? agent.channelValue : config.channelValue)] as const)
+  ),
 ])
 
 // 配置接口
@@ -319,7 +348,7 @@ export const agents: Record<AgentType, AgentConfig> = Object.fromEntries(
             label: agent.label,
             icon: `${img_host}/agent/${agent.name.toLowerCase()}.png`,
             channelName: key as ChannelType,
-            channelType: config.channelValue as ChannelValue,
+            channelType: ('channelValue' in agent ? agent.channelValue : config.channelValue) as ChannelValue,
             providerId: config.providerValue,
             mode: agent.mode || AGENT_MODES.CHAT,
             category: config.category as AgentCategory,

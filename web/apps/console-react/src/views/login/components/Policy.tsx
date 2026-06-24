@@ -46,13 +46,13 @@ export function Policy(props: PolicyProps) {
 
   if (!isPrivatePremEnv) {
     return (
-      <div className={`text-xs text-[#9A9A9A] ${className}`}>
+      <div className={`text-xs text-disabled ${className}`}>
         {t('login.agree_tip')}{' '}
         <a
           href={encodeURI('https://doc.53ai.com/入门/服务协议.html')}
           target="_blank"
           rel="noreferrer"
-          className="text-[#4F5052] cursor-pointer underline"
+          className="text-secondary cursor-pointer underline"
         >
           {t('login.agree')}
         </a>{' '}
@@ -61,7 +61,7 @@ export function Policy(props: PolicyProps) {
           href={encodeURI('https://doc.53ai.com/入门/AI隐私条款.html')}
           target="_blank"
           rel="noreferrer"
-          className="text-[#4F5052] cursor-pointer underline"
+          className="text-secondary cursor-pointer underline"
         >
           {t('login.policy')}
         </a>
@@ -75,7 +75,7 @@ export function Policy(props: PolicyProps) {
   }
 
   return (
-    <div className={`text-xs text-[#9A9A9A] ${className}`}>
+    <div className={`text-xs text-disabled ${className}`}>
       {t('login.agree_tip')}{' '}
       {terms_of_service.enabled && (
         <>
@@ -83,7 +83,7 @@ export function Policy(props: PolicyProps) {
             href={terms_of_service.url}
             target="_blank"
             rel="noreferrer"
-            className="text-[#4F5052] cursor-pointer underline"
+            className="text-secondary cursor-pointer underline"
           >
             {t('login.service_agreement')}
           </a>
@@ -99,7 +99,7 @@ export function Policy(props: PolicyProps) {
             href={privacy_policy.url}
             target="_blank"
             rel="noreferrer"
-            className="text-[#4F5052] cursor-pointer underline pr-[2px]"
+            className="text-secondary cursor-pointer underline pr-[2px]"
           >
             {t('login.privacy_policy')}
           </a>
@@ -111,7 +111,7 @@ export function Policy(props: PolicyProps) {
           href={ai_privacy_policy.url}
           target="_blank"
           rel="noreferrer"
-          className="text-[#4F5052] cursor-pointer underline pl-[2px]"
+          className="text-secondary cursor-pointer underline pl-[2px]"
         >
           {t('login.ai_privacy_policy')}
         </a>

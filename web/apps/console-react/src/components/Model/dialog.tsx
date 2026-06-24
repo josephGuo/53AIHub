@@ -129,7 +129,7 @@ export const ModelDialog = forwardRef<ModelDialogRef, ModelDialogProps>(
             <div key={platform.channel_id} className="mb-4 last:mb-0">
               {/* Platform title */}
               <div className="h-9 flex items-center mb-0.5">
-                <span className="text-sm font-medium text-[#4F5052]">{platform.label}</span>
+                <span className="text-sm font-medium text-secondary">{platform.label}</span>
               </div>
 
               {/* Model list */}
@@ -138,7 +138,7 @@ export const ModelDialog = forwardRef<ModelDialogRef, ModelDialogProps>(
                   <div key={model.model_value} className="h-8 flex items-center justify-between">
                     <div className="flex items-center flex-1">
                       <img src={model.icon} alt={model.label} className="size-5 mr-2" />
-                      <span className="text-sm text-[#1D1E1F]">{model.label}</span>
+                      <span className="text-sm text-primary">{model.label}</span>
                     </div>
                     <Switch
                       size="small"

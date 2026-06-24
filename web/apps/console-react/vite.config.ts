@@ -9,6 +9,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 
 import { mergePublic } from '../../packages/vite-plugins/merge-public'
 import conditionalCompilation from '../../packages/vite-plugins/conditional-compilation'
+import { vitePluginMock } from '../../packages/vite-plugin-mock/src/index'
 
 // 读取 package.json 作为备用版本号
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
@@ -70,6 +71,7 @@ const versionPlugin = () => {
 }
 
 function setupPlugins(env: ImportMetaEnv): PluginOption[] {
+  const isMock = env.VITE_MOCK === 'true'
   return [
     conditionalCompilation({
       platform: env.VITE_PLATFORM,
@@ -92,6 +94,7 @@ function setupPlugins(env: ImportMetaEnv): PluginOption[] {
     ...mergePublic({
       sharedPublicPath: path.resolve(process.cwd(), '..', '..', 'packages', 'shared-public'),
     }),
+    vitePluginMock({ enabled: isMock, verbose: true }),
   ]
 }
 
@@ -106,7 +109,6 @@ export default defineConfig(env => {
         '@km/shared-business': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-business', 'src'),
         '@km/shared-components-react': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-components-react', 'src'),
         '@km/shared-utils': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-utils', 'src'),
-        '@km/shared-types': path.resolve(process.cwd(), '..', '..', 'packages', 'shared-types', 'src'),
       },
     },
     plugins: setupPlugins(viteEnv),

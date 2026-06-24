@@ -27,6 +27,10 @@ interface AgentFormStoreState {
   support_image: boolean
   is_new: boolean
   adapter: IAgentCreateAdapter | null
+  // 修改追踪：保存初始表单数据用于比较
+  initial_form_data: AgentFormData | null
+  // 是否有未保存的修改
+  is_dirty: boolean
 }
 
 // ==================== Store 操作接口 ====================
@@ -79,6 +83,12 @@ interface AgentFormStoreActions {
 
   // 辅助方法
   getSupportFile: () => boolean
+
+  // 修改追踪
+  setInitialFormData: (data: AgentFormData) => void
+  setIsDirty: (dirty: boolean) => void
+  checkDirty: () => boolean
+  resetDirty: () => void
 }
 
 type AgentFormStore = AgentFormStoreState & AgentFormStoreActions
@@ -89,6 +99,8 @@ export const useAgentFormStore = create<AgentFormStore>((set, get) => ({
   // 初始状态
   ...getInitialState(),
   adapter: null,
+  initial_form_data: null,
+  is_dirty: false,
 
   // 基础状态更新
   setSaving: (saving) => set({ saving }),
@@ -226,7 +238,6 @@ export const useAgentFormStore = create<AgentFormStore>((set, get) => ({
     set({ loading: true })
     try {
       let data = await adapter.getDetail(agent_id)
-
       // 应用适配器的数据过滤
       if (adapter.filterResponseData) {
         data = adapter.filterResponseData(data)
@@ -242,7 +253,7 @@ export const useAgentFormStore = create<AgentFormStore>((set, get) => ({
       if (agent_type !== 'prompt') {
         supportImage = true
       }
-
+      
       set({
         agent_data: data,
         form_data: { ...getInitialFormData(), ...data },
@@ -314,6 +325,26 @@ export const useAgentFormStore = create<AgentFormStore>((set, get) => ({
   getSupportFile: () => {
     return get().agent_type !== 'prompt'
   },
+
+  // 修改追踪
+  setInitialFormData: (data) => set({
+    initial_form_data: JSON.parse(JSON.stringify(data)),
+    is_dirty: false,
+  }),
+
+  setIsDirty: (dirty) => set({ is_dirty: dirty }),
+
+  checkDirty: () => {
+    const { initial_form_data, form_data } = get()
+    if (!initial_form_data) return false
+    // 深度比较两个对象
+    return JSON.stringify(initial_form_data) !== JSON.stringify(form_data)
+  },
+
+  resetDirty: () => set({
+    initial_form_data: null,
+    is_dirty: false,
+  }),
 }))
 
 export default useAgentFormStore

@@ -1,5 +1,6 @@
-import { Table, Button, Input, Tag, Upload, message } from 'antd'
-import { SearchOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import { Table, Button, Tag, Upload, message } from 'antd'
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import { Search } from '@km/shared-components-react'
 import { useEffect, useState } from 'react'
 import { t } from '@/locales'
 import { knowledgeApi } from '@/api/modules/knowledge'
@@ -98,13 +99,12 @@ export function KnowledgeDocument() {
   return (
     <div className="p-6">
       <div className="flex justify-between mb-4">
-        <Input
+        <Search
+          mode="expanded"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          onDebouncedChange={setKeyword}
           placeholder={t('document.search_placeholder')}
-          prefix={<SearchOutlined />}
-          allowClear
-          style={{ width: 300 }}
+          className="w-[300px]"
         />
         <Upload showUploadList={false}>
           <Button type="primary" icon={<UploadOutlined />}>

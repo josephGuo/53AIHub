@@ -1,4 +1,5 @@
 import service from '../../config'
+import axios from 'axios'
 import { handleError } from '../../error-handler'
 import {
   type ModelValue,
@@ -7,6 +8,7 @@ import {
   REASONING_MODE,
   MODEL_USE_TYPE,
 } from '@/constants/platform/config'
+import { MODEL_VALUE_SEPARATOR, EXTERNAL_MODEL_API_URL } from '@/constants/platform/model'
 import { getPublicPath } from '@/utils/config'
 
 import { JSONParse } from '@/utils'
@@ -23,6 +25,7 @@ export interface RawModelOption {
       deep_thinking?: boolean
       dimensions?: number
       max_tokens?: number
+      context_length?: number
       vision?: boolean
     }>
   }>
@@ -44,6 +47,7 @@ export interface ModelCategoryOption {
     deep_thinking?: boolean
     dimensions?: number
     max_tokens?: number
+    context_length?: number
     vision?: boolean
   }>
 }
@@ -115,6 +119,8 @@ export interface ChannelItem extends Omit<RawChannelItem, 'models' | 'config' | 
       deep_thinking: boolean
       vision: boolean
       text_generation: boolean
+      max_tokens?: number
+      context_length?: number
     }>
   }>
   options: Array<{
@@ -126,6 +132,8 @@ export interface ChannelItem extends Omit<RawChannelItem, 'models' | 'config' | 
     deep_thinking: boolean
     vision: boolean
     text_generation: boolean
+    max_tokens?: number
+    context_length?: number
   }>
 }
 
@@ -177,20 +185,31 @@ export const transformChannelData = (data: RawChannelItem): ChannelItem => {
   const config = JSONParse(data.config, {}) || {}
   const custom_config = JSONParse(data.custom_config, {})
 
+  // 判断 config 是否为数组格式（新格式）
+  const isConfigArray = Array.isArray(config)
+
   const models = typeof data.models === 'string' ? data.models.split(',') : (data.models as any) || []
   const alias_map = (custom_config.alias_map || {}) as Record<string, string>
 
   const options = models.map((value: string) => {
     const model_type = custom_config[value] || MODEL_USE_TYPE.REASONING
+
+    // 从 config 数组或 custom_config 读取模型属性
+    const modelConfig = isConfigArray
+      ? config.find((c: any) => c.model_id === value)
+      : config
+    
     return {
       value,
       modelType: model_type,
       modelTypeName: getModelTypeName(model_type),
       label: alias_map[value] || value,
       icon: getModelIcon(value) || (model as any)?.platform_icon || '',
-      deep_thinking: custom_config.deep_thinking?.includes(value) || false,
-      vision: custom_config.vision?.includes(value) || false,
-      text_generation: custom_config.text_generation?.includes(value) || false,
+      deep_thinking: modelConfig?.deep_thinking || custom_config.deep_thinking?.includes(value) || false,
+      vision: modelConfig?.vision || custom_config.vision?.includes(value) || false,
+      text_generation: modelConfig?.text_generation || custom_config.text_generation?.includes(value) || false,
+      max_tokens: modelConfig?.max_tokens || custom_config.max_tokens?.[value],
+      context_length: modelConfig?.context_length || custom_config.context_length?.[value],
     }
   })
 
@@ -222,15 +241,15 @@ export const transformSelectData = (data: RawChannelItem, type?: string, mode?: 
   if (type) options = options.filter(item => result.custom_config[item.value] === type)
 
   const deepThinking = result.custom_config.deep_thinking || []
-  if (mode === REASONING_MODE.DEEP) options = options.filter(item => deepThinking.includes(item.value))
-  else if (mode === REASONING_MODE.FAST && deepThinking.length > 0)
-    options = options.filter(item => !deepThinking.includes(item.value))
+  if (mode === REASONING_MODE.DEEP) options = options.filter(item => deepThinking.includes(item.value) || item.deep_thinking)
+  else if (mode === REASONING_MODE.FAST)
+    options = options.filter(item => !deepThinking.includes(item.value) || !item.deep_thinking)
 
   return {
     ...result,
     options: options.map(item => ({
-      value: `${data.channel_id}_53aikm_${item.value}`,
-      model_value: `${data.channel_id}_53aikm_${item.value}_53aikm_${data.type}`,
+      value: `${data.channel_id}${MODEL_VALUE_SEPARATOR}${item.value}`,
+      model_value: `${data.channel_id}${MODEL_VALUE_SEPARATOR}${item.value}${MODEL_VALUE_SEPARATOR}${data.type}`,
       label: item.label,
       icon: item.icon,
       modelType: item.modelType,
@@ -267,6 +286,41 @@ export const channelApi = {
         .then((res: any) => res.data.platforms)
         .catch(handleError)
     },
+  },
+  /**
+   * 获取外部模型的 max_tokens 和 context_length 映射
+   * 从 EXTERNAL_MODEL_API_URL 获取
+   */
+  externalModels(): Promise<{ maxTokens: Record<string, number>; contextLength: Record<string, number> }> {
+    return axios
+      .get(EXTERNAL_MODEL_API_URL)
+      .then((res: any) => {
+        const maxTokens: Record<string, number> = {}
+        const contextLength: Record<string, number> = {}
+        const data = res.data?.data || res.data || []
+        if (Array.isArray(data)) {
+          data.forEach((model: any) => {
+            const modelMaxTokens = model.top_provider?.max_completion_tokens || model.max_tokens
+            const modelContextLength = model.top_provider?.context_length
+            if (model.id) {
+              // 存储完整格式（如 'qwen/qwen3.7-plus'）
+              if (modelMaxTokens) maxTokens[model.id] = modelMaxTokens
+              if (modelContextLength) contextLength[model.id] = modelContextLength
+              // 同时存储简化格式（去掉 provider 前缀，如 'qwen3.7-plus'）
+              const simpleId = model.id.includes('/') ? model.id.split('/').pop() : model.id
+              if (simpleId && simpleId !== model.id) {
+                if (modelMaxTokens) maxTokens[simpleId] = modelMaxTokens
+                if (modelContextLength) contextLength[simpleId] = modelContextLength
+              }
+            }
+          })
+        }
+        return { maxTokens, contextLength }
+      })
+      .catch((error) => {
+        console.warn('[channelApi.externalModels] Failed to fetch:', error?.message || error)
+        return { maxTokens: {}, contextLength: {} }
+      })
   },
   listv2(): Promise<RawChannelItem[]> {
     return service

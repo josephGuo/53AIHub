@@ -29,7 +29,6 @@ import { CatalogRefContext } from "../index";
 const MetadataView = lazy(() => import("./chunks/metadata"));
 const DocumentView = lazy(() => import("./chunks/view"));
 const SliceView = lazy(() => import("./chunks/slice"));
-const GraphView = lazy(() => import("./chunks/graph"));
 const ChunksPipeline = lazy(() => import("./chunks/pipeline"));
 
 // Menu items
@@ -37,7 +36,6 @@ const menuItems = [
   { icon: "file-code", label: "元数据", value: "metadata" },
   { icon: "notes", label: "文档解析", value: "view" },
   { icon: "paragraph-round", label: "语料切片", value: "slice" },
-  { icon: "six-points", label: "知识图谱", value: "graph" },
 ];
 
 /**
@@ -137,8 +135,7 @@ export function ChunksV2View() {
         return <DocumentView />;
       case "slice":
         return <SliceView onStatusChange={handleSliceStatusChange} />;
-      case "graph":
-        return <GraphView />;
+
       default:
         return <MetadataView />;
     }

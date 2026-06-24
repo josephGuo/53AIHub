@@ -69,7 +69,6 @@ export {
   ChannelConfigContext,
   useChannelConfig,
   AgentBasicInfo,
-  AgentUsageGuide,
   AgentInfo,
   AgentTypeSelector,
   UseScope,
@@ -81,6 +80,7 @@ export {
   RelateAgents,
   RelateAgentsDialog,
   RelateAgentsSetting,
+  UsageChannel,
   Chat,
   Completion,
 } from './components'
@@ -91,26 +91,43 @@ export type {
   CreatePageLayoutProps,
   AgentBasicInfoProps,
   AgentBasicInfoValue,
-  AgentUsageGuideProps,
-  UseCaseItem,
-  ChannelItem,
-  CaseItem,
-  SceneItem,
+  UsageChannelProps,
   ChatRef,
   CompletionRef,
 } from './components'
 
 // Constants
-export { AGENT_TYPES, BACKEND_AGENT_TYPE, AGENT_MODES } from './constants'
-export type { AgentPlatformType } from './constants'
+export {
+  AGENT_TYPES,
+  BACKEND_AGENT_TYPE,
+  AGENT_MODES,
+  OPENCLAW_COMPATIBLE_AGENT_METADATA,
+  OPENCLAW_COMPATIBLE_AGENT_TYPES,
+  OPENCLAW_COMPATIBLE_CHANNEL_TYPES,
+  OPENCLAW_WS_CHANNEL_TYPE,
+  OPENCLAW_WS_MODEL,
+  QCLAW_WS_CHANNEL_TYPE,
+  CODEX_WS_CHANNEL_TYPE,
+  MANUS_WS_CHANNEL_TYPE,
+  getOpenClawCompatibleAgentIconPath,
+  getOpenClawCompatibleAgentMetadata,
+  getOpenClawCompatibleChannelType,
+  isOpenClawCompatibleChannelType,
+  isOpenClawCompatibleAgentType,
+  normalizeOpenClawCompatibleCustomConfig,
+  resolveOpenClawCompatibleAgentLogo,
+  resolveOpenClawCompatibleAgentTypeFromRecord,
+  resolveOpenClawCompatibleAgentTypeFromChannelType,
+} from './constants'
+export type { AgentPlatformType, OpenClawCompatibleAgentMetadata, OpenClawCompatibleAgentRecord, OpenClawCompatibleAgentType } from './constants'
 
 // AgentForm (platform router)
 export { AgentForm } from './platform'
 export type { AgentFormRef as PlatformAgentFormRef } from './platform'
 
-// Openclaw config component
-export { OpenclawConfig } from './platform/Openclaw'
-export type { OpenclawConfigProps } from './platform/Openclaw'
+// Openclaw component (now part of AgentForm system)
+export { Openclaw, buildOpenClawInstallCommand } from './platform/Openclaw'
+export type { OpenclawRef } from './platform/Openclaw'
 
 // Language pack
 export { agentCreateMessages } from './locales'

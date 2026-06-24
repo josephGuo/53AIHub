@@ -1,10 +1,10 @@
 import {
-  forwardRef,
-  useImperativeHandle,
-  useState,
-  useMemo,
-  useRef,
-  useEffect,
+    forwardRef,
+    useImperativeHandle,
+    useState,
+    useMemo,
+    useRef,
+    useEffect,
 } from "react";
 import { Modal, Form, Input, Button, Image, Tooltip } from "antd";
 import { message } from "antd";
@@ -161,7 +161,7 @@ export const AlipaySettingDialog = forwardRef<
     <div className="flex items-center">
       <span>{label}</span>
       <span
-        className="flex items-center gap-0.5 text-[#9A9A9A] ml-2 text-sm hover:opacity-80 cursor-pointer"
+        className="flex items-center gap-0.5 text-disabled ml-2 text-sm hover:opacity-80 cursor-pointer"
         onClick={onGuideOpen}
       >
         <SvgIcon className="inline" name="help" width="14" color="#999" />
@@ -190,7 +190,7 @@ export const AlipaySettingDialog = forwardRef<
       >
         <div
           ref={guideRef}
-          className="gap-3 bg-[#F6F9FC] p-5 mb-4 box-border text-sm text-[#4F5052]"
+          className="gap-3 bg-[#F6F9FC] p-5 mb-4 box-border text-sm text-secondary"
         >
           <div
             className="whitespace-pre-wrap leading-6"
@@ -203,7 +203,7 @@ export const AlipaySettingDialog = forwardRef<
           <Tooltip title={copied ? t("copied") : t("action_copy")}>
             <span
               ref={copyIconRef}
-              className="cursor-pointer ml-1 text-[#4F5052] hover:text-[#3664EF]"
+              className="cursor-pointer ml-1 text-secondary hover:text-brand"
               onClick={handleCopy}
             >
               <CopyOutlined style={{ fontSize: 14 }} />
@@ -255,7 +255,7 @@ export const AlipaySettingDialog = forwardRef<
           {guideList.map((item, index) => (
             <li
               key={index}
-              className="flex flex-col gap-2 text-[#1D1E1F] text-sm"
+              className="flex flex-col gap-2 text-primary text-sm"
             >
               <div
                 className="text-wrap break-words whitespace-pre-wrap"

@@ -70,7 +70,7 @@ export function ChatHistoryDrawer({
         }),
       },
       {
-        title: t("time.older_7_days"),
+        title: t("time.over_7_days"),
         conversations: conversations.filter(
           (c: ConversationItem) =>
             new Date(c.created_time || (c.created_at as any)) < weekAgo,
